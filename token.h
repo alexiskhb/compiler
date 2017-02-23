@@ -8,10 +8,23 @@ struct Pos {
     unsigned long long fstream_pos;
 };
 
-class Token
-{
+class Token {
 public:
-    enum Category {
+    enum Category : int;
+    enum Operator : int;
+    enum Separator : int;
+    enum Reserved : int;
+    enum Literal : int;
+
+    Token();
+    Token(Pos _position, Category _category, const std::string& _raw_value, int _subcategory = -1);
+    Pos position;
+    Category category;
+    std::string raw_value;
+    int subcategory;
+
+
+    enum Category : int {
         C_OPERATOR,
         C_SEPARATOR,
         C_RESERVED,
@@ -19,7 +32,7 @@ public:
         C_IDENTIFIER,
     };
 
-    enum Operator {
+    enum Operator : int {
         OP_EQUAL,
         OP_GTHAN,
         OP_LTHAN,
@@ -55,13 +68,13 @@ public:
         OP_MOD,       // mod
     };
 
-    enum Separator {
+    enum Separator : int {
         S_COMMA,
         S_COLON,
         S_SCOLON,
     };
 
-    enum Reserved {
+    enum Reserved : int {
         R_AND,
         R_ASM,
         R_ARRAY,
@@ -115,18 +128,11 @@ public:
         R_XOR,
     };
 
-    enum Literal {
+    enum Literal : int {
         L_STRING,
         L_INTEGER,
         L_FLOAT,
     };
-
-    Token();
-    Token(Pos _position, Category _category, const std::string& _raw_value, int _subcategory = -1);
-    Pos position;
-    Category category;
-    std::string raw_value;
-    int subcategory;
 };
 
 #endif // TOKEN_H

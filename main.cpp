@@ -6,8 +6,7 @@
 
 using namespace std;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     cxxopts::Options options(argv[0]);
     options.add_options() ("positional", "", cxxopts::value<vector<string>>());
     options.parse_positional({"", "", "positional"});
@@ -21,5 +20,4 @@ int main(int argc, char *argv[])
         std::cerr << "Could not open " << files[0] << endl;
         return -1;
     }
-
 }
