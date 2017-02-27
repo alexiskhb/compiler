@@ -2,9 +2,11 @@
 #define TOKEN_H
 
 #include <string>
+#include <iostream>
+#include <vector>
 
 struct Pos {
-    unsigned int line, column;
+    int line, column;
     unsigned long long fstream_pos;
 };
 
@@ -18,11 +20,19 @@ public:
 
     Token();
     Token(Pos _position, Category _category, const std::string& _raw_value, int _subcategory = -1);
+    void clear();
+    void evaluate();
+    bool empty();
+
     Pos position;
     Category category;
     std::string raw_value;
     int subcategory;
+    int value_id;
 
+    static std::vector<int> int_values;
+    static std::vector<double> float_values;
+    static std::vector<std::string> string_values;
 
     enum Category : int {
         C_OPERATOR,
@@ -134,5 +144,7 @@ public:
         L_FLOAT,
     };
 };
+
+std::ostream& operator<<(std::ostream& os, const Token& t);
 
 #endif // TOKEN_H
