@@ -18,6 +18,9 @@ public:
     const char* what() const noexcept override {
         return m_bad_token.raw_value.c_str();
     }
+    Pos position() const {
+        return m_bad_token.position;
+    }
 private:
     Token m_bad_token;
 };
@@ -131,10 +134,15 @@ public:
 
     static State st[SIZEOF_STATES][SIZEOF_CHARACTERS];
     static Character ch[256];
+    static Token::Category state_to_cat[SIZEOF_STATES];
+    static State chtost[SIZEOF_CHARACTERS];
+    static Character sttoch[SIZEOF_STATES];
+    static int state_to_subcat[SIZEOF_STATES];
 private:
     void save_token();
     void clear_token();
     void begin_token();
+    void updatesave_token();
     void throw_error();
     void update_token();
     bool init_states();
@@ -143,7 +151,7 @@ private:
     std::ifstream m_file;
     std::deque<Token> m_tokens;
     std::string m_filename;
-    State m_state = ST_START;
+    State m_state = ST_START, m_prev_state;
     Token m_current_token;
     char m_c;
     int m_line, m_column;

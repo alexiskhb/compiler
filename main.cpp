@@ -13,15 +13,21 @@ int main(int argc, char *argv[]) {
     options.parse_positional({"", "", "positional"});
     options.parse(argc, argv);
     auto files = options["positional"].as<vector<string>>();
-    if (files.empty()) {
-//        return -1;
-    }
-    Scanner scanner(argc > 1 ? files[0] : "test/001.in");
+//    Scanner scanner(argc > 1 ? files[0] : "test/001.in");
+    Scanner scanner(argv[1]);
     if (!scanner.is_open()) {
         std::cerr << "Could not open " << files[0] << endl;
         return -1;
     }
     while (!scanner.eof()) {
-        cout << scanner.get_next_token() << endl;
+        try {
+            cout << scanner.get_next_token() << endl;
+        } catch(BadToken& e) {
+            cerr << "bad token (" <<
+                    e.what() << ") at (" <<
+                    e.position().line << ":" <<
+                    e.position().column << ")" << endl;
+            break;
+        }
     }
 }

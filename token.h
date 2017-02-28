@@ -4,6 +4,8 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <map>
+#include <algorithm>
 
 struct Pos {
     int line, column;
@@ -21,8 +23,11 @@ public:
     Token();
     Token(Pos _position, Category _category, const std::string& _raw_value, int _subcategory = -1);
     void clear();
-    void evaluate();
+    Token& evaluate();
     bool empty();
+    std::string strvalue() const;
+    std::string strcategory() const;
+    static int is_reserved(std::string s);
 
     Pos position;
     Category category;
@@ -33,6 +38,10 @@ public:
     static std::vector<int> int_values;
     static std::vector<double> float_values;
     static std::vector<std::string> string_values;
+    static std::map<std::string, Reserved> reserved_lst;
+    static std::map<Reserved, std::string> reversed_reserved_lst;
+    static std::map<Operator, std::string> operator_lst;
+    static std::map<Separator, std::string> separator_lst;
 
     enum Category : int {
         C_OPERATOR,
@@ -43,7 +52,7 @@ public:
     };
 
     enum Operator : int {
-        OP_EQUAL,
+        OP_EQUAL = 1,
         OP_GTHAN,
         OP_LTHAN,
         OP_PLUS,
@@ -85,7 +94,7 @@ public:
     };
 
     enum Reserved : int {
-        R_AND,
+        R_AND = 1,
         R_ASM,
         R_ARRAY,
         R_BEGIN,
@@ -143,6 +152,8 @@ public:
         L_INTEGER,
         L_FLOAT,
     };
+private:
+    static bool init_reversed_reserved();
 };
 
 std::ostream& operator<<(std::ostream& os, const Token& t);
