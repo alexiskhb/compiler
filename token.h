@@ -24,10 +24,13 @@ public:
     Token(Pos _position, Category _category, const std::string& _raw_value, int _subcategory = -1);
     void clear();
     Token& evaluate();
-    bool empty();
+    bool empty() const;
     std::string strvalue() const;
     std::string strcategory() const;
     static int is_reserved(std::string s);
+    operator bool() const {
+        return empty();
+    }
 
     Pos position;
     Category category;

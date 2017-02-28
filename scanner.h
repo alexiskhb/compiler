@@ -14,15 +14,27 @@
 
 class BadToken : public std::exception {
 public:
-    BadToken(Token t) : m_bad_token(t) {}
+    BadToken(Token t, const std::string& prev_state, const std::string &state) :
+        m_bad_token(t), m_prev_state(prev_state), m_state(state) {
+    }
     const char* what() const noexcept override {
-        return m_bad_token.raw_value.c_str();
+        return ("(" + m_bad_token.raw_value + ") [" + m_prev_state + "][" + m_state + "]").c_str();
     }
     Pos position() const {
         return m_bad_token.position;
     }
+    std::string prev_state() const {
+        return m_prev_state;
+    }
+    std::string state() const {
+        return m_state;
+    }
+    std::string wat() const {
+        return ("(" + m_bad_token.raw_value + ") [" + m_prev_state + "][" + m_state + "]").c_str();
+    }
 private:
     Token m_bad_token;
+    std::string m_prev_state, m_state;
 };
 
 class Scanner {
@@ -36,6 +48,10 @@ public:
     Token get_next_token();
     void open(const std::string& filename);
     bool eof();
+    bool last_token_success() const;
+    operator bool() const {
+        return last_token_success();
+    }
 
     enum State : int {
         ST_START = 0,
@@ -155,6 +171,9 @@ private:
     Token m_current_token;
     char m_c;
     int m_line, m_column;
+    bool m_last_token_success = true;
 };
+
+Scanner& operator>>(Scanner& scanner, Token& token);
 
 #endif // SCANNER_H

@@ -11,18 +11,16 @@ int Scanner::state_to_subcat[Scanner::SIZEOF_STATES];
 string stst[] = {"ST_START", "ST_ERROR", "ST_EOF", "ST_IDENTIFIER", "ST_STRLIT", "ST_INTEGER", "ST_FLOAT", "ST_EXPONFLOAT", "ST_EXPONCHAR", "ST_EXPONSIGN", "ST_EXPON", "ST_MLINECMT", "ST_COLON", "ST_PLUS", "ST_LBRACE", "ST_ASTER", "ST_MINUS", "ST_DOT", "ST_SLASH", "ST_LTHAN", "ST_DOLLAR", "ST_PERCENT", "ST_AT", "ST_CHARORD", "ST_GTHAN", "ST_LPAREN", "START_GREEDY", "ST_COMMENT", "ST_ASSIGN", "ST_PLUSAGN", "ST_MINUSAGN", "ST_FACAGN", "ST_MULAGN", "ST_LEQ", "ST_GEQ", "ST_NEQ", "ST_DOTDOT", "ST_COMMA", "ST_DIRECTIVE", "ST_RPAREN", "ST_LSQBRAC", "ST_RSQBRAC", "ST_RBRACE", "ST_CARET", "ST_EQUAL", "ST_SCOLON", "ST_SHL", "ST_SHR", "ST_LPARENDOT", "ST_RPARENDOT", "ST_LPARENAST", "ST_RPARENAST", "END_GREEDY", "SIZEOF_STATES"};
 
 bool Scanner::init_states() {
-    for(int i = 0; i < SIZEOF_STATES; i++) {
-        fill(st[i], st[i] + SIZEOF_CHARACTERS, ST_ERROR);
-    }
+    fill(&st[0][0], &st[0][0] + SIZEOF_STATES*SIZEOF_CHARACTERS, ST_ERROR);
     fill(ch, ch + 256, CH_OTHER);
     ch['_'] = CH_LETTER;
-    for(int i = 'A'; i <= 'Z'; i++) {
-        ch[i] = ch[i - 'A' + 'a'] = CH_LETTER;
-    }
+    fill(ch + 'A', ch + 'Z' + 1, CH_LETTER);
+    fill(ch + 'a', ch + 'z' + 1, CH_LETTER);
     fill(ch + '0', ch + '9' + 1, CH_DIGIT);
     fill(state_to_cat, state_to_cat + SIZEOF_STATES, Token::C_OPERATOR);
     fill(sttoch, sttoch + SIZEOF_STATES, (Character)-1);
     fill(chtost, chtost + SIZEOF_CHARACTERS, (State)-1);
+
     state_to_cat[ST_IDENTIFIER] = Token::C_IDENTIFIER;
     state_to_cat[ST_INTEGER] = Token::C_LITERAL;
     state_to_cat[ST_FLOAT] = Token::C_LITERAL;
@@ -93,36 +91,27 @@ bool Scanner::init_states() {
     ch['	'] = CH_TAB;
     ch[' '] = CH_SPACE;
 
-//    sttoch[ chtost[CH_DIGIT]     = ST_DIGIT     ] = CH_DIGIT;
-//    sttoch[ chtost[CH_LETTER]    = ST_LETTER    ] = CH_LETTER;
-//    sttoch[ chtost[CH_NUMBER]    = ST_NUMBER    ] = CH_NUMBER;
-    sttoch[ chtost[CH_DOLLAR]    = ST_DOLLAR    ] = CH_DOLLAR;
-    sttoch[ chtost[CH_PERCENT]   = ST_PERCENT   ] = CH_PERCENT;
-//    sttoch[ chtost[CH_EXPONCHAR] = ST_EXPONCHAR ] = CH_EXPONCHAR;
-//    sttoch[ chtost[CH_APOST]     = ST_APOST     ] = CH_APOST;
-    sttoch[ chtost[CH_LPAREN]    = ST_LPAREN    ] = CH_LPAREN;
-    sttoch[ chtost[CH_RPAREN]    = ST_RPAREN    ] = CH_RPAREN;
-    sttoch[ chtost[CH_LSQBRAC]   = ST_LSQBRAC   ] = CH_LSQBRAC;
-    sttoch[ chtost[CH_RSQBRAC]   = ST_RSQBRAC   ] = CH_RSQBRAC;
-    sttoch[ chtost[CH_LBRACE]    = ST_LBRACE    ] = CH_LBRACE;
-    sttoch[ chtost[CH_RBRACE]    = ST_RBRACE    ] = CH_RBRACE;
-    sttoch[ chtost[CH_ASTER]     = ST_ASTER     ] = CH_ASTER;
-    sttoch[ chtost[CH_PLUS]      = ST_PLUS      ] = CH_PLUS;
-    sttoch[ chtost[CH_COMMA]     = ST_COMMA     ] = CH_COMMA;
-    sttoch[ chtost[CH_MINUS]     = ST_MINUS     ] = CH_MINUS;
-    sttoch[ chtost[CH_DOT]       = ST_DOT       ] = CH_DOT;
-    sttoch[ chtost[CH_SLASH]     = ST_SLASH     ] = CH_SLASH;
-    sttoch[ chtost[CH_COLON]     = ST_COLON     ] = CH_COLON;
-    sttoch[ chtost[CH_SCOLON]    = ST_SCOLON    ] = CH_SCOLON;
-    sttoch[ chtost[CH_LTHAN]     = ST_LTHAN     ] = CH_LTHAN;
-    sttoch[ chtost[CH_GTHAN]     = ST_GTHAN     ] = CH_GTHAN;
-    sttoch[ chtost[CH_EQUAL]     = ST_EQUAL     ] = CH_EQUAL;
-    sttoch[ chtost[CH_CARET]     = ST_CARET     ] = CH_CARET;
-//    sttoch[ chtost[CH_UNDERS]    = ST_UNDERS    ] = CH_UNDERS;
-//    sttoch[ chtost[CH_LF]        = ST_LF        ] = CH_LF;
-//    sttoch[ chtost[CH_TAB]       = ST_TAB       ] = CH_TAB;
-//    sttoch[ chtost[CH_SPACE]     = ST_SPACE     ] = CH_SPACE;
-//    sttoch[ chtost[CH_OTHER]     = ST_OTHER     ] = CH_OTHER;
+    sttoch [chtost[CH_DOLLAR]  = ST_DOLLAR ] = CH_DOLLAR;
+    sttoch [chtost[CH_PERCENT] = ST_PERCENT] = CH_PERCENT;
+    sttoch [chtost[CH_LPAREN]  = ST_LPAREN ] = CH_LPAREN;
+    sttoch [chtost[CH_RPAREN]  = ST_RPAREN ] = CH_RPAREN;
+    sttoch [chtost[CH_LSQBRAC] = ST_LSQBRAC] = CH_LSQBRAC;
+    sttoch [chtost[CH_RSQBRAC] = ST_RSQBRAC] = CH_RSQBRAC;
+    sttoch [chtost[CH_LBRACE]  = ST_LBRACE ] = CH_LBRACE;
+    sttoch [chtost[CH_RBRACE]  = ST_RBRACE ] = CH_RBRACE;
+    sttoch [chtost[CH_ASTER]   = ST_ASTER  ] = CH_ASTER;
+    sttoch [chtost[CH_PLUS]    = ST_PLUS   ] = CH_PLUS;
+    sttoch [chtost[CH_COMMA]   = ST_COMMA  ] = CH_COMMA;
+    sttoch [chtost[CH_MINUS]   = ST_MINUS  ] = CH_MINUS;
+    sttoch [chtost[CH_DOT]     = ST_DOT    ] = CH_DOT;
+    sttoch [chtost[CH_SLASH]   = ST_SLASH  ] = CH_SLASH;
+    sttoch [chtost[CH_COLON]   = ST_COLON  ] = CH_COLON;
+    sttoch [chtost[CH_SCOLON]  = ST_SCOLON ] = CH_SCOLON;
+    sttoch [chtost[CH_LTHAN]   = ST_LTHAN  ] = CH_LTHAN;
+    sttoch [chtost[CH_GTHAN]   = ST_GTHAN  ] = CH_GTHAN;
+    sttoch [chtost[CH_EQUAL]   = ST_EQUAL  ] = CH_EQUAL;
+    sttoch [chtost[CH_CARET]   = ST_CARET  ] = CH_CARET;
+
 // Comments
     st[ST_LPAREN][CH_ASTER] = ST_MLINECMT;
     st[ST_SLASH][CH_SLASH] = ST_COMMENT;
@@ -132,6 +121,10 @@ bool Scanner::init_states() {
     st[ST_MLINECMT][CH_RBRACE] = ST_START;
 // Common signs
     for(int s = 0; s < SIZEOF_STATES; ++s) {
+        st[s][CH_LF] = ST_START;
+        st[s][CH_SPACE] = ST_START;
+        st[s][CH_TAB] = ST_START;
+        st[s][CH_SCOLON] = ST_START;
         if (sttoch[s] == Character(-1)) {
             continue;
         }
@@ -142,17 +135,13 @@ bool Scanner::init_states() {
         st[ST_INTEGER][C] = S;
         st[S][CH_LETTER] = ST_IDENTIFIER;
         st[S][CH_DIGIT] = ST_INTEGER;
-        st[S][CH_SPACE] = ST_START;
-        st[S][CH_LF] = ST_START;
+        st[S][C] = S;
     }
 // Identifiers
     st[ST_IDENTIFIER][CH_LETTER] = ST_IDENTIFIER;
     st[ST_IDENTIFIER][CH_DIGIT]  = ST_IDENTIFIER;
     st[ST_IDENTIFIER][CH_UNDERS] = ST_IDENTIFIER;
     st[ST_IDENTIFIER][CH_EXPONCHAR] = ST_IDENTIFIER;
-
-    st[ST_IDENTIFIER][CH_SCOLON] = ST_START;
-    st[ST_IDENTIFIER][CH_LF] = ST_START;
 // Directives
     st[ST_MLINECMT][CH_DOLLAR] = ST_DIRECTIVE;
 // Integer
@@ -169,40 +158,9 @@ bool Scanner::init_states() {
     st[ST_START][CH_EXPONCHAR] = ST_IDENTIFIER;
 //
     st[ST_START][CH_LETTER] = ST_IDENTIFIER;
-// Spaces and delimiters
-    st[ST_START][CH_SPACE]  = ST_START;
-    st[ST_START][CH_TAB]    = ST_START;
-    st[ST_START][CH_LF]     = ST_START;
-    st[ST_START][CH_SCOLON] = ST_START;
-
-    st[ST_IDENTIFIER][CH_SPACE] = ST_START;
-    st[ST_INTEGER]   [CH_SPACE] = ST_START;
-    st[ST_FLOAT]     [CH_SPACE] = ST_START;
-    st[ST_EXPONFLOAT][CH_SPACE] = ST_START;
-    st[ST_EXPON]     [CH_SPACE] = ST_START;
-
-    st[ST_IDENTIFIER][CH_TAB] = ST_START;
-    st[ST_INTEGER]   [CH_TAB] = ST_START;
-    st[ST_FLOAT]     [CH_TAB] = ST_START;
-    st[ST_EXPONFLOAT][CH_TAB] = ST_START;
-    st[ST_EXPON]     [CH_TAB] = ST_START;
-
-    st[ST_IDENTIFIER][CH_LF] = ST_START;
-    st[ST_INTEGER]   [CH_LF] = ST_START;
-    st[ST_FLOAT]     [CH_LF] = ST_START;
-    st[ST_EXPONFLOAT][CH_LF] = ST_START;
-    st[ST_EXPON]     [CH_LF] = ST_START;
-
-    st[ST_IDENTIFIER][CH_SCOLON] = ST_START;
-    st[ST_INTEGER]   [CH_SCOLON] = ST_START;
-    st[ST_FLOAT]     [CH_SCOLON] = ST_START;
-    st[ST_EXPONFLOAT][CH_SCOLON] = ST_START;
-    st[ST_EXPON]     [CH_SCOLON] = ST_START;
 // Assign
     st[ST_COLON][CH_EQUAL] = ST_ASSIGN;
     st[ST_ASSIGN][CH_LETTER] = ST_IDENTIFIER;
-    st[ST_ASSIGN][CH_SPACE] = ST_START;
-    st[ST_ASSIGN][CH_LF] = ST_START;
     st[ST_ASSIGN][CH_DIGIT] = ST_INTEGER;
 
     return true;
@@ -218,26 +176,14 @@ bool Scanner::init_fc() {
         fc[ST_START][i] = sav_tk;
         fc[i][ST_ERROR] = thr_er;
         fc[i][ST_START] = sav_tk;
+        fc[i][ST_EOF] = sav_tk;
         fc[i][i] = upd_tk;
-//        for(int g = START_GREEDY; g < END_GREEDY; g++) {
-//            fc[i][g] = sav_tk;
-//        }
+        fc[ST_START][i] = beg_tk;
     }
     fc[ST_START][ST_START] = 0;
-    fc[ST_START][ST_IDENTIFIER] = beg_tk;
-    fc[ST_START][ST_INTEGER]    = beg_tk;
-
     fc[ST_IDENTIFIER][ST_ASTER] = sav_tk;
-    fc[ST_IDENTIFIER][ST_START] = sav_tk;
-    fc[ST_IDENTIFIER][ST_EOF] = sav_tk;
-
     fc[ST_INTEGER][ST_ASTER] = sav_tk;
-    fc[ST_INTEGER][ST_START] = sav_tk;
-    fc[ST_INTEGER][ST_EOF] = sav_tk;
-
     fc[ST_FLOAT][ST_ASTER] = sav_tk;
-    fc[ST_FLOAT][ST_START] = sav_tk;
-    fc[ST_FLOAT][ST_EOF] = sav_tk;
     for(int s = 0; s < SIZEOF_STATES; ++s) {
         if (sttoch[s] == Character(-1)) {
             continue;
@@ -246,12 +192,10 @@ bool Scanner::init_fc() {
         Character C = sttoch[s];
         fc[S][ST_IDENTIFIER] = sav_tk;
         fc[ST_IDENTIFIER][S] = sav_tk;
-        fc[S][ST_START] = sav_tk;
     }
 // Assign
     fc[ST_COLON][ST_ASSIGN] = upd_tk;
     fc[ST_ASSIGN][ST_IDENTIFIER] = upsav_tk;
-    fc[ST_ASSIGN][ST_START] = sav_tk;
 }
 
 Scanner::Scanner() {
@@ -319,18 +263,25 @@ bool Scanner::eof() {
 
 void Scanner::throw_error() {
     update_token();
-    throw BadToken(m_current_token);
+    throw BadToken(m_current_token, stst[m_prev_state], stst[m_state]);
 }
 
 Token Scanner::get_next_token() {
     if (!m_tokens.empty()) {
         Token result = m_tokens.front();
         m_tokens.pop_front();
+        m_last_token_success = true;
         return result;
     }
-    string unseparated_chars;
-    getline(m_file, unseparated_chars);
-    ++m_line;
+    string unseparated_chars = "";
+    while(unseparated_chars.size() == 0 && !m_file.eof()) {
+        getline(m_file, unseparated_chars);
+        ++m_line;
+    }
+    if (unseparated_chars.size() == 0) {
+        m_last_token_success = false;
+        return Token();
+    }
     unseparated_chars.push_back('\n');
     for(m_column = 0; m_column < unseparated_chars.size(); m_column++) {
         m_c = unseparated_chars[m_column];
@@ -343,10 +294,21 @@ Token Scanner::get_next_token() {
         }
     }
     if (m_tokens.size() == 0) {
+        m_last_token_success = false;
         return Token();
     }
     Token result = m_tokens.front();
     m_tokens.pop_front();
+    m_last_token_success = true;
     return result;
+}
+
+bool Scanner::last_token_success() const {
+    return m_last_token_success;
+}
+
+Scanner& operator>>(Scanner& scanner, Token& token) {
+    token = scanner.get_next_token();
+    return scanner;
 }
 

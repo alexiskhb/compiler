@@ -102,7 +102,10 @@ std::map<Token::Separator, std::string> Token::separator_lst = {
 };
 
 Token::Token() {
-
+    position = {0, 0, 0};
+    category = Category(0);
+    raw_value = "";
+    subcategory = 0;
 }
 
 Token::Token(Pos _position, Category _category, const std::string& _raw_value, int _subcategory) {
@@ -115,6 +118,7 @@ Token::Token(Pos _position, Category _category, const std::string& _raw_value, i
 void Token::clear() {
     raw_value.clear();
     position = {0, 0, 0};
+    subcategory = 0;
 }
 
 Token& Token::evaluate() {
@@ -148,7 +152,7 @@ Token& Token::evaluate() {
     return *this;
 }
 
-bool Token::empty() {
+bool Token::empty() const {
     return raw_value.empty();
 }
 

@@ -19,12 +19,13 @@ int main(int argc, char *argv[]) {
         std::cerr << "Could not open " << files[0] << endl;
         return -1;
     }
-    while (!scanner.eof()) {
+    Token token;
+    while (scanner >> token) {
         try {
-            cout << scanner.get_next_token() << endl;
+            cout << token << endl;
         } catch(BadToken& e) {
-            cerr << "bad token (" <<
-                    e.what() << ") at (" <<
+            cerr << "bad token " <<
+                    e.wat() << " at (" <<
                     e.position().line << ":" <<
                     e.position().column << ")" << endl;
             break;
