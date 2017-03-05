@@ -3,7 +3,7 @@
 using namespace std;
 
 vector<int> Token::int_values;
-vector<double> Token::float_values;
+vector<long double> Token::float_values;
 vector<std::string> Token::string_values;
 std::map<Token::Reserved, std::string> Token::reversed_reserved_lst;
 std::map<std::string, Token::Reserved> Token::reserved_lst =
@@ -103,9 +103,7 @@ std::map<Token::Separator, std::string> Token::separator_lst = {
 
 Token::Token() {
     position = {0, 0, 0};
-    category = Category(0);
     raw_value = "";
-    subcategory = 0;
 }
 
 Token::Token(Pos _position, Category _category, const std::string& _raw_value, int _subcategory) {
@@ -125,8 +123,8 @@ Token& Token::evaluate() {
     switch (category) {
     case C_OPERATOR:
     case C_SEPARATOR:
-    case C_IDENTIFIER: {
-    case C_RESERVED:;
+    case C_IDENTIFIER:
+    case C_RESERVED:{
         value_id = -1;
         return *this;
     }
@@ -168,7 +166,8 @@ string Token::strvalue() const {
     case C_OPERATOR: return operator_lst[(Operator)subcategory];
     case C_RESERVED: return reversed_reserved_lst[(Reserved)subcategory];
     case C_SEPARATOR: return separator_lst[(Separator)subcategory];
-    case C_IDENTIFIER: return "";
+    case C_IDENTIFIER:
+    case C_EOF: case C_COMMENT: return "";
     }
 
     if (subcategory == -1) {
@@ -196,13 +195,16 @@ bool Token::init_reversed_reserved() {
 }
 
 string Token::strcategory() const {
-    static string cat[] = {"operator", "separator", "reserved", "literal", "identifier"};
-    return cat[category];
+    static string cat[] = {"operator", "separator", "reserved", "literal", "identifier", "comment", "EOF"};
+    static string lit[] = {"string ", "integer ", "float "};
+    return (category == C_LITERAL ? lit[subcategory] : "") + cat[category];
 }
 
 std::ostream& operator<<(std::ostream& os, const Token& t) {
-    return os << t.raw_value << " (" <<
+    return os  << "(" <<
                  t.position.line << ':' <<
                  t.position.column << ") " <<
-                 t.strcategory() << " " << t.strvalue();
+                 t.strcategory() << " [" <<
+                 t.strvalue() << "] \"" <<
+                 t.raw_value << "\"";
 }

@@ -39,7 +39,7 @@ public:
     int value_id;
 
     static std::vector<int> int_values;
-    static std::vector<double> float_values;
+    static std::vector<long double> float_values;
     static std::vector<std::string> string_values;
     static std::map<std::string, Reserved> reserved_lst;
     static std::map<Reserved, std::string> reversed_reserved_lst;
@@ -52,6 +52,8 @@ public:
         C_RESERVED,
         C_LITERAL,
         C_IDENTIFIER,
+        C_COMMENT,
+        C_EOF,
     };
 
     enum Operator : int {

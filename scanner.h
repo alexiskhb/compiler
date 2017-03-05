@@ -30,7 +30,7 @@ public:
         return m_state;
     }
     std::string wat() const {
-        return ("(" + m_bad_token.raw_value + ") [" + m_prev_state + "][" + m_state + "]").c_str();
+        return "(" + m_bad_token.raw_value + ") [" + m_prev_state + "][" + m_state + "]";
     }
 private:
     Token m_bad_token;
@@ -172,6 +172,8 @@ private:
     char m_c;
     int m_line, m_column;
     bool m_last_token_success = true;
+    bool m_eof_returned = false;
+    bool m_token_done;
 };
 
 Scanner& operator>>(Scanner& scanner, Token& token);

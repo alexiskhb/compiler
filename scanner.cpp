@@ -24,10 +24,15 @@ bool Scanner::init_states() {
     state_to_cat[ST_IDENTIFIER] = Token::C_IDENTIFIER;
     state_to_cat[ST_INTEGER] = Token::C_LITERAL;
     state_to_cat[ST_FLOAT] = Token::C_LITERAL;
+    state_to_cat[ST_EXPON] = Token::C_LITERAL;
+    state_to_cat[ST_EXPONFLOAT] = Token::C_LITERAL;
+
     state_to_cat[ST_STRLIT] = Token::C_LITERAL;
     state_to_cat[ST_SCOLON] = Token::C_SEPARATOR;
     state_to_cat[ST_COLON] = Token::C_SEPARATOR;
     state_to_cat[ST_COMMA] = Token::C_SEPARATOR;
+    state_to_cat[ST_COMMENT] = Token::C_COMMENT;
+    state_to_cat[ST_MLINECMT] = Token::C_COMMENT;
 
     state_to_subcat[ST_EQUAL] = Token::OP_EQUAL;
     state_to_subcat[ST_GTHAN] = Token::OP_GTHAN;
@@ -62,6 +67,8 @@ bool Scanner::init_states() {
 
     state_to_subcat[ST_INTEGER] = Token::L_INTEGER;
     state_to_subcat[ST_FLOAT] = Token::L_FLOAT;
+    state_to_subcat[ST_EXPON] = Token::L_FLOAT;
+    state_to_subcat[ST_EXPONFLOAT] = Token::L_FLOAT;
     state_to_subcat[ST_STRLIT] = Token::L_STRING;
 
     ch['e'] = ch['E'] = CH_EXPONCHAR;
@@ -113,12 +120,9 @@ bool Scanner::init_states() {
     sttoch [chtost[CH_CARET]   = ST_CARET  ] = CH_CARET;
 
 // Comments
-    st[ST_LPAREN][CH_ASTER] = ST_MLINECMT;
+//    st[ST_LPAREN][CH_ASTER] = ST_MLINECMT;
     st[ST_SLASH][CH_SLASH] = ST_COMMENT;
-    // Rewrite 'st[i][CH_SPACE] = ST_START;' there
-    fill(st[ST_MLINECMT], st[ST_MLINECMT] + SIZEOF_CHARACTERS, ST_MLINECMT);
     // st[ST_LBRACE][CH_ASTER] = ST_MLINECMT;
-    st[ST_MLINECMT][CH_RBRACE] = ST_START;
 // Common signs
     for(int s = 0; s < SIZEOF_STATES; ++s) {
         st[s][CH_LF] = ST_START;
@@ -135,7 +139,10 @@ bool Scanner::init_states() {
         st[ST_INTEGER][C] = S;
         st[S][CH_LETTER] = ST_IDENTIFIER;
         st[S][CH_DIGIT] = ST_INTEGER;
-        st[S][C] = S;
+//        st[S][C] = S;
+    }
+    for(int s = 0; s < SIZEOF_STATES; ++s) {
+        st[s][CH_LBRACE] = ST_MLINECMT;
     }
 // Identifiers
     st[ST_IDENTIFIER][CH_LETTER] = ST_IDENTIFIER;
@@ -146,15 +153,19 @@ bool Scanner::init_states() {
     st[ST_MLINECMT][CH_DOLLAR] = ST_DIRECTIVE;
 // Integer
     st[ST_INTEGER][CH_DIGIT] = ST_INTEGER;
+    st[ST_START][CH_DIGIT] = ST_INTEGER;
 // Float
     st[ST_INTEGER][CH_DOT] = ST_FLOAT;
     st[ST_FLOAT][CH_DIGIT] = ST_EXPONFLOAT;
     st[ST_EXPONFLOAT][CH_DIGIT] = ST_EXPONFLOAT;
+    st[ST_INTEGER][CH_EXPONCHAR] = ST_EXPONCHAR;
     st[ST_EXPONFLOAT][CH_EXPONCHAR] = ST_EXPONCHAR;
+    st[ST_FLOAT][CH_EXPONCHAR] = ST_EXPONCHAR;
     st[ST_EXPONCHAR][CH_PLUS] = ST_EXPONSIGN;
     st[ST_EXPONCHAR][CH_MINUS] = ST_EXPONSIGN;
     st[ST_EXPONCHAR][CH_DIGIT] = ST_EXPON;
     st[ST_EXPONSIGN][CH_DIGIT] = ST_EXPON;
+    st[ST_EXPON][CH_DIGIT] = ST_EXPON;
     st[ST_START][CH_EXPONCHAR] = ST_IDENTIFIER;
 //
     st[ST_START][CH_LETTER] = ST_IDENTIFIER;
@@ -163,6 +174,11 @@ bool Scanner::init_states() {
     st[ST_ASSIGN][CH_LETTER] = ST_IDENTIFIER;
     st[ST_ASSIGN][CH_DIGIT] = ST_INTEGER;
 
+    fill(st[ST_COMMENT], st[ST_COMMENT] + SIZEOF_CHARACTERS, ST_COMMENT);
+    fill(st[ST_MLINECMT], st[ST_MLINECMT] + SIZEOF_CHARACTERS, ST_MLINECMT);
+    st[ST_COMMENT][CH_LF] = ST_START;
+    st[ST_MLINECMT][CH_RBRACE] = ST_START;
+    st[ST_MLINECMT][CH_LF] = ST_MLINECMT;
     return true;
 }
 
@@ -179,12 +195,16 @@ bool Scanner::init_fc() {
         fc[i][ST_EOF] = sav_tk;
         fc[i][i] = upd_tk;
         fc[ST_START][i] = beg_tk;
+        if (sttoch[i] == Character(-1)) {
+            continue;
+        }
+        fc[ST_IDENTIFIER][i] = sav_tk;
+        fc[ST_INTEGER][i] = sav_tk;
+        fc[ST_FLOAT][i] = sav_tk;
     }
     fc[ST_START][ST_START] = 0;
-    fc[ST_IDENTIFIER][ST_ASTER] = sav_tk;
-    fc[ST_INTEGER][ST_ASTER] = sav_tk;
-    fc[ST_FLOAT][ST_ASTER] = sav_tk;
     for(int s = 0; s < SIZEOF_STATES; ++s) {
+        fc[ST_MLINECMT][s] = 0;
         if (sttoch[s] == Character(-1)) {
             continue;
         }
@@ -196,6 +216,20 @@ bool Scanner::init_fc() {
 // Assign
     fc[ST_COLON][ST_ASSIGN] = upd_tk;
     fc[ST_ASSIGN][ST_IDENTIFIER] = upsav_tk;
+// Digits
+    fc[ST_INTEGER][ST_FLOAT] = upd_tk;
+    fc[ST_FLOAT][ST_EXPONFLOAT] = upd_tk;
+    fc[ST_INTEGER][ST_FLOAT] = upd_tk;
+    fc[ST_FLOAT][ST_EXPONFLOAT] = upd_tk;
+    fc[ST_EXPONFLOAT][ST_EXPONCHAR] = upd_tk;
+    fc[ST_EXPONCHAR][ST_EXPON] = upd_tk;
+    fc[ST_INTEGER][ST_EXPONCHAR] = upd_tk;
+    fc[ST_EXPONCHAR][ST_EXPONSIGN] = upd_tk;
+    fc[ST_EXPONSIGN][ST_EXPON] = upd_tk;
+// Commennts
+    fc[ST_SLASH][ST_COMMENT] = upd_tk;
+    fc[ST_MLINECMT][ST_MLINECMT] = upd_tk;
+    fc[ST_MLINECMT][ST_START] = upsav_tk;
 }
 
 Scanner::Scanner() {
@@ -233,6 +267,7 @@ void Scanner::save_token() {
         m_current_token.subcategory = state_to_subcat[m_prev_state];
     }
     m_tokens.push_back(m_current_token.evaluate());
+    m_token_done = true;
     clear_token();
     update_token();
 }
@@ -258,7 +293,7 @@ void Scanner::updatesave_token() {
 }
 
 bool Scanner::eof() {
-    return m_file.eof() && m_tokens.empty();
+    return m_file.eof() && m_tokens.empty() || m_eof_returned;
 }
 
 void Scanner::throw_error() {
@@ -267,35 +302,42 @@ void Scanner::throw_error() {
 }
 
 Token Scanner::get_next_token() {
+    if (m_eof_returned) {
+        m_last_token_success = false;
+        return Token();
+    }
     if (!m_tokens.empty()) {
         Token result = m_tokens.front();
         m_tokens.pop_front();
         m_last_token_success = true;
         return result;
     }
-    string unseparated_chars = "";
-    while(unseparated_chars.size() == 0 && !m_file.eof()) {
-        getline(m_file, unseparated_chars);
-        ++m_line;
-    }
-    if (unseparated_chars.size() == 0) {
-        m_last_token_success = false;
-        return Token();
-    }
-    unseparated_chars.push_back('\n');
-    for(m_column = 0; m_column < unseparated_chars.size(); m_column++) {
-        m_c = unseparated_chars[m_column];
-        m_prev_state = m_state;
-        m_state = st[m_state][ch[m_c]];
-        if (fc[m_prev_state][m_state]) {
-            fc[m_prev_state][m_state]();
-        } else if (m_state != ST_START || m_prev_state != ST_START) {
-            cerr << "There's no action for [" << stst[m_prev_state] << "][" << stst[m_state] << "] on char '" << m_c << "'" << endl;
+    m_token_done = false;
+    while (!m_token_done) {
+        string unseparated_chars = "";
+        while(unseparated_chars.size() == 0 && !m_file.eof()) {
+            getline(m_file, unseparated_chars);
+            ++m_line;
+        }
+        if (unseparated_chars.size() == 0) {
+            m_eof_returned = true;
+            return Token(m_current_token.position, Token::C_EOF, " ");
+        }
+        unseparated_chars.push_back('\n');
+        for(m_column = 0; m_column < unseparated_chars.size(); m_column++) {
+            m_c = unseparated_chars[m_column];
+            m_prev_state = m_state;
+            m_state = st[m_state][ch[m_c]];
+            if (fc[m_prev_state][m_state]) {
+                fc[m_prev_state][m_state]();
+            } else if (m_state != ST_START || m_prev_state != ST_START) {
+                cerr << "There's no action for [" << stst[m_prev_state] << "][" << stst[m_state] << "] on char '" << m_c << "'" << endl;
+            }
         }
     }
     if (m_tokens.size() == 0) {
-        m_last_token_success = false;
-        return Token();
+        m_eof_returned = true;
+        return Token(m_current_token.position, Token::C_EOF, "[invalid]");
     }
     Token result = m_tokens.front();
     m_tokens.pop_front();
