@@ -17,7 +17,7 @@ public:
     BadToken(Token t, const std::string& prev_state, const std::string &state) :
         m_bad_token(t), m_prev_state(prev_state), m_state(state) {
     }
-    const char* what() const noexcept override {
+    const char* what() const throw(){
         return ("(" + m_bad_token.raw_value + ") [" + m_prev_state + "][" + m_state + "]").c_str();
     }
     Pos position() const {
@@ -66,6 +66,8 @@ public:
         ST_EXPONCHAR,  //1.1e
         ST_EXPONSIGN,  //1.1e+
         ST_EXPON,      //1.1e+1
+        ST_HEXINTEGER,
+        ST_BININTEGER,
         //
         ST_MLINECMT,
         ST_COLON,
@@ -119,6 +121,7 @@ public:
         CH_NUMBER, // #
         CH_DOLLAR,
         CH_PERCENT,
+        CH_AT,
         CH_EXPONCHAR,
         CH_APOST,
         CH_LPAREN,
@@ -161,8 +164,11 @@ private:
     void updatesave_token();
     void throw_error();
     void update_token();
+    void update_intliteral_token();
     bool init_states();
     bool init_fc();
+    bool is_hex(char c);
+    bool is_bin(char c);
     std::function<void()> fc[SIZEOF_STATES][SIZEOF_STATES];
     std::ifstream m_file;
     std::deque<Token> m_tokens;

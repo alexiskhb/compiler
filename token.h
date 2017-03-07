@@ -66,6 +66,8 @@ public:
         OP_ASTER,
         OP_LBRACE,
         OP_LPAREN,
+        OP_DOT,
+        OP_AT,
         OP_ASSIGN,    // :=
         OP_PLUSAGN,   // +=
         OP_MINUSAGN,  // -=
@@ -156,9 +158,12 @@ public:
         L_STRING,
         L_INTEGER,
         L_FLOAT,
+        L_HEXINTEGER,
+        L_BININTEGER,
     };
 private:
     static bool init_reversed_reserved();
+    int eval_int_literal(std::string s);
 };
 
 std::ostream& operator<<(std::ostream& os, const Token& t);

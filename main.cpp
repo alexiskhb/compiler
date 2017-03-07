@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
             cout << token << endl;
         } catch(BadToken& e) {
             cerr << "bad token " <<
-                    e.wat() << " at (" <<
+                    e.what() << " at (" <<
                     e.position().line << ":" <<
                     e.position().column << ")" << endl;
             break;

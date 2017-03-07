@@ -78,6 +78,8 @@ std::map<Token::Operator, std::string> Token::operator_lst =
 {OP_LEQ, "LEQ"},
 {OP_GEQ, "GEQ"},
 {OP_NEQ, "NEQ"},
+{OP_DOT, "DOT"},
+{OP_AT, "AT"},
 {OP_DOTDOT, "DOTDOT"},
 {OP_DIRECTIVE, "DIRECTIVE"},
 {OP_RPAREN, "RPAREN"},
@@ -119,6 +121,18 @@ void Token::clear() {
     subcategory = 0;
 }
 
+int Token::eval_int_literal(string s) {
+    switch(subcategory){
+    case L_HEXINTEGER:
+        s[0] = '0';
+        return stoi(s, 0, 16);
+    case L_BININTEGER:
+        s[0] = '0';
+        return stoi(s, 0, 2);
+    default: return stoi(s);
+    }
+}
+
 Token& Token::evaluate() {
     switch (category) {
     case C_OPERATOR:
@@ -132,9 +146,9 @@ Token& Token::evaluate() {
     }
 
     switch (subcategory) {
-    case L_INTEGER: {
+    case L_INTEGER:case L_HEXINTEGER:case L_BININTEGER: {
         value_id = int_values.size();
-        int_values.push_back(stoi(raw_value));
+        int_values.push_back(eval_int_literal(raw_value));
     } break;
     case L_FLOAT: {
         value_id = float_values.size();
@@ -174,7 +188,7 @@ string Token::strvalue() const {
         return "";
     }
     switch (subcategory) {
-    case L_INTEGER: {
+    case L_INTEGER:case L_HEXINTEGER:case L_BININTEGER: {
         return to_string(int_values[value_id]);
     }
     case L_FLOAT: {
@@ -196,15 +210,15 @@ bool Token::init_reversed_reserved() {
 
 string Token::strcategory() const {
     static string cat[] = {"operator", "separator", "reserved", "literal", "identifier", "comment", "EOF"};
-    static string lit[] = {"string ", "integer ", "float "};
+    static string lit[] = {"string ", "integer ", "float ", "hex integer ", "bin integer "};
     return (category == C_LITERAL ? lit[subcategory] : "") + cat[category];
 }
 
 std::ostream& operator<<(std::ostream& os, const Token& t) {
     return os  << "(" <<
                  t.position.line << ':' <<
-                 t.position.column << ") " <<
-                 t.strcategory() << " [" <<
-                 t.strvalue() << "] \"" <<
+                 t.position.column << ")\t" <<
+                 t.strcategory() << "\t[" <<
+                 t.strvalue() << "]\t\"" <<
                  t.raw_value << "\"";
 }
