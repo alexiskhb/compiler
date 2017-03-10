@@ -1,0 +1,3 @@
+var
+	a:array[10..20]of integer;
+	b:array[30..40,50..60]of integer;
