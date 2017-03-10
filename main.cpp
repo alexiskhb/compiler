@@ -7,28 +7,43 @@
 
 using namespace std;
 
+void lexical_analysis(const string& filename) {
+    Scanner scanner(filename);
+    if (!scanner.is_open()) {
+        std::cerr << "Could not open " << filename << endl;
+        return;
+    }
+    Token token;
+    try {
+        while (scanner >> token) {
+            cout << token << endl;
+        }
+    } catch(const BadToken& e) {
+        cerr << "bad token " <<
+                e.value() << " at (" <<
+                e.position().line << ":" <<
+                e.position().column << "): " <<
+                e.msg() << endl;
+    }
+}
+
 int main(int argc, char *argv[]) {
     cxxopts::Options options(argv[0]);
-    options.add_options() ("positional", "", cxxopts::value<vector<string>>());
+    bool lexical = false;
+    options.add_options()
+            ("l,lexical", "lexical analysis", cxxopts::value<bool>(lexical))
+            ("positional", "", cxxopts::value<vector<string>>());
     options.parse_positional({"", "", "positional"});
     options.parse(argc, argv);
     auto files = options["positional"].as<vector<string>>();
-//    Scanner scanner(argc > 1 ? files[0] : "test/001.in");
-    Scanner scanner(argv[1]);
-    if (!scanner.is_open()) {
-        std::cerr << "Could not open " << files[0] << endl;
-        return -1;
+    if (files.size() == 0) {
+        cerr << "Usage: ./compiler [options] file..." << endl;
+        cerr << "Options:\n"
+                "  --lexical   Start lexical analisys" << endl;
+        cerr << "Alexey Shchurov, 8303A, 2017" << endl;
+        return 0;
     }
-    Token token;
-    while (scanner >> token) {
-        try {
-            cout << token << endl;
-        } catch(BadToken& e) {
-            cerr << "bad token " <<
-                    e.what() << " at (" <<
-                    e.position().line << ":" <<
-                    e.position().column << ")" << endl;
-            break;
-        }
+    if (lexical) {
+        lexical_analysis(files[0]);
     }
 }

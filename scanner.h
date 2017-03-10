@@ -14,27 +14,24 @@
 
 class BadToken : public std::exception {
 public:
-    BadToken(Token t, const std::string& prev_state, const std::string &state) :
-        m_bad_token(t), m_prev_state(prev_state), m_state(state) {
+    BadToken(Token t, const std::string& msg) :
+        m_bad_token(t), m_msg(msg) {
     }
-    const char* what() const throw(){
-        return ("(" + m_bad_token.raw_value + ") [" + m_prev_state + "][" + m_state + "]").c_str();
+    const char* what() const noexcept override {
+        return ("\"" + m_bad_token.raw_value + "\"").c_str();
     }
     Pos position() const {
         return m_bad_token.position;
     }
-    std::string prev_state() const {
-        return m_prev_state;
+    std::string msg() const {
+        return m_msg;
     }
-    std::string state() const {
-        return m_state;
-    }
-    std::string wat() const {
-        return "(" + m_bad_token.raw_value + ") [" + m_prev_state + "][" + m_state + "]";
+    std::string value() const {
+        return " \"" + m_bad_token.raw_value + "\"";
     }
 private:
     Token m_bad_token;
-    std::string m_prev_state, m_state;
+    std::string m_msg;
 };
 
 class Scanner {
@@ -56,9 +53,14 @@ public:
     enum State : int {
         ST_START = 0,
         ST_ERROR,
+        ST_ERROR_INVALID_BININT,
+        ST_ERROR_INVALID_HEXINT,
         ST_EOF,
         ST_IDENTIFIER,
         ST_STRLIT,
+        ST_STRLIT_RIGHTAPOST,
+        ST_STRLIT_ESCSTART,
+        ST_STRLIT_ESCNUM,
         //
         ST_INTEGER,    //1
         ST_FLOAT,      //1.
@@ -160,11 +162,14 @@ public:
 private:
     void save_token();
     void clear_token();
+    void upd_strlit();
     void begin_token();
+    void noop();
     void updatesave_token();
     void throw_error();
     void update_token();
     void update_intliteral_token();
+    void save_int_dotdot_token();
     bool init_states();
     bool init_fc();
     bool is_hex(char c);

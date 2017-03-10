@@ -161,9 +161,12 @@ public:
         L_HEXINTEGER,
         L_BININTEGER,
     };
+
+    static const char ETX = (char)3;
 private:
     static bool init_reversed_reserved();
     int eval_int_literal(std::string s);
+    std::string eval_str_literal(const std::string& s);
 };
 
 std::ostream& operator<<(std::ostream& os, const Token& t);

@@ -133,6 +133,35 @@ int Token::eval_int_literal(string s) {
     }
 }
 
+string Token::eval_str_literal(const string& s) {
+    vector<string> parts = {""};
+    for(char c: s) {
+        if (c == ETX) {
+            parts.push_back("");
+            continue;
+        }
+        parts.back().push_back(c);
+    }
+    for(int i = 0; i < parts.size(); i++) {
+        if (parts[i][0] == '#') {
+            parts[i][0] = '0';
+            parts[i] = string(1, stoi(parts[i]));
+            continue;
+        }
+        if (i < parts.size() - 1 && parts[i + 1][0] == '\'') {
+            parts[i].push_back('\'');
+        }
+        parts[i] = string(parts[i].begin() + 1, parts[i].end() - 1);
+    }
+    for(int i = raw_value.size() - 1; i >= 0; i--) {
+        if (raw_value[i] == ETX) {
+            raw_value.erase(i, 1);
+        }
+    }
+    return accumulate(parts.begin(), parts.end(), string(""), plus<string>());
+}
+
+
 Token& Token::evaluate() {
     switch (category) {
     case C_OPERATOR:
@@ -156,7 +185,7 @@ Token& Token::evaluate() {
     } break;
     case L_STRING: {
         value_id = string_values.size();
-        string_values.push_back(raw_value);
+        string_values.push_back(eval_str_literal(raw_value));
     } break;
     default: break;
     }

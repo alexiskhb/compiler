@@ -8,10 +8,12 @@ Scanner::State Scanner::chtost[Scanner::SIZEOF_CHARACTERS];
 Scanner::Character Scanner::sttoch[Scanner::SIZEOF_STATES];
 Token::Category Scanner::state_to_cat[Scanner::SIZEOF_STATES];
 int Scanner::state_to_subcat[Scanner::SIZEOF_STATES];
-string stst[] = {"ST_START", "ST_ERROR", "ST_EOF", "ST_IDENTIFIER", "ST_STRLIT", "ST_INTEGER", "ST_FLOAT", "ST_EXPONFLOAT", "ST_EXPONCHAR", "ST_EXPONSIGN", "ST_EXPON", "ST_MLINECMT", "ST_COLON", "ST_PLUS", "ST_LBRACE", "ST_ASTER", "ST_MINUS", "ST_DOT", "ST_SLASH", "ST_LTHAN", "ST_DOLLAR", "ST_PERCENT", "ST_AT", "ST_CHARORD", "ST_GTHAN", "ST_LPAREN", "START_GREEDY", "ST_COMMENT", "ST_ASSIGN", "ST_PLUSAGN", "ST_MINUSAGN", "ST_FACAGN", "ST_MULAGN", "ST_LEQ", "ST_GEQ", "ST_NEQ", "ST_DOTDOT", "ST_COMMA", "ST_DIRECTIVE", "ST_RPAREN", "ST_LSQBRAC", "ST_RSQBRAC", "ST_RBRACE", "ST_CARET", "ST_EQUAL", "ST_SCOLON", "ST_SHL", "ST_SHR", "ST_LPARENDOT", "ST_RPARENDOT", "ST_LPARENAST", "ST_RPARENAST", "END_GREEDY", "SIZEOF_STATES"};
+string stst[] = {"ST_START", "ST_ERROR", "ST_ERROR_INVALID_BININT", "ST_ERROR_INVALID_HEXINT", "ST_EOF", "ST_IDENTIFIER", "ST_STRLIT", "ST_STRLIT_RIGHTAPOST", "ST_STRLIT_ESCSTART", "ST_STRLIT_ESCNUM", "ST_INTEGER", "ST_FLOAT", "ST_EXPONFLOAT", "ST_EXPONCHAR", "ST_EXPONSIGN", "ST_EXPON", "ST_HEXINTEGER", "ST_BININTEGER", "ST_MLINECMT", "ST_COLON", "ST_PLUS", "ST_LBRACE", "ST_ASTER", "ST_MINUS", "ST_DOT", "ST_SLASH", "ST_LTHAN", "ST_DOLLAR", "ST_PERCENT", "ST_AT", "ST_CHARORD", "ST_GTHAN", "ST_LPAREN", "START_GREEDY", "ST_COMMENT", "ST_ASSIGN", "ST_PLUSAGN", "ST_MINUSAGN", "ST_FACAGN", "ST_MULAGN", "ST_LEQ", "ST_GEQ", "ST_NEQ", "ST_DOTDOT", "ST_COMMA", "ST_DIRECTIVE", "ST_RPAREN", "ST_LSQBRAC", "ST_RSQBRAC", "ST_RBRACE", "ST_CARET", "ST_EQUAL", "ST_SCOLON", "ST_SHL", "ST_SHR", "ST_LPARENDOT", "ST_RPARENDOT", "ST_LPARENAST", "ST_RPARENAST", "END_GREEDY", "SIZEOF_STATES"};
 
 bool Scanner::init_states() {
-//    fill(&st[0][0], &st[0][0] + SIZEOF_STATES*SIZEOF_CHARACTERS, ST_ERROR);
+    fill(&st[0][0], &st[0][0] + SIZEOF_STATES*SIZEOF_CHARACTERS, ST_ERROR);
+    fill(st[ST_HEXINTEGER], st[ST_HEXINTEGER] + SIZEOF_CHARACTERS, ST_ERROR_INVALID_HEXINT);
+    fill(st[ST_BININTEGER], st[ST_BININTEGER] + SIZEOF_CHARACTERS, ST_ERROR_INVALID_BININT);
     fill(ch, ch + 256, CH_OTHER);
     ch['_'] = CH_LETTER;
     fill(ch + 'A', ch + 'Z' + 1, CH_LETTER);
@@ -30,6 +32,8 @@ bool Scanner::init_states() {
     state_to_cat[ST_EXPONFLOAT] = Token::C_LITERAL;
 
     state_to_cat[ST_STRLIT] = Token::C_LITERAL;
+    state_to_cat[ST_STRLIT_ESCNUM] = Token::C_LITERAL;
+    state_to_cat[ST_STRLIT_RIGHTAPOST] = Token::C_LITERAL;
     state_to_cat[ST_SCOLON] = Token::C_SEPARATOR;
     state_to_cat[ST_COLON] = Token::C_SEPARATOR;
     state_to_cat[ST_COMMA] = Token::C_SEPARATOR;
@@ -76,6 +80,8 @@ bool Scanner::init_states() {
     state_to_subcat[ST_EXPON] = Token::L_FLOAT;
     state_to_subcat[ST_EXPONFLOAT] = Token::L_FLOAT;
     state_to_subcat[ST_STRLIT] = Token::L_STRING;
+    state_to_subcat[ST_STRLIT_ESCNUM] = Token::L_STRING;
+    state_to_subcat[ST_STRLIT_RIGHTAPOST] = Token::L_STRING;
 
     ch['e'] = ch['E'] = CH_EXPONCHAR;
     ch['#'] = CH_NUMBER;
@@ -127,28 +133,34 @@ bool Scanner::init_states() {
     sttoch [chtost[CH_EQUAL]   = ST_EQUAL  ] = CH_EQUAL;
     sttoch [chtost[CH_CARET]   = ST_CARET  ] = CH_CARET;
 
-// Comments
-//    st[ST_LPAREN][CH_ASTER] = ST_MLINECMT;
-    st[ST_SLASH][CH_SLASH] = ST_COMMENT;
-    // st[ST_LBRACE][CH_ASTER] = ST_MLINECMT;
 // Common signs
     for(int s = 0; s < SIZEOF_STATES; ++s) {
         st[s][CH_LF] = ST_START;
         st[s][CH_SPACE] = ST_START;
         st[s][CH_TAB] = ST_START;
         st[s][CH_SCOLON] = ST_START;
+        st[s][CH_LETTER] = ST_IDENTIFIER;
+        st[s][CH_EXPONCHAR] = ST_IDENTIFIER;
+        st[s][CH_DIGIT] = ST_INTEGER;
+        st[s][CH_APOST] = ST_STRLIT;
+        st[s][CH_NUMBER] = ST_STRLIT_ESCSTART;
+        st[s][CH_DOLLAR] = ST_HEXINTEGER;
+        st[s][CH_PERCENT] = ST_BININTEGER;
         if (sttoch[s] == Character(-1)) {
             continue;
         }
-        State S = (State)(s);
         Character C = sttoch[s];
-        st[ST_START][C] = S;
-        st[ST_IDENTIFIER][C] = S;
-        st[ST_INTEGER][C] = S;
-        st[S][CH_LETTER] = ST_IDENTIFIER;
-        st[S][CH_DIGIT] = ST_INTEGER;
-//        st[S][C] = S;
+        for(int i = 0; i < SIZEOF_STATES; i++) {
+            st[i][C] = (State)s;
+        }
+        st[ST_START][C] = (State)s;
+        st[ST_IDENTIFIER][C] = (State)s;
+        st[ST_INTEGER][C] = (State)s;
     }
+// Comments
+    //    st[ST_LPAREN][CH_ASTER] = ST_MLINECMT;
+    st[ST_SLASH][CH_SLASH] = ST_COMMENT;
+    // st[ST_LBRACE][CH_ASTER] = ST_MLINECMT;
     for(int s = 0; s < SIZEOF_STATES; ++s) {
         st[s][CH_LBRACE] = ST_MLINECMT;
     }
@@ -157,13 +169,12 @@ bool Scanner::init_states() {
     st[ST_IDENTIFIER][CH_DIGIT]  = ST_IDENTIFIER;
     st[ST_IDENTIFIER][CH_UNDERS] = ST_IDENTIFIER;
     st[ST_IDENTIFIER][CH_EXPONCHAR] = ST_IDENTIFIER;
+    st[ST_START][CH_LETTER] = ST_IDENTIFIER;
+    st[ST_START][CH_EXPONCHAR] = ST_IDENTIFIER;
 // Directives
-    st[ST_MLINECMT][CH_DOLLAR] = ST_DIRECTIVE;
+//    st[ST_MLINECMT][CH_DOLLAR] = ST_DIRECTIVE;
 // Integer
     st[ST_INTEGER][CH_DIGIT] = ST_INTEGER;
-    st[ST_START][CH_DIGIT] = ST_INTEGER;
-    st[ST_START][CH_DOLLAR] = ST_HEXINTEGER;
-    st[ST_START][CH_PERCENT] = ST_BININTEGER;
     st[ST_BININTEGER][CH_DIGIT] = ST_BININTEGER;
     st[ST_HEXINTEGER][CH_DIGIT] = ST_HEXINTEGER;
     st[ST_HEXINTEGER][CH_LETTER] = ST_HEXINTEGER;
@@ -181,13 +192,16 @@ bool Scanner::init_states() {
     st[ST_EXPONSIGN][CH_DIGIT] = ST_EXPON;
     st[ST_EXPON][CH_DIGIT] = ST_EXPON;
     st[ST_START][CH_EXPONCHAR] = ST_IDENTIFIER;
-//
-    st[ST_START][CH_LETTER] = ST_IDENTIFIER;
+// Array declaration
+    st[ST_FLOAT][CH_DOT] = ST_DOTDOT;
+    st[ST_DOT][CH_DOT] = ST_DOTDOT;
+    st[ST_DOTDOT][CH_DIGIT] = ST_INTEGER;
 // Assign
-    st[ST_COLON][CH_EQUAL] = ST_ASSIGN;
     st[ST_ASSIGN][CH_LETTER] = ST_IDENTIFIER;
+    st[ST_ASSIGN][CH_EXPONCHAR] = ST_IDENTIFIER;
     st[ST_ASSIGN][CH_DIGIT] = ST_INTEGER;
 
+    st[ST_COLON][CH_EQUAL] = ST_ASSIGN;
     st[ST_PLUS][CH_EQUAL] = ST_PLUSAGN;
     st[ST_MINUS][CH_EQUAL] = ST_MINUSAGN;
     st[ST_SLASH][CH_EQUAL] = ST_FACAGN;
@@ -195,12 +209,21 @@ bool Scanner::init_states() {
     st[ST_LTHAN][CH_EQUAL] = ST_LEQ;
     st[ST_LTHAN][CH_GTHAN] = ST_NEQ;
     st[ST_GTHAN][CH_EQUAL] = ST_GEQ;
-
+// Multiline comments
     fill(st[ST_COMMENT], st[ST_COMMENT] + SIZEOF_CHARACTERS, ST_COMMENT);
     fill(st[ST_MLINECMT], st[ST_MLINECMT] + SIZEOF_CHARACTERS, ST_MLINECMT);
     st[ST_COMMENT][CH_LF] = ST_START;
     st[ST_MLINECMT][CH_RBRACE] = ST_START;
     st[ST_MLINECMT][CH_LF] = ST_MLINECMT;
+// Characters and string literals
+    fill(st[ST_STRLIT], st[ST_STRLIT] + SIZEOF_CHARACTERS, ST_STRLIT);
+    st[ST_STRLIT][CH_APOST] = ST_STRLIT_RIGHTAPOST;
+    st[ST_STRLIT_RIGHTAPOST][CH_APOST] = ST_STRLIT;
+    st[ST_STRLIT_RIGHTAPOST][CH_NUMBER] = ST_STRLIT_ESCSTART;
+    st[ST_STRLIT_ESCSTART][CH_DIGIT] = ST_STRLIT_ESCNUM;
+    st[ST_STRLIT_ESCNUM][CH_DIGIT] = ST_STRLIT_ESCNUM;
+    st[ST_STRLIT_ESCNUM][CH_APOST] = ST_STRLIT;
+    st[ST_STRLIT_ESCNUM][CH_NUMBER] = ST_STRLIT_ESCSTART;
     return true;
 }
 
@@ -210,24 +233,34 @@ bool Scanner::init_fc() {
     auto upd_tk = bind(&Scanner::update_token, this);
     auto upd_intl_tk = bind(&Scanner::update_intliteral_token, this);
     auto thr_er = bind(&Scanner::throw_error, this);
+    auto sav_iddt = bind(&Scanner::save_int_dotdot_token, this);
+    auto upd_sl = bind(&Scanner::upd_strlit, this);
+    auto noop = bind(&Scanner::noop, this);
     auto upsav_tk = bind(&Scanner::updatesave_token, this);
-    for(int i = 0; i < SIZEOF_STATES; i++) {
-        fc[ST_START][i] = sav_tk;
-        fc[i][ST_ERROR] = thr_er;
-        fc[i][ST_START] = sav_tk;
-        fc[i][ST_EOF] = sav_tk;
-        fc[i][i] = upd_tk;
-        fc[ST_START][i] = beg_tk;
-        if (sttoch[i] == Character(-1)) {
-            continue;
+    for(int s = 0; s < SIZEOF_STATES; s++) {
+        if (sttoch[s] != Character(-1)) {
+            for(int i = 0; i < SIZEOF_STATES; i++) {
+                fc[i][s] = sav_tk;
+            }
         }
-        fc[ST_IDENTIFIER][i] = sav_tk;
-        fc[ST_INTEGER][i] = sav_tk;
-        fc[ST_FLOAT][i] = sav_tk;
+        fc[ST_START][s] = sav_tk;
+        fc[s][ST_ERROR] = thr_er;
+        fc[s][ST_ERROR_INVALID_BININT] = thr_er;
+        fc[s][ST_ERROR_INVALID_HEXINT] = thr_er;
+        fc[s][ST_START] = sav_tk;
+        fc[s][ST_EOF] = sav_tk;
+        fc[ST_STRLIT_ESCNUM][s] = upd_sl;
+        fc[s][s] = upd_tk;
+        fc[ST_START][s] = beg_tk;
+        fc[s][ST_MLINECMT] = sav_tk;
+//        fc[ST_IDENTIFIER][i] = sav_tk;
+//        fc[ST_INTEGER][i] = sav_tk;
+//        fc[ST_FLOAT][i] = sav_tk;
     }
     fc[ST_START][ST_START] = 0;
     for(int s = 0; s < SIZEOF_STATES; ++s) {
         fc[ST_MLINECMT][s] = 0;
+        fc[s][ST_ERROR] = thr_er;
         if (sttoch[s] == Character(-1)) {
             continue;
         }
@@ -237,10 +270,14 @@ bool Scanner::init_fc() {
         fc[ST_IDENTIFIER][S] = sav_tk;
         fc[S][ST_INTEGER] = sav_tk;
         fc[ST_INTEGER][S] = sav_tk;
+        fc[s][ST_ERROR] = thr_er;
     }
 // Assign
-    fc[ST_COLON][ST_ASSIGN] = upd_tk;
-    fc[ST_ASSIGN][ST_IDENTIFIER] = upsav_tk;
+    fc[ST_COLON][ST_ASSIGN] = sav_tk;
+    for(State s: {ST_ASSIGN, ST_PLUSAGN, ST_MINUSAGN, ST_FACAGN, ST_MULAGN}) {
+        fc[s][ST_IDENTIFIER] = sav_tk;
+        fc[s][ST_INTEGER] = sav_tk;
+    }
 // Digits
     fc[ST_INTEGER][ST_FLOAT] = upd_tk;
     fc[ST_FLOAT][ST_EXPONFLOAT] = upd_tk;
@@ -255,7 +292,8 @@ bool Scanner::init_fc() {
     fc[ST_SLASH][ST_COMMENT] = upd_tk;
     fc[ST_MLINECMT][ST_MLINECMT] = upd_tk;
     fc[ST_MLINECMT][ST_START] = upsav_tk;
-
+// Operators
+    fc[ST_COLON][ST_ASSIGN] = upd_tk;
     fc[ST_PLUS][ST_PLUSAGN] = upd_tk;
     fc[ST_PLUS][ST_PLUSAGN] = upd_tk;
     fc[ST_MINUS][ST_MINUSAGN] = upd_tk;
@@ -270,8 +308,22 @@ bool Scanner::init_fc() {
     fc[ST_LTHAN][ST_NEQ] = upd_tk;
     fc[ST_FLOAT][ST_EXPONCHAR] = upd_tk;
 
+    fc[ST_DOT][ST_DOTDOT] = upd_tk;
+    fc[ST_FLOAT][ST_DOTDOT] = sav_iddt;
+    fc[ST_DOTDOT][ST_INTEGER] = sav_tk;
+// Literals
     fc[ST_BININTEGER][ST_BININTEGER] = upd_intl_tk;
     fc[ST_HEXINTEGER][ST_HEXINTEGER] = upd_intl_tk;
+
+    fc[ST_STRLIT][ST_START] = upsav_tk;
+
+    fc[ST_STRLIT][ST_STRLIT_RIGHTAPOST] = upd_tk;
+
+    fc[ST_STRLIT_RIGHTAPOST][ST_STRLIT] = upd_sl;
+    fc[ST_STRLIT_RIGHTAPOST][ST_STRLIT_ESCSTART] = upd_sl;
+    fc[ST_STRLIT_ESCNUM][ST_STRLIT] = upd_sl;
+    fc[ST_STRLIT_ESCNUM][ST_STRLIT_ESCSTART] = upd_sl;
+    fc[ST_STRLIT_ESCSTART][ST_STRLIT_ESCNUM] = upd_tk;
 }
 
 Scanner::Scanner() {
@@ -322,6 +374,11 @@ void Scanner::save_token() {
     update_token();
 }
 
+void Scanner::upd_strlit() {
+    m_current_token.raw_value.push_back(Token::ETX);
+    update_token();
+}
+
 void Scanner::update_token() {
     if (m_current_token.position.line == 0 && m_current_token.position.column == 0) {
         m_current_token.position.line = m_line;
@@ -335,10 +392,24 @@ void Scanner::update_intliteral_token() {
         m_current_token.position.line = m_line;
         m_current_token.position.column = m_column;
     }
-    if (m_state == ST_BININTEGER && !is_bin(m_c) || m_state == ST_HEXINTEGER && !is_hex(m_c)) {
+    if (m_state == ST_BININTEGER && !is_bin(m_c)) {
+        m_state = ST_ERROR_INVALID_BININT;
+        throw_error();
+    }
+    if (m_state == ST_HEXINTEGER && !is_hex(m_c)) {
+        m_state = ST_ERROR_INVALID_HEXINT;
         throw_error();
     }
     m_current_token.raw_value.push_back(m_c);
+}
+
+void Scanner::save_int_dotdot_token() {
+    m_current_token.raw_value.pop_back();
+    auto t = m_prev_state;
+    m_prev_state = ST_INTEGER;
+    save_token();
+    m_prev_state = t;
+    m_current_token.raw_value.push_back('.');
 }
 
 void Scanner::clear_token() {
@@ -348,6 +419,10 @@ void Scanner::clear_token() {
 void Scanner::begin_token() {
     clear_token();
     update_token();
+}
+
+void Scanner::noop() {
+
 }
 
 void Scanner::updatesave_token() {
@@ -360,8 +435,14 @@ bool Scanner::eof() {
 }
 
 void Scanner::throw_error() {
+    string msg;
+    switch(m_state){
+    case ST_ERROR_INVALID_BININT: msg = "invalid binary integer"; break;
+    case ST_ERROR_INVALID_HEXINT: msg = "invalid hex integer"; break;
+    default: msg = "unrecognized error"; break;
+    }
     update_token();
-    throw BadToken(m_current_token, stst[m_prev_state], stst[m_state]);
+    throw BadToken(m_current_token, msg);
 }
 
 Token Scanner::get_next_token() {
