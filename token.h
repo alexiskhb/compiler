@@ -28,6 +28,7 @@ public:
     std::string strvalue() const;
     std::string strcategory() const;
     static int is_reserved(std::string s);
+    static int is_reserved_operator(Reserved);
     operator bool() const {
         return empty();
     }
@@ -43,6 +44,7 @@ public:
     static std::vector<std::string> string_values;
     static std::map<std::string, Reserved> reserved_lst;
     static std::map<Reserved, std::string> reversed_reserved_lst;
+    static std::map<Reserved, Operator> reserved_operator_lst;
     static std::map<Operator, std::string> operator_lst;
     static std::map<Separator, std::string> separator_lst;
 

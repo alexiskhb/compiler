@@ -362,8 +362,14 @@ void Scanner::save_token() {
     if (m_prev_state == ST_IDENTIFIER) {
         int is_reserved = Token::is_reserved(m_current_token.raw_value);
         if (is_reserved) {
-            m_current_token.category = Token::C_RESERVED;
-            m_current_token.subcategory = is_reserved;
+            int is_operator = Token::is_reserved_operator((Token::Reserved)is_reserved);
+            if (is_operator) {
+                m_current_token.category = Token::C_OPERATOR;
+                m_current_token.subcategory = is_operator;
+            } else {
+                m_current_token.category = Token::C_RESERVED;
+                m_current_token.subcategory = is_reserved;
+            }
         }
     } else {
         m_current_token.subcategory = state_to_subcat[m_prev_state];
@@ -383,6 +389,7 @@ void Scanner::update_token() {
     if (m_current_token.position.line == 0 && m_current_token.position.column == 0) {
         m_current_token.position.line = m_line;
         m_current_token.position.column = m_column;
+        m_current_token.position.fstream_pos = m_file.tellg();
     }
     m_current_token.raw_value.push_back(m_c);
 }

@@ -1,0 +1,9 @@
+a SHL b
+a SHR b
+a and b
+a or b
+a NOT b
+a xor b
+a IN b
+a div b
+a MOD b

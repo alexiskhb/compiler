@@ -102,6 +102,17 @@ std::map<Token::Separator, std::string> Token::separator_lst = {
 {S_COLON, "COLON"},
 {S_SCOLON, "SEMICOLON"}
 };
+std::map<Token::Reserved, Token::Operator> Token::reserved_operator_lst = {
+{R_SHL, OP_SHL},
+{R_SHR, OP_SHR},
+{R_AND, OP_AND},
+{R_OR, OP_OR},
+{R_NOT, OP_NOT},
+{R_XOR, OP_XOR},
+{R_IN, OP_IN},
+{R_DIV, OP_DIV},
+{R_MOD, OP_MOD}
+};
 
 Token::Token() {
     position = {0, 0, 0};
@@ -202,6 +213,11 @@ int Token::is_reserved(string s) {
     transform(s.begin(), s.end(), s.begin(), (int (*)(int))toupper);
     auto result = Token::reserved_lst.find(s);
     return result == Token::reserved_lst.end() ? 0 : result->second;
+}
+
+int Token::is_reserved_operator(Reserved r) {
+    auto result = Token::reserved_operator_lst.find(r);
+    return result == Token::reserved_operator_lst.end() ? 0 : result->second;
 }
 
 string Token::strvalue() const {
