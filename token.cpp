@@ -156,7 +156,11 @@ string Token::eval_str_literal(const string& s) {
     for(int i = 0; i < parts.size(); i++) {
         if (parts[i][0] == '#') {
             parts[i][0] = '0';
-            parts[i] = string(1, stoi(parts[i]));
+            int ord = stoi(parts[i]);
+            if (ord > 127) {
+                throw BadToken(*this, "character ord is too big");
+            }
+            parts[i] = string(1, ord);
             continue;
         }
         if (i < parts.size() - 1 && parts[i + 1][0] == '\'') {

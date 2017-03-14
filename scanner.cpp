@@ -446,7 +446,7 @@ void Scanner::throw_error() {
     switch(m_state){
     case ST_ERROR_INVALID_BININT: msg = "invalid binary integer"; break;
     case ST_ERROR_INVALID_HEXINT: msg = "invalid hex integer"; break;
-    default: msg = "unrecognized error"; break;
+    default: msg = "unrecognized token"; break;
     }
     update_token();
     throw BadToken(m_current_token, msg);

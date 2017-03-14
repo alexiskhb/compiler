@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include "scanner.h"
-#include "token.h"
+#include "parser.h"
 
 using namespace std;
 
@@ -27,6 +27,15 @@ void lexical_analysis(const string& filename) {
     }
 }
 
+void parse(const string& filename) {
+    Parser parser(filename);
+    if (!parser.is_open()) {
+        std::cerr << "Could not open " << filename << endl;
+        return;
+    }
+    parser.parse();
+}
+
 int main(int argc, char *argv[]) {
     cxxopts::Options options(argv[0]);
     bool lexical = false;
@@ -46,4 +55,5 @@ int main(int argc, char *argv[]) {
     if (lexical) {
         lexical_analysis(files[0]);
     }
+    parse(files[0]);
 }

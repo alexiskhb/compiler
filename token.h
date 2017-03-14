@@ -173,4 +173,26 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const Token& t);
 
+class BadToken : public std::exception {
+public:
+    BadToken(Token t, const std::string& msg) :
+        m_bad_token(t), m_msg(msg) {
+    }
+    const char* what() const noexcept override {
+        return ("\"" + m_bad_token.raw_value + "\"").c_str();
+    }
+    Pos position() const {
+        return m_bad_token.position;
+    }
+    std::string msg() const {
+        return m_msg;
+    }
+    std::string value() const {
+        return " \"" + m_bad_token.raw_value + "\"";
+    }
+private:
+    Token m_bad_token;
+    std::string m_msg;
+};
+
 #endif // TOKEN_H
