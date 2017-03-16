@@ -74,8 +74,8 @@ bool Scanner::init_states() {
     state_to_subcat[ST_COMMA] = Token::S_COMMA;
 
     state_to_subcat[ST_INTEGER] = Token::L_INTEGER;
-    state_to_subcat[ST_HEXINTEGER] = Token::L_HEXINTEGER;
-    state_to_subcat[ST_BININTEGER] = Token::L_BININTEGER;
+    state_to_subcat[ST_HEXINTEGER] = Token::L_INTEGER;
+    state_to_subcat[ST_BININTEGER] = Token::L_INTEGER;
     state_to_subcat[ST_FLOAT] = Token::L_FLOAT;
     state_to_subcat[ST_EXPON] = Token::L_FLOAT;
     state_to_subcat[ST_EXPONFLOAT] = Token::L_FLOAT;
@@ -235,7 +235,6 @@ bool Scanner::init_fc() {
     auto thr_er = bind(&Scanner::throw_error, this);
     auto sav_iddt = bind(&Scanner::save_int_dotdot_token, this);
     auto upd_sl = bind(&Scanner::upd_strlit, this);
-    auto noop = bind(&Scanner::noop, this);
     auto upsav_tk = bind(&Scanner::updatesave_token, this);
     for(int s = 0; s < SIZEOF_STATES; s++) {
         if (sttoch[s] != Character(-1)) {
@@ -265,7 +264,6 @@ bool Scanner::init_fc() {
             continue;
         }
         State S = (State)(s);
-        Character C = sttoch[s];
         fc[S][ST_IDENTIFIER] = sav_tk;
         fc[ST_IDENTIFIER][S] = sav_tk;
         fc[S][ST_INTEGER] = sav_tk;
@@ -324,6 +322,7 @@ bool Scanner::init_fc() {
     fc[ST_STRLIT_ESCNUM][ST_STRLIT] = upd_sl;
     fc[ST_STRLIT_ESCNUM][ST_STRLIT_ESCSTART] = upd_sl;
     fc[ST_STRLIT_ESCSTART][ST_STRLIT_ESCNUM] = upd_tk;
+    return true;
 }
 
 Scanner::Scanner() {
@@ -331,7 +330,7 @@ Scanner::Scanner() {
 }
 
 bool Scanner::is_hex(char c) {
-    return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F';
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
 bool Scanner::is_bin(char c) {
@@ -348,6 +347,7 @@ void Scanner::open(const string& filename) {
     m_line = 0;
     m_file.open(filename);
     m_filename = filename;
+    m_current_to_return = 0;
 }
 
 bool Scanner::is_open() const {
@@ -386,7 +386,7 @@ void Scanner::upd_strlit() {
 }
 
 void Scanner::update_token() {
-    if (m_current_token.position.line == 0 && m_current_token.position.column == 0) {
+    if (!m_current_token.position) {
         m_current_token.position.line = m_line;
         m_current_token.position.column = m_column;
         m_current_token.position.fstream_pos = m_file.tellg();
@@ -437,8 +437,8 @@ void Scanner::updatesave_token() {
     save_token();
 }
 
-bool Scanner::eof() {
-    return m_file.eof() && m_tokens.empty() || m_eof_returned;
+bool Scanner::eof() const {
+    return m_eof_returned;
 }
 
 void Scanner::throw_error() {
@@ -452,16 +452,17 @@ void Scanner::throw_error() {
     throw BadToken(m_current_token, msg);
 }
 
-Token Scanner::get_next_token() {
+void Scanner::next_token() {
     if (m_eof_returned) {
         m_last_token_success = false;
-        return Token();
+        return;
     }
-    if (!m_tokens.empty()) {
-        Token result = m_tokens.front();
-        m_tokens.pop_front();
-        m_last_token_success = true;
-        return result;
+    if (m_current_to_return < m_tokens.size()) {
+        ++m_current_to_return;
+        if (m_current_to_return != m_tokens.size()) {
+            m_last_token_success = true;
+            return;
+        }
     }
     m_token_done = false;
     while (!m_token_done) {
@@ -472,13 +473,14 @@ Token Scanner::get_next_token() {
         }
         if (unseparated_chars.size() == 0) {
             m_eof_returned = true;
-            return Token(m_current_token.position, Token::C_EOF, " ");
+            m_tokens.emplace_back(m_current_token.position, Token::C_EOF, " ");
+            return;
         }
         unseparated_chars.push_back('\n');
         for(m_column = 0; m_column < unseparated_chars.size(); m_column++) {
             m_c = unseparated_chars[m_column];
             m_prev_state = m_state;
-            m_state = st[m_state][ch[m_c]];
+            m_state = st[m_state][ch[(int)m_c]];
             if (fc[m_prev_state][m_state]) {
                 fc[m_prev_state][m_state]();
             } else if (m_state != ST_START || m_prev_state != ST_START) {
@@ -486,22 +488,69 @@ Token Scanner::get_next_token() {
             }
         }
     }
-    if (m_tokens.size() == 0) {
-        m_eof_returned = true;
-        return Token(m_current_token.position, Token::C_EOF, "[invalid]");
+    if (m_current_to_return == m_tokens.size()) {
+        throw runtime_error("something wrong");
     }
-    Token result = m_tokens.front();
-    m_tokens.pop_front();
     m_last_token_success = true;
-    return result;
+}
+
+Token Scanner::get_next_token() {
+    next_token();
+    return top();
+}
+
+Token Scanner::top() const {
+    if (m_current_to_return == m_tokens.size()) {
+        throw runtime_error("no tokens available");
+    }
+    return m_tokens[m_current_to_return];
 }
 
 bool Scanner::last_token_success() const {
     return m_last_token_success;
 }
 
+Token Scanner::require(Token::Operator op) {
+    Token token = get_next_token();
+    if (token != op) {
+        throw runtime_error("requirement not satisfied");
+    }
+    return token;
+}
+
+Token Scanner::operator++() {
+    return get_next_token();
+}
+
+Token Scanner::operator++(int) {
+    Token result = top();
+    next_token();
+    return result;
+}
+
 Scanner& operator>>(Scanner& scanner, Token& token) {
     token = scanner.get_next_token();
     return scanner;
 }
+
+bool operator==(const Scanner& scanner, Token::Category cat) {
+    return scanner.top() == cat;
+}
+
+bool operator!=(const Scanner& scanner, Token::Category cat) {
+    return scanner.top() != cat;
+}
+
+bool operator==(const Scanner& scanner, Token::Operator op) {
+    return scanner.top() == op;
+}
+
+bool operator!=(const Scanner& scanner, Token::Operator op) {
+    return scanner.top() != op;
+}
+
+
+
+
+
 

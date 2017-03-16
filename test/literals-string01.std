@@ -1,8 +1,10 @@
 (1:0)	string literal	[}]	"#125"
-(2:0)	string literal	[abc]	"'abc'"
+(2:0)	string literal	[abc~&?!`";]	"'abc~&?!`";'"
 (3:0)	string literal	[{|]	"#123#124"
 (4:0)	string literal	[abc'%'xyz]	"'abc'''#37'''xyz'"
 (5:0)	string literal	[qwe'rty]	"'qwe''rty'"
 (6:0)	string literal	[here line starts
 	and here's its end.]	"'here line starts'#13#10'	and here''s its end.'"
-(6:47)	EOF	[]	" "
+(7:0)	string literal	['Poor'
+Kazimir]	"'''Poor'''#13#10'Kazimir'"
+(7:25)	EOF	[]	" "

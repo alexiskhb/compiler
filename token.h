@@ -8,7 +8,14 @@
 #include <algorithm>
 
 struct Pos {
-    int line, column;
+    bool operator==(const Pos& other) {
+        return fstream_pos == other.fstream_pos;
+    }
+    operator bool() {
+        return fstream_pos;
+    }
+
+    size_t line, column;
     unsigned long long fstream_pos;
 };
 
@@ -29,8 +36,14 @@ public:
     std::string strcategory() const;
     static int is_reserved(std::string s);
     static int is_reserved_operator(Reserved);
-    operator bool() const {
-        return empty();
+    explicit operator bool() const {
+        return !(empty() || category == C_EOF);
+    }
+    explicit operator Token::Category() const {
+        return category;
+    }
+    explicit operator Token::Operator() const {
+        return category == C_OPERATOR ? (Operator)subcategory : NOT_OPERATOR;
     }
 
     Pos position;
@@ -94,6 +107,8 @@ public:
         OP_IN,        // in
         OP_DIV,       // div
         OP_MOD,       // mod
+        NOT_OPERATOR,
+        SIZEOF_OPERATORS,
     };
 
     enum Separator : int {
@@ -159,9 +174,7 @@ public:
     enum Literal : int {
         L_STRING,
         L_INTEGER,
-        L_FLOAT,
-        L_HEXINTEGER,
-        L_BININTEGER,
+        L_FLOAT
     };
 
     static const char ETX = (char)3;
@@ -172,6 +185,10 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& os, const Token& t);
+bool operator==(const Token& t, Token::Category);
+bool operator==(const Token& t, Token::Operator);
+bool operator!=(const Token& t, Token::Category);
+bool operator!=(const Token& t, Token::Operator);
 
 class BadToken : public std::exception {
 public:

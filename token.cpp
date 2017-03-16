@@ -133,11 +133,11 @@ void Token::clear() {
 }
 
 int Token::eval_int_literal(string s) {
-    switch(subcategory){
-    case L_HEXINTEGER:
+    switch(s[0]){
+    case '$':
         s[0] = '0';
         return stoi(s, 0, 16);
-    case L_BININTEGER:
+    case '%':
         s[0] = '0';
         return stoi(s, 0, 2);
     default: return stoi(s);
@@ -153,7 +153,7 @@ string Token::eval_str_literal(const string& s) {
         }
         parts.back().push_back(c);
     }
-    for(int i = 0; i < parts.size(); i++) {
+    for(size_t i = 0; i < parts.size(); i++) {
         if (parts[i][0] == '#') {
             parts[i][0] = '0';
             int ord = stoi(parts[i]);
@@ -190,7 +190,7 @@ Token& Token::evaluate() {
     }
 
     switch (subcategory) {
-    case L_INTEGER:case L_HEXINTEGER:case L_BININTEGER: {
+    case L_INTEGER:{
         value_id = int_values.size();
         int_values.push_back(eval_int_literal(raw_value));
     } break;
@@ -204,7 +204,6 @@ Token& Token::evaluate() {
     } break;
     default: break;
     }
-
     return *this;
 }
 
@@ -231,13 +230,14 @@ string Token::strvalue() const {
     case C_SEPARATOR: return separator_lst[(Separator)subcategory];
     case C_IDENTIFIER:
     case C_EOF: case C_COMMENT: return "";
+    default:;
     }
 
     if (subcategory == -1) {
         return "";
     }
     switch (subcategory) {
-    case L_INTEGER:case L_HEXINTEGER:case L_BININTEGER: {
+    case L_INTEGER: {
         return to_string(int_values[value_id]);
     }
     case L_FLOAT: {
@@ -271,3 +271,20 @@ std::ostream& operator<<(std::ostream& os, const Token& t) {
                  t.strvalue() << "]\t\"" <<
                  t.raw_value << "\"";
 }
+
+bool operator==(const Token& t, Token::Category cat) {
+    return t.category == cat;
+}
+
+bool operator==(const Token& t, Token::Operator op) {
+    return t.category == Token::C_OPERATOR && t.subcategory == op;
+}
+
+bool operator!=(const Token& t, Token::Category cat) {
+    return t.category != cat;
+}
+
+bool operator!=(const Token& t, Token::Operator op) {
+    return !(t == op);
+}
+

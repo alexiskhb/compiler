@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <iterator>
 #include "token.h"
 #include <vector>
 #include <exception>
@@ -14,20 +15,29 @@
 
 class Scanner {
 public:
-    enum State : int;
-    enum Character : int;
-
     Scanner();
     Scanner(const std::string& filename);
     bool is_open() const;
     Token get_next_token();
+    void next_token();
+    Token top() const;
+    Token require(Token::Operator);
     void open(const std::string& filename);
-    bool eof();
+    bool eof() const;
     bool last_token_success() const;
-    operator bool() const {
+    explicit operator bool() const {
         return last_token_success();
     }
+    explicit operator Token::Operator() const {
+        return static_cast<Token::Operator>(top());
+    }
+    operator Token() const {
+        return top();
+    }
+    Token operator++();
+    Token operator++(int);
 
+private:
     enum State : int {
         ST_START = 0,
         ST_ERROR,
@@ -137,7 +147,7 @@ public:
     static State chtost[SIZEOF_CHARACTERS];
     static Character sttoch[SIZEOF_STATES];
     static int state_to_subcat[SIZEOF_STATES];
-private:
+
     void save_token();
     void clear_token();
     void upd_strlit();
@@ -155,16 +165,21 @@ private:
     std::function<void()> fc[SIZEOF_STATES][SIZEOF_STATES];
     std::ifstream m_file;
     std::deque<Token> m_tokens;
+    std::deque<Token>::size_type m_current_to_return = 0;
     std::string m_filename;
     State m_state = ST_START, m_prev_state;
     Token m_current_token;
     char m_c;
-    int m_line, m_column;
+    size_t m_line, m_column;
     bool m_last_token_success = true;
     bool m_eof_returned = false;
     bool m_token_done;
 };
 
 Scanner& operator>>(Scanner& scanner, Token& token);
+bool operator==(const Scanner& s, Token::Category);
+bool operator==(const Scanner& s, Token::Operator);
+bool operator!=(const Scanner& s, Token::Category);
+bool operator!=(const Scanner& s, Token::Operator);
 
 #endif // SCANNER_H

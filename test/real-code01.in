@@ -1,0 +1,61 @@
+type
+ TDynArAr = array [1..2,1..3] of integer;
+var
+TempPic: TDynArAr;
+
+function ColorInLine(ln: integer; ar: TDynArAr): integer;
+var
+ d, f: longint;
+ pd, pf: ^longint;
+begin
+ pd:=@d;pf:=@f;
+ f:=^pf;d:=^pd;
+ d  (m div 2) + 1;
+ SetLength(CountAr, 0);
+ for i  0 to m-1 do 
+ inc(CountAr[ar[ln, i]]);
+ CountAr[ar[ln, i]] > k then
+ end; 
+ if(k = m)and(DomColor = f) 
+ 
+ (k >= d)and(k<m) 
+ exit(f)
+ exit(0); 
+
+ 
+
+ assign(supout, 'supreme.out');
+ read(supin, n, m);
+ SetLength(ColumnIsColored, m);
+ for j  0 to m-1 do
+ ColorIsUsed[i]  false; 
+ 
+ flagDom  true; 
+ while flagDom do 
+ DomColor  0;
+ flagDom  false;
+ count  0;
+ SetLength(ColumnIsColored, m);
+ CountColoredLines  0;
+ inc(i);
+ (i = n - 1) break;
+ 
+ j  -1; 
+ while (DomColor = 0) do 
+ inc(j);
+ (not ColorIsUsed[ColorInColumn(j, TempPic)]) 
+ DomColor  ColorInColumn(j, TempPic);
+ flagDom  true;
+ 
+ (j = m - 1) break;
+ 
+ DomColor <> 0 
+ ColorIsUsed[DomColor]  true
+ else 
+ write(supout, '''Poor'''#13#10'Kazimir');
+ j = -1 j  0;
+
+ (PicIsPlain(TempPic))and(count <= 1000) 
+ writeln(supout, count);
+ writeln(supout, 'R ', ActionNum[i])
+end.
