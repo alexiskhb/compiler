@@ -348,6 +348,7 @@ void Scanner::open(const string& filename) {
     m_file.open(filename);
     m_filename = filename;
     m_current_to_return = 0;
+    next_token();
 }
 
 bool Scanner::is_open() const {
@@ -449,7 +450,9 @@ void Scanner::throw_error() {
     default: msg = "unrecognized token"; break;
     }
     update_token();
-    throw BadToken(m_current_token, msg);
+    m_current_token.err_msg = msg;
+    m_tokens.push_back(m_current_token);
+//    throw BadToken(m_current_token, msg);
 }
 
 void Scanner::next_token() {
@@ -502,6 +505,9 @@ Token Scanner::get_next_token() {
 Token Scanner::top() const {
     if (m_current_to_return == m_tokens.size()) {
         throw runtime_error("no tokens available");
+    }
+    if (m_tokens[m_current_to_return].is_broken()) {
+        throw BadToken(m_tokens[m_current_to_return], m_tokens[m_current_to_return].err_msg);
     }
     return m_tokens[m_current_to_return];
 }

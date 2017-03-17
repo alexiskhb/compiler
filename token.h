@@ -32,6 +32,7 @@ public:
     void clear();
     Token& evaluate();
     bool empty() const;
+    bool is_broken() const;
     std::string strvalue() const;
     std::string strcategory() const;
     static int is_reserved(std::string s);
@@ -49,6 +50,7 @@ public:
     Pos position;
     Category category;
     std::string raw_value;
+    std::string err_msg = "";
     int subcategory;
     int value_id;
 

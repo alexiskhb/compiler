@@ -63,14 +63,13 @@ bool Parser::is_open() const {
 }
 
 NodePtr Parser::parse() {
-    return nullptr;
+    return syntax_tree = parse_expression();
 }
 
 NodePtr Parser::parse_expression() {
     NodePtr left = parse_term();
-    Token token = ++scanner;
     if (precedence(scanner) == precedence(Token::OP_OR)) {
-        ++scanner;
+        Token token = scanner++;
         NodePtr right = parse_expression();
         left = new_operator_node((Token::Operator)token, left, right);
     }
@@ -88,7 +87,7 @@ NodePtr Parser::parse_term() {
 }
 
 NodePtr Parser::parse_factor() {
-    Token token = scanner.top();
+    Token token = scanner++;
     switch ((Token::Category)token) {
     case Token::C_IDENTIFIER:
         return make_shared<IdentifierNode>(token);
@@ -109,6 +108,26 @@ NodePtr Parser::parse_factor() {
     return nullptr;
 }
 
+ostream& Parser::output_syntax_tree(ostream& os) {
+    int node_id = 1;
+    walk_tree(syntax_tree, node_id, os);
+    os << '.' << endl;
+    return os;
+}
+
+void Parser::walk_tree(NodePtr node, int& id, ostream& os) {
+    int this_node = id;
+    os << ", " << this_node << ' ' << node->str() << '\n';
+    if (node->left) {
+        os << "- " << this_node << ' ' << ++id << '\n';
+        walk_tree(node->left, id, os);
+    }
+    if (node->right) {
+        os << "- " << this_node << ' ' << ++id << '\n';
+        walk_tree(node->right, id, os);
+    }
+}
+
 NodePtr Parser::new_literal_factor(const Token& token) {
     switch (token.subcategory) {
     case Token::L_FLOAT:
@@ -123,6 +142,17 @@ NodePtr Parser::new_literal_factor(const Token& token) {
 }
 
 NodePtr Parser::new_operator_node(Token::Operator operation, NodePtr left, NodePtr right) {
+    switch (operation) {
+    case 2:
+        break;
+    default:
+        break;
+    }
     return make_shared<BinaryOperator>(operation, left, right);
 }
+
+
+
+
+
 

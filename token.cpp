@@ -158,7 +158,8 @@ string Token::eval_str_literal(const string& s) {
             parts[i][0] = '0';
             int ord = stoi(parts[i]);
             if (ord > 127) {
-                throw BadToken(*this, "character ord is too big");
+                err_msg = "character ord is too big";
+//                throw BadToken(*this, "character ord is too big");
             }
             parts[i] = string(1, ord);
             continue;
@@ -209,6 +210,10 @@ Token& Token::evaluate() {
 
 bool Token::empty() const {
     return raw_value.empty();
+}
+
+bool Token::is_broken() const {
+    return !err_msg.empty();
 }
 
 int Token::is_reserved(string s) {
