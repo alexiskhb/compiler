@@ -266,13 +266,14 @@ bool Scanner::init_fc() {
         State S = (State)(s);
         fc[S][ST_IDENTIFIER] = sav_tk;
         fc[ST_IDENTIFIER][S] = sav_tk;
+        fc[S][S] = sav_tk;
         fc[S][ST_INTEGER] = sav_tk;
         fc[ST_INTEGER][S] = sav_tk;
         fc[s][ST_ERROR] = thr_er;
     }
 // Assign
     fc[ST_COLON][ST_ASSIGN] = sav_tk;
-    for(State s: {ST_ASSIGN, ST_PLUSAGN, ST_MINUSAGN, ST_FACAGN, ST_MULAGN}) {
+    for(State s: {ST_ASSIGN, ST_PLUSAGN, ST_MINUSAGN, ST_FACAGN, ST_MULAGN, ST_GEQ, ST_LEQ, ST_NEQ}) {
         fc[s][ST_IDENTIFIER] = sav_tk;
         fc[s][ST_INTEGER] = sav_tk;
     }
@@ -516,12 +517,26 @@ bool Scanner::last_token_success() const {
     return m_last_token_success;
 }
 
-Token Scanner::require(Token::Operator op) {
-    Token token = get_next_token();
-    if (token != op) {
-        throw runtime_error("requirement not satisfied");
+Token Scanner::require(initializer_list<Token::Operator> ops) {
+    Token token = top();
+//    cerr << token << endl;
+    for(Token::Operator op: ops) {
+        if (token == op) {
+            return token;
+        }
     }
-    return token;
+    throw runtime_error("no operation found");
+}
+
+Token Scanner::require(initializer_list<Token::Category> cats) {
+    Token token = top();
+//    cerr << token << endl;
+    for(Token::Category cat: cats) {
+        if (token == cat) {
+            return token;
+        }
+    }
+    throw runtime_error("no category found");
 }
 
 Token Scanner::operator++() {
@@ -553,6 +568,14 @@ bool operator==(const Scanner& scanner, Token::Operator op) {
 
 bool operator!=(const Scanner& scanner, Token::Operator op) {
     return scanner.top() != op;
+}
+
+bool operator==(const Scanner& scanner, Token::Separator sep) {
+    return scanner.top() == sep;
+}
+
+bool operator!=(const Scanner& scanner, Token::Separator sep) {
+    return scanner.top() != sep;
 }
 
 

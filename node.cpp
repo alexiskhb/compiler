@@ -25,7 +25,7 @@ std::map<Token::Operator, std::string> operator_lst =
 {Token::OP_AT, "@"},
 {Token::OP_DOTDOT, ".."},
 {Token::OP_RPAREN, ")"},
-{Token::OP_LSQBRAC, "["},
+{Token::OP_LSQBRAC, "[]"},
 {Token::OP_RSQBRAC, "]"},
 {Token::OP_RBRACE, ")"},
 {Token::OP_CARET, "^"},
@@ -37,8 +37,19 @@ std::map<Token::Operator, std::string> operator_lst =
 {Token::OP_XOR, "XOR"},
 {Token::OP_IN, "IN"},
 {Token::OP_DIV, "DIV"},
-{Token::OP_MOD, "MOD"}
+{Token::OP_MOD, "MOD"},
 };
+
+std::map<Token::Separator, std::string> separator_lst =
+{
+{Token::S_COLON, ":"},
+{Token::S_SCOLON, ";"},
+{Token::S_COMMA, ","},
+};
+
+EofNode::EofNode(const Token&) {
+
+}
 
 IntegerNode::IntegerNode(const Token& token) {
     value = Token::int_values[token.value_id];
@@ -62,11 +73,21 @@ BinaryOperator::BinaryOperator(Token::Operator a_operation, NodePtr a_left, Node
     right = a_right;
 }
 
-UnaryOperator::UnaryOperator(Token::Operator operation, NodePtr node) : BinaryOperator(operation, node, node) {
+SeparatedPair::SeparatedPair(Token::Separator a_separator, NodePtr a_left, NodePtr a_right) {
+    separator = a_separator;
+    left = a_left;
+    right = a_right;
+}
+
+UnaryOperator::UnaryOperator(Token::Operator operation, NodePtr node) : BinaryOperator(operation, node, nullptr) {
 
 }
 
 string Node::str() {
+    return "";
+}
+
+string EofNode::str() {
     return "";
 }
 
@@ -90,8 +111,20 @@ string BinaryOperator::str() {
     return operator_lst[operation];
 }
 
+string SeparatedPair::str() {
+    return separator_lst[separator];
+}
+
 string UnaryOperator::str() {
     return operator_lst[operation];
+}
+
+bool Node::empty() const {
+    return false;
+}
+
+bool IdentifierNode::empty() const {
+    return name.empty();
 }
 
 

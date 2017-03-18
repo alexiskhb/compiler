@@ -18,10 +18,18 @@ private:
     NodePtr parse_expression();
     NodePtr parse_term();
     NodePtr parse_factor();
-    NodePtr new_operator_node(Token::Operator, NodePtr, NodePtr);
+    NodePtr parse_comma_separated();
+    NodePtr parse_statements();
+    NodePtr parse_identifier();
+    NodePtr parse_recursive(int);
+    NodePtr new_node(Token::Operator, NodePtr, NodePtr);
+    NodePtr new_node(Token::Operator, NodePtr);
+    NodePtr new_node(Token::Separator, NodePtr, NodePtr);
     NodePtr new_literal_factor(const Token&);
     Scanner scanner;
+    Token stored_token;
     NodePtr syntax_tree = nullptr;
+    bool new_node_created = false;
 };
 
 #endif // PARSER_H

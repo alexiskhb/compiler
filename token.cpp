@@ -281,15 +281,23 @@ bool operator==(const Token& t, Token::Category cat) {
     return t.category == cat;
 }
 
-bool operator==(const Token& t, Token::Operator op) {
-    return t.category == Token::C_OPERATOR && t.subcategory == op;
-}
-
 bool operator!=(const Token& t, Token::Category cat) {
     return t.category != cat;
 }
 
+bool operator==(const Token& t, Token::Operator op) {
+    return t.category == Token::C_OPERATOR && t.subcategory == op;
+}
+
 bool operator!=(const Token& t, Token::Operator op) {
     return !(t == op);
+}
+
+bool operator==(const Token& t, Token::Separator sep) {
+    return t.category == Token::C_SEPARATOR && t.subcategory == sep;
+}
+
+bool operator!=(const Token& t, Token::Separator sep) {
+    return !(t == sep);
 }
 

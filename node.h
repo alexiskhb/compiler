@@ -13,10 +13,16 @@ typedef std::shared_ptr<Node> NodePtr;
 class Node {
 public:
     virtual std::string str();
+    virtual bool empty() const;
     NodePtr left = nullptr;
     NodePtr right = nullptr;
 };
 
+class EofNode : public Node {
+public:
+    EofNode(const Token& token);
+    std::string str() override;
+};
 
 class IntegerNode : public Node {
 public:
@@ -42,6 +48,7 @@ public:
 class IdentifierNode : public Node {
 public:
     IdentifierNode(const Token& token);
+    bool empty() const override;
     std::string str() override;
     std::string name;
 };
@@ -51,6 +58,13 @@ public:
     BinaryOperator(Token::Operator, NodePtr, NodePtr);
     std::string str() override;
     Token::Operator operation;
+};
+
+class SeparatedPair : public Node {
+public:
+    SeparatedPair(Token::Separator, NodePtr, NodePtr);
+    std::string str() override;
+    Token::Separator separator;
 };
 
 class UnaryOperator : public BinaryOperator {

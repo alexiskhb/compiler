@@ -21,7 +21,8 @@ public:
     Token get_next_token();
     void next_token();
     Token top() const;
-    Token require(Token::Operator);
+    Token require(std::initializer_list<Token::Operator>);
+    Token require(std::initializer_list<Token::Category>);
     void open(const std::string& filename);
     bool eof() const;
     bool last_token_success() const;
@@ -30,6 +31,9 @@ public:
     }
     explicit operator Token::Operator() const {
         return static_cast<Token::Operator>(top());
+    }
+    explicit operator Token::Separator() const {
+        return static_cast<Token::Separator>(top());
     }
     operator Token() const {
         return top();
@@ -179,7 +183,9 @@ private:
 Scanner& operator>>(Scanner& scanner, Token& token);
 bool operator==(const Scanner& s, Token::Category);
 bool operator==(const Scanner& s, Token::Operator);
+bool operator==(const Scanner& s, Token::Separator);
 bool operator!=(const Scanner& s, Token::Category);
 bool operator!=(const Scanner& s, Token::Operator);
+bool operator!=(const Scanner& s, Token::Separator);
 
 #endif // SCANNER_H

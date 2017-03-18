@@ -35,15 +35,13 @@ void parse(const string& filename) {
         return;
     }
     parser.parse();
-    ofstream output("test-parse/in");
-    parser.output_syntax_tree(output);
     parser.output_syntax_tree(cout);
 }
 
 int main(int argc, char *argv[]) {
 //    lexical_analysis("test/err-big-escape-char-ord.errin");
-    parse("test-parse/12.in");
-    return 0;
+//    parse("test-parse/12.in");
+//    return 0;
     cxxopts::Options options(argv[0]);
     bool lexical = false;
     options.add_options()
@@ -62,5 +60,5 @@ int main(int argc, char *argv[]) {
     if (lexical) {
         lexical_analysis(files[0]);
     }
-//    parse(files[0]);
+    parse(files[0]);
 }

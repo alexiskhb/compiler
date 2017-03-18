@@ -46,6 +46,9 @@ public:
     explicit operator Token::Operator() const {
         return category == C_OPERATOR ? (Operator)subcategory : NOT_OPERATOR;
     }
+    explicit operator Token::Separator() const {
+        return category == C_SEPARATOR ? (Separator)subcategory : NOT_SEPARATOR;
+    }
 
     Pos position;
     Category category;
@@ -117,6 +120,7 @@ public:
         S_COMMA,
         S_COLON,
         S_SCOLON,
+        NOT_SEPARATOR,
     };
 
     enum Reserved : int {
@@ -189,8 +193,10 @@ private:
 std::ostream& operator<<(std::ostream& os, const Token& t);
 bool operator==(const Token& t, Token::Category);
 bool operator==(const Token& t, Token::Operator);
+bool operator==(const Token& t, Token::Separator);
 bool operator!=(const Token& t, Token::Category);
 bool operator!=(const Token& t, Token::Operator);
+bool operator!=(const Token& t, Token::Separator);
 
 class BadToken : public std::exception {
 public:
