@@ -73,7 +73,9 @@ public:
     std::string str() override;
 };
 
-
+typedef std::shared_ptr<BinaryOperator> BinOpPtr;
+typedef BinaryOperator* BinOpRawPtr;
+typedef Node* NodeRawPtr;
 
 
 #endif // NODE_H

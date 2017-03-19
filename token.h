@@ -8,11 +8,14 @@
 #include <algorithm>
 
 struct Pos {
-    bool operator==(const Pos& other) {
+    bool operator==(const Pos& other) const {
         return fstream_pos == other.fstream_pos;
     }
-    operator bool() {
+    operator bool() const {
         return fstream_pos;
+    }
+    operator std::string() const {
+        return "(" + std::to_string(line) + ":" + std::to_string(column) + ")";
     }
 
     size_t line, column;
@@ -48,6 +51,9 @@ public:
     }
     explicit operator Token::Separator() const {
         return category == C_SEPARATOR ? (Separator)subcategory : NOT_SEPARATOR;
+    }
+    operator Pos() const {
+        return position;
     }
 
     Pos position;
@@ -121,6 +127,7 @@ public:
         S_COLON,
         S_SCOLON,
         NOT_SEPARATOR,
+        SIZEOF_SEPARATORS,
     };
 
     enum Reserved : int {
@@ -191,6 +198,7 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& os, const Token& t);
+std::ostream& operator<<(std::ostream& os, const Pos& p);
 bool operator==(const Token& t, Token::Category);
 bool operator==(const Token& t, Token::Operator);
 bool operator==(const Token& t, Token::Separator);

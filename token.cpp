@@ -269,12 +269,14 @@ string Token::strcategory() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const Token& t) {
-    return os  << "(" <<
-                 t.position.line << ':' <<
-                 t.position.column << ")\t" <<
+    return os << t.position << "\t" <<
                  t.strcategory() << "\t[" <<
                  t.strvalue() << "]\t\"" <<
                  t.raw_value << "\"";
+}
+
+std::ostream& operator<<(std::ostream& os, const Pos& p) {
+    return os << "(" << p.line << ':' << p.column << ")";
 }
 
 bool operator==(const Token& t, Token::Category cat) {
