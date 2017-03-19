@@ -5,7 +5,7 @@ using namespace std;
 int precedence_lst[Token::SIZEOF_OPERATORS];
 int precedence_sep_lst[Token::SIZEOF_SEPARATORS];
 
-const int PREC_MAX = 9;
+int PREC_MAX;
 bool init_precedence() {
     fill(precedence_lst, precedence_lst + Token::SIZEOF_OPERATORS, 0);
     fill(precedence_sep_lst, precedence_sep_lst + Token::SIZEOF_SEPARATORS, 0);
@@ -48,6 +48,13 @@ bool init_precedence() {
     precedence_sep_lst[Token::S_COMMA] = 2;
 
     precedence_sep_lst[Token::S_SCOLON] = 1;
+    PREC_MAX = 0;
+    for(auto t: precedence_lst) {
+        PREC_MAX = max(PREC_MAX, t);
+    }
+    for(auto t: precedence_sep_lst) {
+        PREC_MAX = max(PREC_MAX, t);
+    }
     return true;
 }
 
@@ -87,22 +94,27 @@ NodePtr Parser::parse_recursive(int prec) {
         NodePtr right;
         switch (token.category) {
         case Token::C_OPERATOR: {
-            switch (token.subcategory) {
+            switch ((Token::Operator)token) {
             case Token::OP_LSQBRAC: {
                 right = parse_recursive(precedence(Token::S_COMMA));
-                scanner.require({Token::OP_RSQBRAC});
+                if (!scanner.require({Token::OP_RSQBRAC})) {
+                    throw ParseError(token, "unexpected " +
+                                     scanner.top().strcategory() + " " +
+                                     scanner.top().strvalue() + ", need ']'");
+                }
                 ++scanner;
             } break;
             case Token::OP_DOT: {
-                scanner.require({Token::C_IDENTIFIER});
+                if (!scanner.require({Token::C_IDENTIFIER})) {
+                    throw ParseError(token, "unexpected " +
+                                     scanner.top().strcategory() + " " +
+                                     scanner.top().strvalue() + ", need identifier");
+                }
                 right = parse_recursive(prec);
             } break;
             case Token::OP_MINUS: {
                 right = parse_recursive(prec);
-                if (!dynamic_cast<BinaryOperator*>(right.get())) {
-                    break;
-                }
-                if (dynamic_cast<UnaryOperator*>(right.get())) {
+                if (!dynamic_cast<BinaryOperator*>(right.get()) || dynamic_cast<UnaryOperator*>(right.get())) {
                     break;
                 }
                 Token::Operator op = dynamic_cast<BinaryOperator*>(right.get())->operation;
@@ -114,6 +126,12 @@ NodePtr Parser::parse_recursive(int prec) {
                 left = new_node(Token::OP_MINUS, left, right);
                 right = right_op->right;
                 return new_node(op, left, right);
+            } break;
+            case Token::OP_RSQBRAC: {
+                throw ParseError(token, "unexpected ']', need '[' before");
+            } break;
+            case Token::OP_CARET: {
+                right = nullptr;
             } break;
             default: right = parse_recursive(prec);
             }
@@ -142,7 +160,11 @@ NodePtr Parser::parse_factor() {
         switch ((Token::Operator)token) {
         case Token::OP_LPAREN: {
             NodePtr node = parse_recursive(precedence(Token::S_COMMA));
-            scanner.require({Token::OP_RPAREN});
+            if (!scanner.require({Token::OP_RPAREN})) {
+                throw ParseError(token, "unexpected " +
+                                 scanner.top().strcategory() + " " +
+                                 scanner.top().strvalue() + ", need ')'");
+            }
             ++scanner;
             return node;
         } break;
@@ -152,17 +174,24 @@ NodePtr Parser::parse_factor() {
             NodePtr node = parse_factor();
             return new_node((Token::Operator)token, node);
         } break;
-        default: throw ParseError(token, "illegal factor operator");
+        default: throw ParseError(token, "unexpected operator \"" + token.raw_value + "\"");
         }
     }
-    default: throw ParseError(token, "illegal factor category");
+    default: throw ParseError(token, "unexpected token \"" + token.raw_value + "\"");
     }
+
+}
+
+string Parser::get_line(int id) {
+    return scanner.get_line(id);
 }
 
 ostream& Parser::output_syntax_tree(ostream& os) {
-    int node_id = 1;
-    walk_tree(syntax_tree, node_id, os);
-    os << '.' << endl;
+    if (syntax_tree) {
+        int node_id = 1;
+        walk_tree(syntax_tree, node_id, os);
+        os << '.' << endl;
+    }
     return os;
 }
 
@@ -188,7 +217,7 @@ NodePtr Parser::new_literal_factor(const Token& token) {
     case Token::L_STRING:
         return make_shared<StringNode>(token);
     default:
-        throw ParseError(token, "illegal literal type");
+        throw runtime_error("illegal literal type");
     }
 }
 
@@ -203,7 +232,7 @@ NodePtr Parser::new_node(Token::Operator operation, NodePtr node) {
 NodePtr Parser::new_node(Token::Operator operation, NodePtr left, NodePtr right) {
     if (!right) {
         if (!left) {
-            throw runtime_error("both operands are null");
+            throw runtime_error("both new node operands are null");
         }
         return new_node(operation, left);
     }

@@ -525,18 +525,28 @@ Token Scanner::require(initializer_list<Token::Operator> ops) {
             return token;
         }
     }
-    throw runtime_error("no operation found");
+    return Token();
 }
 
 Token Scanner::require(initializer_list<Token::Category> cats) {
     Token token = top();
-//    cerr << token << endl;
     for(Token::Category cat: cats) {
         if (token == cat) {
             return token;
         }
     }
-    throw runtime_error("no category found");
+    return Token();
+}
+
+string Scanner::get_line(int id) {
+    auto pos = m_file.tellg();
+    m_file.seekg(0);
+    string result;
+    while(id--) {
+        getline(m_file, result);
+    }
+    m_file.seekg(pos);
+    return result;
 }
 
 Token Scanner::operator++() {

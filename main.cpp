@@ -34,18 +34,21 @@ void parse(const string& filename) {
         std::cerr << "Could not open " << filename << endl;
         return;
     }
-    parser.parse();
+    try {
+        parser.parse();
+    } catch (ParseError pe) {
+        cerr << pe.msg() << ":\n";
+        cerr << parser.get_line(pe.pos().line) << endl;
+    }
     parser.output_syntax_tree(cout);
 }
 
 int main(int argc, char *argv[]) {
-//    lexical_analysis("test/err-big-escape-char-ord.errin");
-//    parse("test-parse/12.in");
-//    return 0;
     cxxopts::Options options(argv[0]);
-    bool lexical = false;
+    bool lexical = false, parser = false;
     options.add_options()
             ("l,lexical", "lexical analysis", cxxopts::value<bool>(lexical))
+            ("p,parse", "parse", cxxopts::value<bool>(parser))
             ("positional", "", cxxopts::value<vector<string>>());
     options.parse_positional({"", "", "positional"});
     options.parse(argc, argv);
@@ -60,5 +63,7 @@ int main(int argc, char *argv[]) {
     if (lexical) {
         lexical_analysis(files[0]);
     }
-    parse(files[0]);
+    if (parser) {
+        parse(files[0]);
+    }
 }

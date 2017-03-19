@@ -8,11 +8,19 @@ for filename in $test_dir/*.in; do
 	answer=$test_dir/$(basename "$filename" .in).std
 	echo $filename $output >>$test_dir/test-lst
 	echo $filename $answer >>$test_dir/test-lst
-	$script_dir/compiler $filename >$output
+	$script_dir/compiler --parse $filename >$output
+	diff $output $answer && rm -f $output
+done
+for filename in $test_dir/*.errin; do
+	echo ..................................................$filename
+	output=$test_dir/$(basename "$filename" .errin).out
+	answer=$test_dir/$(basename "$filename" .errin).std
+	$script_dir/compiler --parse $filename 2>$output >/dev/null
 	diff $output $answer && rm -f $output
 done
 total=$(find $test_dir/*.std 2>/dev/null | wc -l)
 failed=$(find $test_dir/*.tree 2>/dev/null | wc -l)
-passed=`expr $total - $failed`
+errfailed=$(find $test_dir/*.out 2>/dev/null | wc -l)
+passed=`expr $total - $failed - $errfailed`
 echo $passed of $total tests passed
 $test_dir/treeviewer

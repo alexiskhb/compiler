@@ -4,6 +4,7 @@
 #include <string>
 #include <ostream>
 #include "scanner.h"
+#include <algorithm>
 #include "node.h"
 #include "token.h"
 
@@ -13,6 +14,7 @@ public:
     NodePtr parse();
     bool is_open() const;
     std::ostream& output_syntax_tree(std::ostream&);
+    std::string get_line(int);
 private:
     void walk_tree(NodePtr, int&, std::ostream&);
     NodePtr parse_factor();
@@ -28,11 +30,10 @@ private:
 class ParseError : public std::runtime_error {
 public:
     ParseError(const Pos& pos, const std::string& msg) :
-        std::runtime_error("parse error: " + msg + " at " + (std::string)pos), m_msg(msg), m_pos(pos) {
+        std::runtime_error("parse error at " + (std::string)pos + ": " + msg), m_msg("at " + (std::string)pos + ": " + msg), m_pos(pos) {
     }
     const char* what() const noexcept override {
-        std::string message = ("parse error: " + m_msg + " at " + (std::string)pos()).c_str();
-        std::cerr << message << std::endl;
+        std::string message = ("parse error at " + (std::string)pos() + ": " + m_msg).c_str();
         return message.c_str();
     }
     std::string msg() const {

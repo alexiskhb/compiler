@@ -40,6 +40,7 @@ public:
     }
     Token operator++();
     Token operator++(int);
+    std::string get_line(int);
 
 private:
     enum State : int {
