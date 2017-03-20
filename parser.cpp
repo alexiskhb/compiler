@@ -111,10 +111,6 @@ NodePtr Parser::parse_recursive(int prec) {
                                      scanner.top().strvalue() + ", need identifier");
                 }
                 right = parse_factor();
-//                right = parse_recursive(prec);
-//                swap(left, right);
-//                left = new_node(Token::OP_DOT, left, right);
-//                return left->right;
             } break;
             case Token::OP_MINUS: {
                 right = parse_recursive(prec);
@@ -175,7 +171,7 @@ NodePtr Parser::parse_factor() {
         case Token::OP_MINUS:
         case Token::OP_NOT:
         case Token::OP_AT: {
-            NodePtr node = parse_factor();
+            NodePtr node = parse_recursive(precedence(Token::OP_CARET));
             return new_node((Token::Operator)token, node);
         } break;
         default: throw ParseError(token, "unexpected operator \"" + token.raw_value + "\"");

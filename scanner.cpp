@@ -111,8 +111,6 @@ bool Scanner::init_states() {
     ch['\t'] = CH_TAB;
     ch[' '] = CH_SPACE;
 
-//    sttoch [chtost[CH_DOLLAR]  = ST_DOLLAR ] = CH_DOLLAR;
-//    sttoch [chtost[CH_PERCENT] = ST_PERCENT] = CH_PERCENT;
     sttoch [chtost[CH_LPAREN]  = ST_LPAREN ] = CH_LPAREN;
     sttoch [chtost[CH_RPAREN]  = ST_RPAREN ] = CH_RPAREN;
     sttoch [chtost[CH_LSQBRAC] = ST_LSQBRAC] = CH_LSQBRAC;
@@ -464,7 +462,11 @@ void Scanner::next_token() {
     if (m_current_to_return < m_tokens.size()) {
         ++m_current_to_return;
         if (m_current_to_return != m_tokens.size()) {
-            m_last_token_success = true;
+            if (top().category == Token::C_COMMENT) {
+                next_token();
+            } else {
+                m_last_token_success = true;
+            }
             return;
         }
     }
@@ -484,7 +486,7 @@ void Scanner::next_token() {
         for(m_column = 0; m_column < unseparated_chars.size(); m_column++) {
             m_c = unseparated_chars[m_column];
             m_prev_state = m_state;
-            m_state = st[m_state][ch[(int)m_c]];
+            m_state = st[m_state][ch[(unsigned char)m_c]];
             if (fc[m_prev_state][m_state]) {
                 fc[m_prev_state][m_state]();
             } else if (m_state != ST_START || m_prev_state != ST_START) {
@@ -495,7 +497,11 @@ void Scanner::next_token() {
     if (m_current_to_return == m_tokens.size()) {
         throw runtime_error("something wrong");
     }
-    m_last_token_success = true;
+    if (top().category == Token::C_COMMENT) {
+        next_token();
+    } else {
+        m_last_token_success = true;
+    }
 }
 
 Token Scanner::get_next_token() {
