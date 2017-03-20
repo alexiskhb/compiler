@@ -110,7 +110,11 @@ NodePtr Parser::parse_recursive(int prec) {
                                      scanner.top().strcategory() + " " +
                                      scanner.top().strvalue() + ", need identifier");
                 }
-                right = parse_recursive(prec);
+                right = parse_factor();
+//                right = parse_recursive(prec);
+//                swap(left, right);
+//                left = new_node(Token::OP_DOT, left, right);
+//                return left->right;
             } break;
             case Token::OP_MINUS: {
                 right = parse_recursive(prec);
