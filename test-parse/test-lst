@@ -62,6 +62,10 @@
 ../test-parse/minus-06-01.in ../test-parse/minus-06-01.std
 ../test-parse/minus-06-02.in ../test-parse/minus-06-02.tree
 ../test-parse/minus-06-02.in ../test-parse/minus-06-02.std
+../test-parse/mul-div-01-01.in ../test-parse/mul-div-01-01.tree
+../test-parse/mul-div-01-01.in ../test-parse/mul-div-01-01.std
+../test-parse/mul-div-01-02.in ../test-parse/mul-div-01-02.tree
+../test-parse/mul-div-01-02.in ../test-parse/mul-div-01-02.std
 ../test-parse/mul-minus-01.in ../test-parse/mul-minus-01.tree
 ../test-parse/mul-minus-01.in ../test-parse/mul-minus-01.std
 ../test-parse/mul-minus-02.in ../test-parse/mul-minus-02.tree
@@ -118,8 +122,14 @@
 ../test-parse/square-br-dot-04-01.in ../test-parse/square-br-dot-04-01.std
 ../test-parse/square-br-dot-04-02.in ../test-parse/square-br-dot-04-02.tree
 ../test-parse/square-br-dot-04-02.in ../test-parse/square-br-dot-04-02.std
-../test-parse/sum-01.in ../test-parse/sum-01.tree
-../test-parse/sum-01.in ../test-parse/sum-01.std
+../test-parse/sum-00-01.in ../test-parse/sum-00-01.tree
+../test-parse/sum-00-01.in ../test-parse/sum-00-01.std
+../test-parse/sum-00-02.in ../test-parse/sum-00-02.tree
+../test-parse/sum-00-02.in ../test-parse/sum-00-02.std
+../test-parse/sum-01-01.in ../test-parse/sum-01-01.tree
+../test-parse/sum-01-01.in ../test-parse/sum-01-01.std
+../test-parse/sum-01-02.in ../test-parse/sum-01-02.tree
+../test-parse/sum-01-02.in ../test-parse/sum-01-02.std
 ../test-parse/unary-00-01.in ../test-parse/unary-00-01.tree
 ../test-parse/unary-00-01.in ../test-parse/unary-00-01.std
 ../test-parse/unary-00-02.in ../test-parse/unary-00-02.tree

@@ -89,7 +89,7 @@ NodePtr Parser::parse() {
 
 NodePtr Parser::parse_recursive(int prec) {
     NodePtr left = prec < PREC_MAX? parse_recursive(prec + 1) : parse_factor();
-    if (precedence(scanner) >= prec) {
+    while (precedence(scanner) >= prec) {
         Token token = scanner++;
         NodePtr right;
         switch (token.category) {
@@ -112,28 +112,13 @@ NodePtr Parser::parse_recursive(int prec) {
                 }
                 right = parse_factor();
             } break;
-            case Token::OP_MINUS: {
-                right = parse_recursive(prec);
-                if (!dynamic_cast<BinaryOperator*>(right.get()) || dynamic_cast<UnaryOperator*>(right.get())) {
-                    break;
-                }
-                Token::Operator op = dynamic_cast<BinaryOperator*>(right.get())->operation;
-                if (precedence(op) > precedence(Token::OP_MINUS)) {
-                    break;
-                }
-                NodePtr right_op = right;
-                right = right_op->left;
-                left = new_node(Token::OP_MINUS, left, right);
-                right = right_op->right;
-                return new_node(op, left, right);
-            } break;
             case Token::OP_RSQBRAC: {
                 throw ParseError(token, "unexpected ']', need '[' before");
             } break;
             case Token::OP_CARET: {
                 right = nullptr;
             } break;
-            default: right = parse_recursive(prec);
+            default: right = parse_recursive(prec + 1);
             }
             left = new_node((Token::Operator)token, left, right);
         } break;
