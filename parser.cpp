@@ -12,15 +12,15 @@ bool init_precedence() {
 
     precedence_lst[Token::OP_DOT] = 9;
 
-    precedence_lst[Token::OP_CARET]   = 8;
-    precedence_lst[Token::OP_LSQBRAC] = 8;
+    precedence_lst[Token::OP_DEREFERENCE]   = 8;
+    precedence_lst[Token::OP_LEFT_BRACKET] = 8;
 
     precedence_lst[Token::OP_AT]  = 7;
     precedence_lst[Token::OP_NOT] = 7;
 
     precedence_lst[Token::OP_AND]   = 6;
-    precedence_lst[Token::OP_ASTER] = 6;
-    precedence_lst[Token::OP_SLASH] = 6;
+    precedence_lst[Token::OP_MULT] = 6;
+    precedence_lst[Token::OP_SLASH_DIV] = 6;
     precedence_lst[Token::OP_DIV]   = 6;
     precedence_lst[Token::OP_MOD]   = 6;
     precedence_lst[Token::OP_SHL]   = 6;
@@ -36,14 +36,14 @@ bool init_precedence() {
     precedence_lst[Token::OP_GEQ]   = 4;
     precedence_lst[Token::OP_NEQ]   = 4;
     precedence_lst[Token::OP_EQUAL] = 4;
-    precedence_lst[Token::OP_GTHAN] = 4;
-    precedence_lst[Token::OP_LTHAN] = 4;
+    precedence_lst[Token::OP_GREATER] = 4;
+    precedence_lst[Token::OP_LESS] = 4;
     
     precedence_lst[Token::OP_ASSIGN]   = 3;
-    precedence_lst[Token::OP_PLUSAGN]  = 3;
-    precedence_lst[Token::OP_MINUSAGN] = 3;
-    precedence_lst[Token::OP_FACAGN]   = 3;
-    precedence_lst[Token::OP_MULAGN]   = 3;
+    precedence_lst[Token::OP_PLUS_ASSIGN]  = 3;
+    precedence_lst[Token::OP_MINUS_ASSIGN] = 3;
+    precedence_lst[Token::OP_DIV_ASSIGN]   = 3;
+    precedence_lst[Token::OP_MULT_ASSIGN]   = 3;
 
     precedence_sep_lst[Token::S_COMMA] = 2;
 
@@ -83,7 +83,7 @@ bool Parser::is_open() const {
     return scanner.is_open();
 }
 
-NodePtr Parser::parse() {
+NodePtr Parser::parse_simple_expressions() {
     return syntax_tree = parse_recursive(1);
 }
 
@@ -95,27 +95,23 @@ NodePtr Parser::parse_recursive(int prec) {
         switch (token.category) {
         case Token::C_OPERATOR: {
             switch ((Token::Operator)token) {
-            case Token::OP_LSQBRAC: {
+            case Token::OP_LEFT_BRACKET: {
                 right = parse_recursive(precedence(Token::S_COMMA));
-                if (!scanner.require({Token::OP_RSQBRAC})) {
-                    throw ParseError(token, "unexpected " +
-                                     scanner.top().strcategory() + " " +
-                                     scanner.top().strvalue() + ", need ']'");
+                if (!scanner.require({Token::OP_RIGHT_BRACKET})) {
+                    throw ParseError(token, "unexpected " + scanner.top().strcategory() + " " + scanner.top().strvalue() + ", need ']'");
                 }
                 ++scanner;
             } break;
             case Token::OP_DOT: {
                 if (!scanner.require({Token::C_IDENTIFIER})) {
-                    throw ParseError(token, "unexpected " +
-                                     scanner.top().strcategory() + " " +
-                                     scanner.top().strvalue() + ", need identifier");
+                    throw ParseError(token, "unexpected " + scanner.top().strcategory() + " " + scanner.top().strvalue() + ", need identifier");
                 }
                 right = parse_factor();
             } break;
-            case Token::OP_RSQBRAC: {
+            case Token::OP_RIGHT_BRACKET: {
                 throw ParseError(token, "unexpected ']', need '[' before");
             } break;
-            case Token::OP_CARET: {
+            case Token::OP_DEREFERENCE: {
                 right = nullptr;
             } break;
             default: right = parse_recursive(prec + 1);
@@ -143,12 +139,10 @@ NodePtr Parser::parse_factor() {
         return make_shared<EofNode>(token);
     case Token::C_OPERATOR: {
         switch ((Token::Operator)token) {
-        case Token::OP_LPAREN: {
+        case Token::OP_LEFT_PAREN: {
             NodePtr node = parse_recursive(precedence(Token::S_COMMA));
-            if (!scanner.require({Token::OP_RPAREN})) {
-                throw ParseError(token, "unexpected " +
-                                 scanner.top().strcategory() + " " +
-                                 scanner.top().strvalue() + ", need ')'");
+            if (!scanner.require({Token::OP_RIGHT_PAREN})) {
+                throw ParseError(token, "unexpected " + scanner.top().strcategory() + " " + scanner.top().strvalue() + ", need ')'");
             }
             ++scanner;
             return node;
@@ -156,7 +150,7 @@ NodePtr Parser::parse_factor() {
         case Token::OP_MINUS:
         case Token::OP_NOT:
         case Token::OP_AT: {
-            NodePtr node = parse_recursive(precedence(Token::OP_CARET));
+            NodePtr node = parse_recursive(precedence(Token::OP_DEREFERENCE));
             return new_node((Token::Operator)token, node);
         } break;
         default: throw ParseError(token, "unexpected operator \"" + token.raw_value + "\"");
@@ -174,22 +168,22 @@ string Parser::get_line(int id) {
 ostream& Parser::output_syntax_tree(ostream& os) {
     if (syntax_tree) {
         int node_id = 1;
-        walk_tree(syntax_tree, node_id, os);
+        output_tree(syntax_tree, node_id, os);
         os << '.' << endl;
     }
     return os;
 }
 
-void Parser::walk_tree(NodePtr node, int& id, ostream& os) {
+void Parser::output_tree(NodePtr node, int& id, ostream& os) {
     int this_node = id;
     os << "+ " << this_node << ' ' << node->str() << '\n';
     if (node->left) {
         os << "- " << this_node << ' ' << ++id << '\n';
-        walk_tree(node->left, id, os);
+        output_tree(node->left, id, os);
     }
     if (node->right) {
         os << "- " << this_node << ' ' << ++id << '\n';
-        walk_tree(node->right, id, os);
+        output_tree(node->right, id, os);
     }
 }
 

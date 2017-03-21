@@ -84,40 +84,40 @@ public:
 
     enum Operator : int {
         OP_EQUAL = 1,
-        OP_GTHAN,
-        OP_LTHAN,
+        OP_GREATER,
+        OP_LESS,
         OP_PLUS,
         OP_MINUS,
-        OP_SLASH,
-        OP_ASTER,
-        OP_LBRACE,
-        OP_LPAREN,
+        OP_SLASH_DIV,
+        OP_MULT,
+        OP_LEFT_BRACE,
+        OP_LEFT_PAREN,
         OP_DOT,
         OP_AT,
-        OP_ASSIGN,    // :=
-        OP_PLUSAGN,   // +=
-        OP_MINUSAGN,  // -=
-        OP_FACAGN,    // /=
-        OP_MULAGN,    // *=
-        OP_LEQ,       // <=
-        OP_GEQ,       // >=
-        OP_NEQ,       // <>
-        OP_DOTDOT,    // ..
-        OP_DIRECTIVE, // {$
-        OP_RPAREN,    // )
-        OP_LSQBRAC,   // [
-        OP_RSQBRAC,   // ]
-        OP_RBRACE,    // }
-        OP_CARET,     // ^
-        OP_SHL,       // <<
-        OP_SHR,       // >>
-        OP_AND,       // and
-        OP_OR,        // or
-        OP_NOT,       // not
-        OP_XOR,       // xor
-        OP_IN,        // in
-        OP_DIV,       // div
-        OP_MOD,       // mod
+        OP_ASSIGN,        // :=
+        OP_PLUS_ASSIGN,   // +=
+        OP_MINUS_ASSIGN,  // -=
+        OP_DIV_ASSIGN,    // /=
+        OP_MULT_ASSIGN,   // *=
+        OP_LEQ,           // <=
+        OP_GEQ,           // >=
+        OP_NEQ,           // <>
+        OP_DOTDOT,        // ..
+        OP_DIRECTIVE,     // {$
+        OP_RIGHT_PAREN,   // )
+        OP_LEFT_BRACKET,  // [
+        OP_RIGHT_BRACKET, // ]
+        OP_RIGHT_BRACE,   // }
+        OP_DEREFERENCE,   // ^
+        OP_SHL,           // <<
+        OP_SHR,           // >>
+        OP_AND,           // and
+        OP_OR,            // or
+        OP_NOT,           // not
+        OP_XOR,           // xor
+        OP_IN,            // in
+        OP_DIV,           // div
+        OP_MOD,           // mod
         NOT_OPERATOR,
         SIZEOF_OPERATORS,
     };

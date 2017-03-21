@@ -35,7 +35,7 @@ void parse(const string& filename) {
         return;
     }
     try {
-        parser.parse();
+        parser.parse_simple_expressions();
     } catch (ParseError pe) {
         cerr << pe.msg() << ":\n";
         cerr << parser.get_line(pe.pos().line) << endl;

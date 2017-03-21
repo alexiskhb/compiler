@@ -26,6 +26,8 @@
 ../test-parse/caret-06-01.in ../test-parse/caret-06-01.std
 ../test-parse/caret-06-02.in ../test-parse/caret-06-02.tree
 ../test-parse/caret-06-02.in ../test-parse/caret-06-02.std
+../test-parse/char-01.in ../test-parse/char-01.tree
+../test-parse/char-01.in ../test-parse/char-01.std
 ../test-parse/commas-01.in ../test-parse/commas-01.tree
 ../test-parse/commas-01.in ../test-parse/commas-01.std
 ../test-parse/commas-02.in ../test-parse/commas-02.tree

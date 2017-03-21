@@ -11,12 +11,12 @@
 class Parser {
 public:
     Parser(const std::string& filename);
-    NodePtr parse();
+    NodePtr parse_simple_expressions();
     bool is_open() const;
     std::ostream& output_syntax_tree(std::ostream&);
     std::string get_line(int);
 private:
-    void walk_tree(NodePtr, int&, std::ostream&);
+    void output_tree(NodePtr, int&, std::ostream&);
     NodePtr parse_factor();
     NodePtr parse_recursive(int);
     NodePtr new_node(Token::Operator, NodePtr, NodePtr);

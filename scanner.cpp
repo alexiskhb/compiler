@@ -41,29 +41,29 @@ bool Scanner::init_states() {
     state_to_cat[ST_MLINECMT] = Token::C_COMMENT;
 
     state_to_subcat[ST_EQUAL] = Token::OP_EQUAL;
-    state_to_subcat[ST_GTHAN] = Token::OP_GTHAN;
-    state_to_subcat[ST_LTHAN] = Token::OP_LTHAN;
+    state_to_subcat[ST_GTHAN] = Token::OP_GREATER;
+    state_to_subcat[ST_LTHAN] = Token::OP_LESS;
     state_to_subcat[ST_PLUS] = Token::OP_PLUS;
     state_to_subcat[ST_MINUS] = Token::OP_MINUS;
-    state_to_subcat[ST_SLASH] = Token::OP_SLASH;
-    state_to_subcat[ST_ASTER] = Token::OP_ASTER;
-    state_to_subcat[ST_LBRACE] = Token::OP_LBRACE;
-    state_to_subcat[ST_LPAREN] = Token::OP_LPAREN;
+    state_to_subcat[ST_SLASH] = Token::OP_SLASH_DIV;
+    state_to_subcat[ST_ASTER] = Token::OP_MULT;
+    state_to_subcat[ST_LBRACE] = Token::OP_LEFT_BRACE;
+    state_to_subcat[ST_LPAREN] = Token::OP_LEFT_PAREN;
     state_to_subcat[ST_ASSIGN] = Token::OP_ASSIGN;
-    state_to_subcat[ST_PLUSAGN] = Token::OP_PLUSAGN;
-    state_to_subcat[ST_MINUSAGN] = Token::OP_MINUSAGN;
-    state_to_subcat[ST_FACAGN] = Token::OP_FACAGN;
-    state_to_subcat[ST_MULAGN] = Token::OP_MULAGN;
+    state_to_subcat[ST_PLUSAGN] = Token::OP_PLUS_ASSIGN;
+    state_to_subcat[ST_MINUSAGN] = Token::OP_MINUS_ASSIGN;
+    state_to_subcat[ST_FACAGN] = Token::OP_DIV_ASSIGN;
+    state_to_subcat[ST_MULAGN] = Token::OP_MULT_ASSIGN;
     state_to_subcat[ST_LEQ] = Token::OP_LEQ;
     state_to_subcat[ST_GEQ] = Token::OP_GEQ;
     state_to_subcat[ST_NEQ] = Token::OP_NEQ;
     state_to_subcat[ST_DOTDOT] = Token::OP_DOTDOT;
     state_to_subcat[ST_DIRECTIVE] = Token::OP_DIRECTIVE;
-    state_to_subcat[ST_RPAREN] = Token::OP_RPAREN;
-    state_to_subcat[ST_LSQBRAC] = Token::OP_LSQBRAC;
-    state_to_subcat[ST_RSQBRAC] = Token::OP_RSQBRAC;
-    state_to_subcat[ST_RBRACE] = Token::OP_RBRACE;
-    state_to_subcat[ST_CARET] = Token::OP_CARET;
+    state_to_subcat[ST_RPAREN] = Token::OP_RIGHT_PAREN;
+    state_to_subcat[ST_LSQBRAC] = Token::OP_LEFT_BRACKET;
+    state_to_subcat[ST_RSQBRAC] = Token::OP_RIGHT_BRACKET;
+    state_to_subcat[ST_RBRACE] = Token::OP_RIGHT_BRACE;
+    state_to_subcat[ST_CARET] = Token::OP_DEREFERENCE;
     state_to_subcat[ST_SHL] = Token::OP_SHL;
     state_to_subcat[ST_SHR] = Token::OP_SHR;
     state_to_subcat[ST_DOT] = Token::OP_DOT;
@@ -525,7 +525,6 @@ bool Scanner::last_token_success() const {
 
 Token Scanner::require(initializer_list<Token::Operator> ops) {
     Token token = top();
-//    cerr << token << endl;
     for(Token::Operator op: ops) {
         if (token == op) {
             return token;
