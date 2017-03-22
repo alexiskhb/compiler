@@ -1,0 +1,2 @@
+at (1:1): "]" expected, but ";" found:
+w[1;3]

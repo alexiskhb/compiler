@@ -11,18 +11,20 @@
 class Parser {
 public:
     Parser(const std::string& filename);
+    NodePtr parse_program();
     NodePtr parse_simple_expressions();
     bool is_open() const;
     std::ostream& output_syntax_tree(std::ostream&);
     std::string get_line(int);
 private:
-    void output_tree(NodePtr, int&, std::ostream&);
-    NodePtr parse_factor();
-    NodePtr parse_recursive(int);
-    NodePtr new_node(Token::Operator, NodePtr, NodePtr);
-    NodePtr new_node(Token::Operator, NodePtr);
-    NodePtr new_node(Token::Separator, NodePtr, NodePtr);
-    NodePtr new_literal_factor(const Token&);
+//    void output_subtree(BinaryOperatorNode, int&, std::ostream&);
+    void output_subtree(NodePtr, int&, std::ostream&);
+    void require(std::initializer_list<Token::Operator>, Pos, const std::string&, const std::string&);
+    void require(std::initializer_list<Token::Category>, Pos, const std::string&, const std::string&);
+    ExpressionNodePtr parse_factor();
+    ExpressionNodePtr parse_expression(int);
+    ExpressionNodePtr new_literal_factor(const Token&);
+    CommaSeparatedArgsNodePtr parse_args();
     Scanner scanner;
     NodePtr syntax_tree = nullptr;
 };
@@ -46,5 +48,12 @@ private:
     std::string m_msg;
     Pos m_pos;
 };
+
+template <class T>
+void check(Node* ptr, Pos pos, const std::string& msg) {
+    if (!dynamic_cast<T*>(ptr)) {
+        throw ParseError(pos, msg);
+    }
+}
 
 #endif // PARSER_H

@@ -61,32 +61,32 @@ std::map<std::string, Token::Reserved> Token::reserved_lst =
 {"XOR", R_XOR}};
 std::map<Token::Operator, std::string> Token::operator_lst =
 {
-{Token::OP_EQUAL, "EQUAL"},
-{Token::OP_GREATER, "GTHAN"},
-{Token::OP_LESS, "LTHAN"},
-{Token::OP_PLUS, "PLUS"},
-{Token::OP_MINUS, "MINUS"},
-{Token::OP_SLASH_DIV, "SLASH"},
-{Token::OP_MULT, "ASTER"},
-{Token::OP_LEFT_BRACE, "LBRACE"},
-{Token::OP_LEFT_PAREN, "LPAREN"},
-{Token::OP_ASSIGN, "ASSIGN"},
-{Token::OP_PLUS_ASSIGN, "PLUSAGN"},
-{Token::OP_MINUS_ASSIGN, "MINUSAGN"},
-{Token::OP_DIV_ASSIGN, "FACAGN"},
-{Token::OP_MULT_ASSIGN, "MULAGN"},
-{Token::OP_LEQ, "LEQ"},
-{Token::OP_GEQ, "GEQ"},
-{Token::OP_NEQ, "NEQ"},
-{Token::OP_DOT, "DOT"},
-{Token::OP_AT, "AT"},
-{Token::OP_DOTDOT, "DOTDOT"},
-{Token::OP_DIRECTIVE, "DIRECTIVE"},
-{Token::OP_RIGHT_PAREN, "RPAREN"},
-{Token::OP_LEFT_BRACKET, "LSQBRAC"},
-{Token::OP_RIGHT_BRACKET, "RSQBRAC"},
-{Token::OP_RIGHT_BRACE, "RBRACE"},
-{Token::OP_DEREFERENCE, "CARET"},
+{Token::OP_EQUAL, "="},
+{Token::OP_GREATER, ">"},
+{Token::OP_LESS, "<"},
+{Token::OP_PLUS, "+"},
+{Token::OP_MINUS, "-"},
+{Token::OP_SLASH_DIV, "/"},
+{Token::OP_MULT, "*"},
+{Token::OP_LEFT_BRACE, "["},
+{Token::OP_LEFT_PAREN, "("},
+{Token::OP_ASSIGN, ":="},
+{Token::OP_PLUS_ASSIGN, "+="},
+{Token::OP_MINUS_ASSIGN, "-="},
+{Token::OP_DIV_ASSIGN, "/="},
+{Token::OP_MULT_ASSIGN, "*="},
+{Token::OP_LEQ, "<="},
+{Token::OP_GEQ, ">="},
+{Token::OP_NEQ, "<>"},
+{Token::OP_DOT, "."},
+{Token::OP_AT, "@"},
+{Token::OP_DOTDOT, ".."},
+{Token::OP_DIRECTIVE, "{$"},
+{Token::OP_RIGHT_PAREN, ")"},
+{Token::OP_LEFT_BRACKET, "["},
+{Token::OP_RIGHT_BRACKET, "]"},
+{Token::OP_RIGHT_BRACE, "}"},
+{Token::OP_DEREFERENCE, "^"},
 {Token::OP_SHL, "SHL"},
 {Token::OP_SHR, "SHR"},
 {Token::OP_AND, "AND"},
@@ -98,20 +98,20 @@ std::map<Token::Operator, std::string> Token::operator_lst =
 {Token::OP_MOD, "MOD"}
 };
 std::map<Token::Separator, std::string> Token::separator_lst = {
-{S_COMMA, "COMMA"},
-{S_COLON, "COLON"},
-{S_SCOLON, "SEMICOLON"}
+{Token::S_COMMA, ","},
+{Token::S_COLON, ":"},
+{Token::S_SCOLON, ";"}
 };
 std::map<Token::Reserved, Token::Operator> Token::reserved_operator_lst = {
-{R_SHL, OP_SHL},
-{R_SHR, OP_SHR},
-{R_AND, OP_AND},
-{R_OR,  OP_OR},
-{R_NOT, OP_NOT},
-{R_XOR, OP_XOR},
-{R_IN,  OP_IN},
-{R_DIV, OP_DIV},
-{R_MOD, OP_MOD}
+{Token::R_SHL, Token::OP_SHL},
+{Token::R_SHR, Token::OP_SHR},
+{Token::R_AND, Token::OP_AND},
+{Token::R_OR,  Token::OP_OR},
+{Token::R_NOT, Token::OP_NOT},
+{Token::R_XOR, Token::OP_XOR},
+{Token::R_IN,  Token::OP_IN},
+{Token::R_DIV, Token::OP_DIV},
+{Token::R_MOD, Token::OP_MOD}
 };
 
 Token::Token() {
@@ -234,7 +234,7 @@ string Token::strvalue() const {
     case C_RESERVED: return reversed_reserved_lst[(Reserved)subcategory];
     case C_SEPARATOR: return separator_lst[(Separator)subcategory];
     case C_IDENTIFIER:
-    case C_EOF: case C_COMMENT: return "";
+    case C_EOF: case C_COMMENT: return "end of file";
     default:;
     }
 

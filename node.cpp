@@ -48,7 +48,6 @@ std::map<Token::Separator, std::string> separator_lst =
 };
 
 EofNode::EofNode(const Token&) {
-
 }
 
 IntegerNode::IntegerNode(const Token& token) {
@@ -63,24 +62,32 @@ StringNode::StringNode(const Token& token) {
     value = Token::string_values[token.value_id];
 }
 
-IdentifierNode::IdentifierNode(const Token& token) {
-    name = token.raw_value;
+IdentifierNode::IdentifierNode(const Token& token) :
+    name(token.raw_value) {
 }
 
-BinaryOperator::BinaryOperator(Token::Operator a_operation, NodePtr a_left, NodePtr a_right) {
-    operation = a_operation;
-    left = a_left;
-    right = a_right;
+ArrayAccessNode::ArrayAccessNode(ExpressionNodePtr array, CommaSeparatedArgsNodePtr index) :
+    array(array), index(index) {
 }
 
-SeparatedPair::SeparatedPair(Token::Separator a_separator, NodePtr a_left, NodePtr a_right) {
-    separator = a_separator;
-    left = a_left;
-    right = a_right;
+BinaryOperatorNode::BinaryOperatorNode(Token::Operator operation, ExpressionNodePtr left, ExpressionNodePtr right) :
+    operation(operation), left(left), right(right) {
 }
 
-UnaryOperator::UnaryOperator(Token::Operator operation, NodePtr node) : BinaryOperator(operation, node, nullptr) {
+CommaSeparatedArgsNode::CommaSeparatedArgsNode(ExpressionNodePtr expr) {
+    args.push_back(expr);
+}
 
+FunctionCallNode::FunctionCallNode(IdentifierNodePtr func_id, CommaSeparatedArgsNodePtr args) :
+    function_identifier(func_id), args(args) {
+}
+
+UnaryOperatorNode::UnaryOperatorNode(Token::Operator operation, ExpressionNodePtr node) :
+    operation(operation), node(node) {
+}
+
+RecordAccessNode::RecordAccessNode(ExpressionNodePtr record, IdentifierNodePtr field) :
+    record(record), field(field) {
 }
 
 string Node::str() {
@@ -88,7 +95,7 @@ string Node::str() {
 }
 
 string EofNode::str() {
-    return "";
+    return "end of file";
 }
 
 string IntegerNode::str() {
@@ -107,15 +114,31 @@ string IdentifierNode::str() {
     return name;
 }
 
-string BinaryOperator::str() {
+string BinaryOperatorNode::str() {
     return operator_lst[operation];
 }
 
-string SeparatedPair::str() {
-    return separator_lst[separator];
+string ArrayAccessNode::str() {
+    return "[]";
 }
 
-string UnaryOperator::str() {
+string CommaSeparatedArgsNode::str() {
+    return ",";
+}
+
+string CommaSeparatedIdentifiersNode::str() {
+    return ",";
+}
+
+string RecordAccessNode::str() {
+    return ".";
+}
+
+string FunctionCallNode::str() {
+    return "FUNCTION CALL";
+}
+
+string UnaryOperatorNode::str() {
     return operator_lst[operation];
 }
 
