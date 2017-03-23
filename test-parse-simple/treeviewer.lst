@@ -42,6 +42,14 @@
 ../test-parse-simple/eq-plus-mul-01.in ../test-parse-simple/eq-plus-mul-01.std
 ../test-parse-simple/eq-plus-mul-02.in ../test-parse-simple/eq-plus-mul-02.tree
 ../test-parse-simple/eq-plus-mul-02.in ../test-parse-simple/eq-plus-mul-02.std
+../test-parse-simple/function-call-00-01.in ../test-parse-simple/function-call-00-01.tree
+../test-parse-simple/function-call-00-01.in ../test-parse-simple/function-call-00-01.std
+../test-parse-simple/function-call-00-02.in ../test-parse-simple/function-call-00-02.tree
+../test-parse-simple/function-call-00-02.in ../test-parse-simple/function-call-00-02.std
+../test-parse-simple/function-call-01-01.in ../test-parse-simple/function-call-01-01.tree
+../test-parse-simple/function-call-01-01.in ../test-parse-simple/function-call-01-01.std
+../test-parse-simple/function-call-01-02.in ../test-parse-simple/function-call-01-02.tree
+../test-parse-simple/function-call-01-02.in ../test-parse-simple/function-call-01-02.std
 ../test-parse-simple/minus-00-01.in ../test-parse-simple/minus-00-01.tree
 ../test-parse-simple/minus-00-01.in ../test-parse-simple/minus-00-01.std
 ../test-parse-simple/minus-01-01.in ../test-parse-simple/minus-01-01.tree

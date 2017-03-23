@@ -7,26 +7,43 @@
 #include <algorithm>
 #include "node.h"
 #include "token.h"
+#include "symboltable.h"
 
 class Parser {
 public:
-    Parser(const std::string& filename);
-    NodePtr parse_program();
-    NodePtr parse_simple_expressions();
+    Parser(const std::string& filename, const bool strict = true);
+    PNodeProgram parse_program();
+    PNode parse_simple_expressions();
     bool is_open() const;
     std::ostream& output_syntax_tree(std::ostream&);
     std::string get_line(int);
+    void set_strict(const bool);
 private:
 //    void output_subtree(BinaryOperatorNode, int&, std::ostream&);
-    void output_subtree(NodePtr, int&, std::ostream&);
+    void output_subtree(PNode, int&, std::ostream&);
     void require(std::initializer_list<Token::Operator>, Pos, const std::string&, const std::string&);
     void require(std::initializer_list<Token::Category>, Pos, const std::string&, const std::string&);
-    ExpressionNodePtr parse_factor();
-    ExpressionNodePtr parse_expression(int);
-    ExpressionNodePtr new_literal_factor(const Token&);
-    CommaSeparatedArgsNodePtr parse_args();
+    void require(std::initializer_list<Token::Reserved>, Pos, const std::string&, const std::string&);
+    PNodeExpression parse_factor();
+    PNodeExpression parse_expression(int);
+    PNodeExpression new_literal_factor(const Token&);
+    PNodeStmtIf parse_if();
+    PNodeStmtWhile parse_while();
+    PNodeStmtRepeat parse_repeat();
+    PNodeStmtConst parse_const();
+    PNodeStmtVar parse_var();
+    PNodeStmtFor parse_for();
+    PNodeStmtProcedure parse_procedure();
+    PNodeStmtFunction parse_function();
+    PNodeStmtRecord parse_record();
+    PNodeStmtType parse_type();
+    PNodeStmtBlock parse_block();
+
+    PNodeCommaSeparatedArgs parse_args();
     Scanner scanner;
-    NodePtr syntax_tree = nullptr;
+    PNode syntax_tree = nullptr;
+    bool require_main_block = true;
+    bool require_type_declared = true;
 };
 
 class ParseError : public std::runtime_error {

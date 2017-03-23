@@ -303,3 +303,11 @@ bool operator!=(const Token& t, Token::Separator sep) {
     return !(t == sep);
 }
 
+bool operator==(const Token& t, Token::Reserved res) {
+    return t.category == Token::C_RESERVED && t.subcategory == res;
+}
+
+bool operator!=(const Token& t, Token::Reserved res) {
+    return !(t == res);
+}
+

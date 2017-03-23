@@ -543,6 +543,16 @@ Token Scanner::require(initializer_list<Token::Category> cats) {
     return Token();
 }
 
+Token Scanner::require(initializer_list<Token::Reserved> rs) {
+    Token token = top();
+    for(Token::Reserved r: rs) {
+        if (token == r) {
+            return token;
+        }
+    }
+    return Token();
+}
+
 string Scanner::get_line(int id) {
     auto pos = m_file.tellg();
     m_file.seekg(0);
@@ -592,6 +602,7 @@ bool operator==(const Scanner& scanner, Token::Separator sep) {
 bool operator!=(const Scanner& scanner, Token::Separator sep) {
     return scanner.top() != sep;
 }
+
 
 
 

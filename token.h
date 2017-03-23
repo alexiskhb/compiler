@@ -52,6 +52,9 @@ public:
     explicit operator Token::Separator() const {
         return category == C_SEPARATOR ? (Separator)subcategory : NOT_SEPARATOR;
     }
+    explicit operator Token::Reserved() const {
+        return category == C_RESERVED ? (Reserved)subcategory : NOT_RESERVED;
+    }
     operator Pos() const {
         return position;
     }
@@ -182,6 +185,7 @@ public:
         R_WHILE,
         R_WITH,
         R_XOR,
+        NOT_RESERVED,
     };
 
     enum Literal : int {
@@ -202,9 +206,11 @@ std::ostream& operator<<(std::ostream& os, const Pos& p);
 bool operator==(const Token& t, Token::Category);
 bool operator==(const Token& t, Token::Operator);
 bool operator==(const Token& t, Token::Separator);
+bool operator==(const Token& t, Token::Reserved);
 bool operator!=(const Token& t, Token::Category);
 bool operator!=(const Token& t, Token::Operator);
 bool operator!=(const Token& t, Token::Separator);
+bool operator!=(const Token& t, Token::Reserved);
 
 class BadToken : public std::exception {
 public:

@@ -47,46 +47,46 @@ std::map<Token::Separator, std::string> separator_lst =
 {Token::S_COMMA, ","},
 };
 
-EofNode::EofNode(const Token&) {
+NodeEof::NodeEof(const Token&) {
 }
 
-IntegerNode::IntegerNode(const Token& token) {
+NodeInteger::NodeInteger(const Token& token) {
     value = Token::int_values[token.value_id];
 }
 
-FloatNode::FloatNode(const Token& token) {
+NodeFloat::NodeFloat(const Token& token) {
     value = Token::float_values[token.value_id];
 }
 
-StringNode::StringNode(const Token& token) {
+NodeString::NodeString(const Token& token) {
     value = Token::string_values[token.value_id];
 }
 
-IdentifierNode::IdentifierNode(const Token& token) :
+NodeIdentifier::NodeIdentifier(const Token& token) :
     name(token.raw_value) {
 }
 
-ArrayAccessNode::ArrayAccessNode(ExpressionNodePtr array, CommaSeparatedArgsNodePtr index) :
+NodeArrayAccess::NodeArrayAccess(PNodeExpression array, PNodeCommaSeparatedArgs index) :
     array(array), index(index) {
 }
 
-BinaryOperatorNode::BinaryOperatorNode(Token::Operator operation, ExpressionNodePtr left, ExpressionNodePtr right) :
+NodeBinaryOperator::NodeBinaryOperator(Token::Operator operation, PNodeExpression left, PNodeExpression right) :
     operation(operation), left(left), right(right) {
 }
 
-CommaSeparatedArgsNode::CommaSeparatedArgsNode(ExpressionNodePtr expr) {
+NodeCommaSeparatedArgs::NodeCommaSeparatedArgs(PNodeExpression expr) {
     args.push_back(expr);
 }
 
-FunctionCallNode::FunctionCallNode(IdentifierNodePtr func_id, CommaSeparatedArgsNodePtr args) :
+NodeFunctionCall::NodeFunctionCall(PNodeIdentifier func_id, PNodeCommaSeparatedArgs args) :
     function_identifier(func_id), args(args) {
 }
 
-UnaryOperatorNode::UnaryOperatorNode(Token::Operator operation, ExpressionNodePtr node) :
+NodeUnaryOperator::NodeUnaryOperator(Token::Operator operation, PNodeExpression node) :
     operation(operation), node(node) {
 }
 
-RecordAccessNode::RecordAccessNode(ExpressionNodePtr record, IdentifierNodePtr field) :
+NodeRecordAccess::NodeRecordAccess(PNodeExpression record, PNodeIdentifier field) :
     record(record), field(field) {
 }
 
@@ -94,51 +94,51 @@ string Node::str() {
     return "";
 }
 
-string EofNode::str() {
+string NodeEof::str() {
     return "end of file";
 }
 
-string IntegerNode::str() {
+string NodeInteger::str() {
     return to_string(value);
 }
 
-string FloatNode::str() {
+string NodeFloat::str() {
     return to_string(value);
 }
 
-string StringNode::str() {
+string NodeString::str() {
     return "\"" + value + "\"";
 }
 
-string IdentifierNode::str() {
+string NodeIdentifier::str() {
     return name;
 }
 
-string BinaryOperatorNode::str() {
+string NodeBinaryOperator::str() {
     return operator_lst[operation];
 }
 
-string ArrayAccessNode::str() {
+string NodeArrayAccess::str() {
     return "[]";
 }
 
-string CommaSeparatedArgsNode::str() {
+string NodeCommaSeparatedArgs::str() {
     return ",";
 }
 
-string CommaSeparatedIdentifiersNode::str() {
+string NodeCommaSeparatedIdentifiers::str() {
     return ",";
 }
 
-string RecordAccessNode::str() {
+string NodeRecordAccess::str() {
     return ".";
 }
 
-string FunctionCallNode::str() {
+string NodeFunctionCall::str() {
     return "FUNCTION CALL";
 }
 
-string UnaryOperatorNode::str() {
+string NodeUnaryOperator::str() {
     return operator_lst[operation];
 }
 
@@ -146,12 +146,46 @@ bool Node::empty() const {
     return false;
 }
 
-bool IdentifierNode::empty() const {
+bool NodeIdentifier::empty() const {
     return name.empty();
 }
 
-
-
+string NodeStmtIf::str() {
+    return "IF";
+}
+string NodeStmtWhile::str() {
+    return "WHILE";
+}
+string NodeStmtAssign::str() {
+    return "ASSIGN";
+}
+string NodeStmtConst::str() {
+    return "CONST";
+}
+string NodeStmtRepeat::str() {
+    return "REPEAT";
+}
+string NodeStmtVar::str() {
+    return "VAR";
+}
+string NodeStmtFor::str() {
+    return "FOR";
+}
+string NodeStmtProcedure::str() {
+    return "PROCEDURE";
+}
+string NodeStmtFunction::str() {
+    return "FUNCTION";
+}
+string NodeStmtRecord::str() {
+    return "RECORD";
+}
+string NodeStmtType::str() {
+    return "TYPE";
+}
+string NodeStmtBlock::str() {
+    return "BLOCK";
+}
 
 
 

@@ -28,8 +28,8 @@ void lexical_analysis(const string& filename) {
     }
 }
 
-void parse(const string& filename) {
-    Parser parser(filename);
+void parse(const string& filename, const bool strict) {
+    Parser parser(filename, strict);
     if (!parser.is_open()) {
         std::cerr << "Could not open " << filename << endl;
         return;
@@ -45,7 +45,7 @@ void parse(const string& filename) {
 
 int main(int argc, char *argv[]) {
     cxxopts::Options options(argv[0]);
-    bool lexical = false, parser = false;
+    bool lexical = false, parser = false, not_strict = false;
     options.add_options()
             ("l,lexical", "lexical analysis", cxxopts::value<bool>(lexical))
             ("p,parse", "parse", cxxopts::value<bool>(parser))
@@ -64,6 +64,6 @@ int main(int argc, char *argv[]) {
         lexical_analysis(files[0]);
     }
     if (parser) {
-        parse(files[0]);
+        parse(files[0], !not_strict);
     }
 }

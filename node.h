@@ -5,38 +5,73 @@
 #include "token.h"
 #include <map>
 #include <memory>
+#include "symbol.h"
+#include "symboltable.h"
 
 class Node;
-class SeparatedNode;
-class ExpressionNode;
-class IntegerNode;
-class EofNode;
-class FloatNode;
-class StringNode;
-class IdentifierNode;
-class BinaryOperatorNode;
-class CommaSeparatedArgsNode;
-class FunctionCallNode;
-class CommaSeparatedIdentifiersNode;
-class UnaryOperatorNode;
-class ArrayAccessNode;
-class RecordAccessNode;
+class NodeSeparated;
+class NodeExpression;
+class NodeInteger;
+class NodeEof;
+class NodeFloat;
+class NodeString;
+class NodeIdentifier;
+class NodeBinaryOperator;
+class NodeCommaSeparatedArgs;
+class NodeFunctionCall;
+class NodeCommaSeparatedIdentifiers;
+class NodeUnaryOperator;
+class NodeArrayAccess;
+class NodeRecordAccess;
 
-typedef std::shared_ptr<Node> NodePtr;
-typedef std::shared_ptr<SeparatedNode> SeparatedNodePtr;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
-typedef std::shared_ptr<IntegerNode> IntegerNodePtr;
-typedef std::shared_ptr<EofNode> EofNodePtr;
-typedef std::shared_ptr<FloatNode> FloatNodePtr;
-typedef std::shared_ptr<StringNode> StringNodePtr;
-typedef std::shared_ptr<IdentifierNode> IdentifierNodePtr;
-typedef std::shared_ptr<BinaryOperatorNode> BinaryOperatorNodePtr;
-typedef std::shared_ptr<CommaSeparatedArgsNode> CommaSeparatedArgsNodePtr;
-typedef std::shared_ptr<FunctionCallNode> FunctionCallNodePtr;
-typedef std::shared_ptr<CommaSeparatedIdentifiersNode> CommaSeparatedIdentifiersNodePtr;
-typedef std::shared_ptr<UnaryOperatorNode> UnaryOperatorNodePtr;
-typedef std::shared_ptr<ArrayAccessNode> ArrayAccessNodePtr;
-typedef std::shared_ptr<RecordAccessNode> RecordAccessNodePtr;
+typedef std::shared_ptr<Node> PNode;
+typedef std::shared_ptr<NodeSeparated> PNodeSeparated;
+typedef std::shared_ptr<NodeExpression> PNodeExpression;
+typedef std::shared_ptr<NodeInteger> PNodeInteger;
+typedef std::shared_ptr<NodeEof> PNodeEof;
+typedef std::shared_ptr<NodeFloat> PNodeFloat;
+typedef std::shared_ptr<NodeString> PNodeString;
+typedef std::shared_ptr<NodeIdentifier> PNodeIdentifier;
+typedef std::shared_ptr<NodeBinaryOperator> PNodeBinaryOperator;
+typedef std::shared_ptr<NodeCommaSeparatedArgs> PNodeCommaSeparatedArgs;
+typedef std::shared_ptr<NodeFunctionCall> PNodeFunctionCall;
+typedef std::shared_ptr<NodeCommaSeparatedIdentifiers> PNodeCommaSeparatedIdentifiers;
+typedef std::shared_ptr<NodeUnaryOperator> PNodeUnaryOperator;
+typedef std::shared_ptr<NodeArrayAccess> PNodeArrayAccess;
+typedef std::shared_ptr<NodeRecordAccess> PNodeRecordAccess;
+
+class NodeProgram;
+class NodeStmt;
+class NodeStmtIf;
+class NodeStmtWhile;
+class NodeStmtAssign;
+class NodeStmtConst;
+class NodeStmtRepeat;
+class NodeStmtVar;
+class NodeStmtFor;
+class NodeStmtProcedure;
+class NodeStmtFunction;
+class NodeStmtRecord;
+class NodeStmtType;
+class NodeStmtBlock;
+class NodeVarDeclarationUnit;
+
+typedef std::shared_ptr<NodeProgram> PNodeProgram;
+typedef std::shared_ptr<NodeStmt> PNodeStmt;
+typedef std::shared_ptr<NodeStmtIf> PNodeStmtIf;
+typedef std::shared_ptr<NodeStmtWhile> PNodeStmtWhile;
+typedef std::shared_ptr<NodeStmtAssign> PNodeStmtAssign;
+typedef std::shared_ptr<NodeStmtConst> PNodeStmtConst;
+typedef std::shared_ptr<NodeStmtRepeat> PNodeStmtRepeat;
+typedef std::shared_ptr<NodeStmtVar> PNodeStmtVar;
+typedef std::shared_ptr<NodeStmtFor> PNodeStmtFor;
+typedef std::shared_ptr<NodeStmtProcedure> PNodeStmtProcedure;
+typedef std::shared_ptr<NodeStmtFunction> PNodeStmtFunction;
+typedef std::shared_ptr<NodeStmtRecord> PNodeStmtRecord;
+typedef std::shared_ptr<NodeStmtType> PNodeStmtType;
+typedef std::shared_ptr<NodeStmtBlock> PNodeStmtBlock;
+typedef std::shared_ptr<NodeVarDeclarationUnit> PNodeVarDeclarationUnit;
+
 
 class Node {
 public:
@@ -44,107 +79,183 @@ public:
     virtual bool empty() const;
 };
 
-class SeparatedNode : public Node {
+class NodeProgram : public Node {
+public:
+    std::vector<PNodeStmt> parts;
+};
+
+class NodeSeparated : public Node {
 public:
 };
 
-class ExpressionNode : public Node {
+class NodeExpression : public Node {
 public:
 };
 
-class EofNode : public ExpressionNode {
+class NodeEof : public NodeExpression {
 public:
-    EofNode(const Token& token);
+    NodeEof(const Token& token);
     std::string str() override;
 };
 
-class IntegerNode : public ExpressionNode {
+class NodeInteger : public NodeExpression {
 public:
-    IntegerNode(const Token& token);
+    NodeInteger(const Token& token);
     std::string str() override;
     int value;
 };
 
-class FloatNode : public ExpressionNode {
+class NodeFloat : public NodeExpression {
 public:
-    FloatNode(const Token& token);
+    NodeFloat(const Token& token);
     std::string str() override;
     long double value;
 };
 
-class StringNode : public ExpressionNode {
+class NodeString : public NodeExpression {
 public:
-    StringNode(const Token& token);
+    NodeString(const Token& token);
     std::string str() override;
     std::string value;
 };
 
-class IdentifierNode : public ExpressionNode {
+class NodeIdentifier : public NodeExpression {
 public:
-    IdentifierNode(const Token& token);
+    NodeIdentifier(const Token& token);
     bool empty() const override;
     std::string str() override;
     std::string name;
+    SymbolVariable var;
 };
 
-class BinaryOperatorNode : public ExpressionNode {
+class NodeBinaryOperator : public NodeExpression {
 public:
-    BinaryOperatorNode(Token::Operator, ExpressionNodePtr, ExpressionNodePtr);
+    NodeBinaryOperator(Token::Operator, PNodeExpression, PNodeExpression);
     std::string str() override;
     Token::Operator operation;
-    ExpressionNodePtr left = nullptr;
-    ExpressionNodePtr right = nullptr;
+    PNodeExpression left = nullptr;
+    PNodeExpression right = nullptr;
 };
 
-//class ColonSeparated
-//class SemicolonSeparated
-
-class CommaSeparatedArgsNode : public SeparatedNode {
+class NodeCommaSeparatedArgs : public NodeSeparated {
 public:
-    CommaSeparatedArgsNode(ExpressionNodePtr);
+    NodeCommaSeparatedArgs(PNodeExpression);
     std::string str() override;
-    std::vector<ExpressionNodePtr> args;
+    std::vector<PNodeExpression> args;
 };
 
-class CommaSeparatedIdentifiersNode : public SeparatedNode {
+class NodeCommaSeparatedIdentifiers : public NodeSeparated {
 public:
     std::string str() override;
-    std::vector<IdentifierNodePtr> args;
+    std::vector<PNodeIdentifier> args;
 };
 
-class FunctionCallNode : public ExpressionNode {
+class NodeFunctionCall : public NodeExpression {
 public:
-    FunctionCallNode(IdentifierNodePtr, CommaSeparatedArgsNodePtr);
+    NodeFunctionCall(PNodeIdentifier, PNodeCommaSeparatedArgs);
     std::string str() override;
-    IdentifierNodePtr function_identifier;
-    CommaSeparatedArgsNodePtr args;
+    PNodeIdentifier function_identifier;
+    PNodeCommaSeparatedArgs args;
 };
 
-class UnaryOperatorNode : public ExpressionNode {
+class NodeUnaryOperator : public NodeExpression {
 public:
-    UnaryOperatorNode(Token::Operator, ExpressionNodePtr);
+    NodeUnaryOperator(Token::Operator, PNodeExpression);
     std::string str() override;
     Token::Operator operation;
-    ExpressionNodePtr node;
+    PNodeExpression node;
 };
 
-class ArrayAccessNode : public ExpressionNode {
+class NodeArrayAccess : public NodeExpression {
 public:
-    ArrayAccessNode(ExpressionNodePtr, CommaSeparatedArgsNodePtr);
+    NodeArrayAccess(PNodeExpression, PNodeCommaSeparatedArgs);
     std::string str() override;
-    ExpressionNodePtr array;
-    CommaSeparatedArgsNodePtr index;
+    PNodeExpression array;
+    PNodeCommaSeparatedArgs index;
 };
 
-class RecordAccessNode : public ExpressionNode {
+class NodeRecordAccess : public NodeExpression {
 public:
-    RecordAccessNode(ExpressionNodePtr, IdentifierNodePtr);
+    NodeRecordAccess(PNodeExpression, PNodeIdentifier);
     std::string str() override;
-    ExpressionNodePtr record;
-    IdentifierNodePtr field;
+    PNodeExpression record;
+    PNodeIdentifier field;
 };
 
 
+class NodeStmt : public Node {
+
+};
+
+class NodeStmtIf : public NodeStmt {
+public:
+    std::string str() override;
+    NodeExpression cond;
+    NodeStmt then_stmt;
+    NodeStmt else_stmt;
+};
+
+class NodeStmtWhile : public NodeStmt {
+public:
+    std::string str() override;
+    NodeExpression cond;
+    NodeStmt stmt;
+};
+
+class NodeStmtAssign : public NodeStmt {
+public:
+    std::string str() override;
+    NodeExpression left;
+    NodeExpression right;
+};
+
+class NodeStmtConst : public NodeStmt {
+public:
+    std::string str() override;
+};
+
+class NodeStmtRepeat : public NodeStmt {
+public:
+    std::string str() override;
+    NodeExpression cond;
+    NodeStmt stmt;
+};
+
+class NodeVarDeclarationUnit : public Node {
+public:
+    PNodeCommaSeparatedIdentifiers vars;
+    PSymbolType type;
+};
+
+class NodeStmtVar : public NodeStmt {
+public:
+    std::string str() override;
+    std::vector<PNodeVarDeclarationUnit> vars;
+};
+
+class NodeStmtFor : public NodeStmt {
+    std::string str() override;
+};
+
+class NodeStmtProcedure : public NodeStmt {
+    std::string str() override;
+};
+
+class NodeStmtFunction : public NodeStmt {
+    std::string str() override;
+};
+
+class NodeStmtRecord : public NodeStmt {
+    std::string str() override;
+};
+
+class NodeStmtType : public NodeStmt {
+    std::string str() override;
+};
+
+class NodeStmtBlock : public NodeStmt {
+    std::string str() override;
+};
 
 
 #endif // NODE_H

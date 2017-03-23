@@ -5,6 +5,8 @@ using namespace std;
 int precedence_lst[Token::SIZEOF_OPERATORS];
 int precedence_sep_lst[Token::SIZEOF_SEPARATORS];
 
+SymTable global_symtable;
+
 int PREC_MAX;
 bool init_precedence() {
     fill(precedence_lst, precedence_lst + Token::SIZEOF_OPERATORS, 0);
@@ -76,20 +78,83 @@ int precedence(Token::Operator op) {
     return precedence_lst[op];
 }
 
-Parser::Parser(const string& filename) {
+Parser::Parser(const string& filename, const bool strict) {
     static bool init = init_precedence();
     scanner.open(filename);
+    set_strict(strict);
 }
 
 bool Parser::is_open() const {
     return scanner.is_open();
 }
 
-NodePtr Parser::parse_program() {
-
+PNodeProgram Parser::parse_program() {
+    PNodeProgram program;
+    while(scanner == Token::C_RESERVED) {
+        Token token = scanner++;
+        switch((Token::Reserved)token) {
+        case Token::R_CONST:     program->parts.push_back(parse_const()); break;
+        case Token::R_VAR:       program->parts.push_back(parse_var()); break;
+        case Token::R_PROCEDURE: program->parts.push_back(parse_procedure()); break;
+        case Token::R_FUNCTION:  program->parts.push_back(parse_function()); break;
+        case Token::R_RECORD:    program->parts.push_back(parse_record()); break;
+        case Token::R_TYPE:      program->parts.push_back(parse_type()); break;
+        case Token::R_BEGIN:     program->parts.push_back(parse_block()); return program;
+        default: throw ParseError(token, "unexpected \"" + token.raw_value + "\"");
+        }
+    }
+    if (require_main_block) {
+        require({Token::R_BEGIN}, scanner.top(), "begin", "end of file");
+    }
+    return program;
 }
 
-NodePtr Parser::parse_simple_expressions() {
+PNodeStmtIf Parser::parse_if() {
+    return nullptr;
+}
+
+PNodeStmtWhile Parser::parse_while() {
+    return nullptr;
+}
+
+PNodeStmtRepeat Parser::parse_repeat() {
+    return nullptr;
+}
+
+PNodeStmtConst Parser::parse_const() {
+    return nullptr;
+}
+
+PNodeStmtVar Parser::parse_var() {
+    return nullptr;
+}
+
+PNodeStmtFor Parser::parse_for() {
+    return nullptr;
+}
+
+PNodeStmtProcedure Parser::parse_procedure() {
+    return nullptr;
+}
+
+PNodeStmtFunction Parser::parse_function() {
+    return nullptr;
+}
+
+PNodeStmtRecord Parser::parse_record() {
+    return nullptr;
+}
+
+PNodeStmtType Parser::parse_type() {
+    return nullptr;
+}
+
+PNodeStmtBlock Parser::parse_block() {
+    return nullptr;
+}
+
+
+PNode Parser::parse_simple_expressions() {
     return syntax_tree = parse_expression(1);
 }
 
@@ -105,9 +170,15 @@ void Parser::require(initializer_list<Token::Category> cats, Pos pos, const stri
     }
 }
 
-CommaSeparatedArgsNodePtr Parser::parse_args() {
-    ExpressionNodePtr first = parse_expression(precedence(Token::OP_EQUAL));
-    CommaSeparatedArgsNodePtr result = make_shared<CommaSeparatedArgsNode>(first);
+void Parser::require(initializer_list<Token::Reserved> rs, Pos pos, const string& expected, const string& found) {
+    if (!scanner.require(rs)) {
+        throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+    }
+}
+
+PNodeCommaSeparatedArgs Parser::parse_args() {
+    PNodeExpression first = parse_expression(precedence(Token::OP_EQUAL));
+    PNodeCommaSeparatedArgs result = make_shared<NodeCommaSeparatedArgs>(first);
     while(scanner == Token::S_COMMA) {
         ++scanner;
         result->args.push_back(parse_expression(precedence(Token::OP_EQUAL)));
@@ -115,26 +186,24 @@ CommaSeparatedArgsNodePtr Parser::parse_args() {
     return result;
 }
 
-ExpressionNodePtr Parser::parse_expression(int prec) {
-    ExpressionNodePtr left = prec < PREC_MAX? parse_expression(prec + 1) : parse_factor();
+PNodeExpression Parser::parse_expression(int prec) {
+    PNodeExpression left = prec < PREC_MAX? parse_expression(prec + 1) : parse_factor();
     while (precedence(scanner) >= prec) {
+        require({Token::C_OPERATOR}, scanner.top(), "operator", scanner.top().strvalue());
         Token token = scanner++;
-        ExpressionNodePtr right;
-        if (token != Token::C_OPERATOR) {
-            throw ParseError(token, "parse_recursive: unexpected token");
-        }
+        PNodeExpression right;
         switch ((Token::Operator)token) {
         case Token::OP_LEFT_BRACKET: {
-            CommaSeparatedArgsNodePtr index = parse_args();
+            PNodeCommaSeparatedArgs index = parse_args();
             require({Token::OP_RIGHT_BRACKET}, token, "\"]\"", scanner.top().strvalue());
             ++scanner;
 //            check<IdentifierNode>(left.get(), token, "need array identifier to access");
-            left = make_shared<ArrayAccessNode>(left, index);
+            left = make_shared<NodeArrayAccess>(left, index);
         } break;
         case Token::OP_DOT: {
             require({Token::C_IDENTIFIER}, token, "indentifier", scanner.top().strvalue());
             right = parse_factor();
-            left = make_shared<RecordAccessNode>(left, dynamic_pointer_cast<IdentifierNode>(right));
+            left = make_shared<NodeRecordAccess>(left, dynamic_pointer_cast<NodeIdentifier>(right));
         } break;
         case Token::OP_RIGHT_BRACKET: {
             throw ParseError(token, "unexpected ']', need '[' before");
@@ -143,37 +212,37 @@ ExpressionNodePtr Parser::parse_expression(int prec) {
             throw ParseError(token, "unexpected ')', need '(' before");
         } break;
         case Token::OP_DEREFERENCE: {
-            return make_shared<UnaryOperatorNode>(Token::OP_DEREFERENCE, left);
+            return make_shared<NodeUnaryOperator>(Token::OP_DEREFERENCE, left);
         } break;
         case Token::OP_LEFT_PAREN: {
-            CommaSeparatedArgsNodePtr args = parse_args();
+            PNodeCommaSeparatedArgs args = parse_args();
             require({Token::OP_RIGHT_PAREN}, token, "\")\"", scanner.top().strvalue());
-            check<IdentifierNode>(left.get(), token, "need identifier to function call from");
+            check<NodeIdentifier>(left.get(), token, "need identifier to function call from");
             ++scanner;
-            return make_shared<FunctionCallNode>(dynamic_pointer_cast<IdentifierNode>(left), args);
+            return make_shared<NodeFunctionCall>(dynamic_pointer_cast<NodeIdentifier>(left), args);
         } break;
         default: {
             right = parse_expression(prec + 1);
-            left = make_shared<BinaryOperatorNode>((Token::Operator)token, left, right);
+            left = make_shared<NodeBinaryOperator>((Token::Operator)token, left, right);
         }
         }
     }
     return left;
 }
 
-ExpressionNodePtr Parser::parse_factor() {
+PNodeExpression Parser::parse_factor() {
     Token token = scanner++;
     switch ((Token::Category)token) {
     case Token::C_IDENTIFIER:
-        return make_shared<IdentifierNode>(token);
+        return make_shared<NodeIdentifier>(token);
     case Token::C_LITERAL:
         return new_literal_factor(token);
     case Token::C_EOF:
-        return make_shared<EofNode>(token);
+        return make_shared<NodeEof>(token);
     case Token::C_OPERATOR: {
         switch ((Token::Operator)token) {
         case Token::OP_LEFT_PAREN: {
-            ExpressionNodePtr node = parse_expression(precedence(Token::OP_EQUAL));
+            PNodeExpression node = parse_expression(precedence(Token::OP_EQUAL));
             require({Token::OP_RIGHT_PAREN}, token, "\")\"", scanner.top().strvalue());
             ++scanner;
             return node;
@@ -181,8 +250,8 @@ ExpressionNodePtr Parser::parse_factor() {
         case Token::OP_MINUS:
         case Token::OP_NOT:
         case Token::OP_AT: {
-            ExpressionNodePtr node = parse_expression(precedence(Token::OP_DEREFERENCE));
-            return make_shared<UnaryOperatorNode>((Token::Operator)token, node);
+            PNodeExpression node = parse_expression(precedence(Token::OP_DEREFERENCE));
+            return make_shared<NodeUnaryOperator>((Token::Operator)token, node);
         } break;
         default: throw ParseError(token, "unexpected operator \"" + token.raw_value + "\"");
         }
@@ -195,6 +264,11 @@ string Parser::get_line(int id) {
     return scanner.get_line(id);
 }
 
+void Parser::set_strict(const bool strict) {
+    require_main_block = strict;
+    require_type_declared = strict;
+}
+
 ostream& Parser::output_syntax_tree(ostream& os) {
     if (syntax_tree) {
         int node_id = 1;
@@ -204,53 +278,53 @@ ostream& Parser::output_syntax_tree(ostream& os) {
     return os;
 }
 
-void Parser::output_subtree(NodePtr node, int& id, ostream& os) {
+void Parser::output_subtree(PNode node, int& id, ostream& os) {
     int this_node = id;
     os << "+ " << this_node << ' ' << node->str() << '\n';
-    if (dynamic_pointer_cast<BinaryOperatorNode>(node)) {
+    if (dynamic_pointer_cast<NodeBinaryOperator>(node)) {
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<BinaryOperatorNode>(node)->left, id, os);
+        output_subtree(dynamic_pointer_cast<NodeBinaryOperator>(node)->left, id, os);
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<BinaryOperatorNode>(node)->right, id, os);
-    } else if (dynamic_pointer_cast<UnaryOperatorNode>(node)) {
+        output_subtree(dynamic_pointer_cast<NodeBinaryOperator>(node)->right, id, os);
+    } else if (dynamic_pointer_cast<NodeUnaryOperator>(node)) {
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<UnaryOperatorNode>(node)->node, id, os);
-    } else if (dynamic_pointer_cast<CommaSeparatedArgsNode>(node)) {
-        for(auto child: dynamic_pointer_cast<CommaSeparatedArgsNode>(node)->args) {
+        output_subtree(dynamic_pointer_cast<NodeUnaryOperator>(node)->node, id, os);
+    } else if (dynamic_pointer_cast<NodeCommaSeparatedArgs>(node)) {
+        for(auto child: dynamic_pointer_cast<NodeCommaSeparatedArgs>(node)->args) {
             os << "- " << this_node << ' ' << ++id << '\n';
             output_subtree(child, id, os);
         }
-    } else if (dynamic_pointer_cast<CommaSeparatedIdentifiersNode>(node)) {
-        for(auto child: dynamic_pointer_cast<CommaSeparatedIdentifiersNode>(node)->args) {
+    } else if (dynamic_pointer_cast<NodeCommaSeparatedIdentifiers>(node)) {
+        for(auto child: dynamic_pointer_cast<NodeCommaSeparatedIdentifiers>(node)->args) {
             os << "- " << this_node << ' ' << ++id << '\n';
             output_subtree(child, id, os);
         }
-    } else if (dynamic_pointer_cast<ArrayAccessNode>(node)) {
+    } else if (dynamic_pointer_cast<NodeArrayAccess>(node)) {
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<ArrayAccessNode>(node)->array, id, os);
+        output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->array, id, os);
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<ArrayAccessNode>(node)->index, id, os);
-    } else if (dynamic_pointer_cast<FunctionCallNode>(node)) {
+        output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->index, id, os);
+    } else if (dynamic_pointer_cast<NodeFunctionCall>(node)) {
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<FunctionCallNode>(node)->function_identifier, id, os);
+        output_subtree(dynamic_pointer_cast<NodeFunctionCall>(node)->function_identifier, id, os);
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<FunctionCallNode>(node)->args, id, os);
-    } else if (dynamic_pointer_cast<RecordAccessNode>(node)) {
+        output_subtree(dynamic_pointer_cast<NodeFunctionCall>(node)->args, id, os);
+    } else if (dynamic_pointer_cast<NodeRecordAccess>(node)) {
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<RecordAccessNode>(node)->record, id, os);
+        output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->record, id, os);
         os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<RecordAccessNode>(node)->field, id, os);
+        output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->field, id, os);
     }
 }
 
-ExpressionNodePtr Parser::new_literal_factor(const Token& token) {
+PNodeExpression Parser::new_literal_factor(const Token& token) {
     switch (token.subcategory) {
     case Token::L_FLOAT:
-        return make_shared<FloatNode>(token);
+        return make_shared<NodeFloat>(token);
     case Token::L_INTEGER:
-        return make_shared<IntegerNode>(token);
+        return make_shared<NodeInteger>(token);
     case Token::L_STRING:
-        return make_shared<StringNode>(token);
+        return make_shared<NodeString>(token);
     default:
         throw runtime_error("illegal literal type");
     }

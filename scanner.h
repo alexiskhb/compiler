@@ -23,6 +23,7 @@ public:
     Token top() const;
     Token require(std::initializer_list<Token::Operator>);
     Token require(std::initializer_list<Token::Category>);
+    Token require(std::initializer_list<Token::Reserved>);
     void open(const std::string& filename);
     bool eof() const;
     bool last_token_success() const;
@@ -34,6 +35,9 @@ public:
     }
     explicit operator Token::Separator() const {
         return static_cast<Token::Separator>(top());
+    }
+    explicit operator Token::Reserved() const {
+        return static_cast<Token::Reserved>(top());
     }
     operator Token() const {
         return top();
