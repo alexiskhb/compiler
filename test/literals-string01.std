@@ -7,4 +7,4 @@
 	and here's its end.]	"'here line starts'#13#10'	and here''s its end.'"
 (7:0)	string literal	['Poor'
 Kazimir]	"'''Poor'''#13#10'Kazimir'"
-(7:25)	EOF	[]	" "
+(7:25)	EOF	[end of file]	"EOF"

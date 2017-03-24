@@ -10,4 +10,4 @@
 (6:8)	integer literal	[1]	"%00001"
 (6:15)	integer literal	[1]	"%1"
 (6:18)	integer literal	[0]	"%0"
-(6:20)	EOF	[]	" "
+(6:20)	EOF	[end of file]	"EOF"

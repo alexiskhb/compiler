@@ -1,4 +1,4 @@
-(1:0)	identifier	[]	"ababaca"
-(1:7)	separator	[COMMA]	","
-(1:8)	identifier	[]	"acaba"
-(1:13)	EOF	[]	" "
+(1:0)	identifier	[ababaca]	"ababaca"
+(1:7)	separator	[,]	","
+(1:8)	identifier	[acaba]	"acaba"
+(1:13)	EOF	[end of file]	"EOF"

@@ -1,2 +1,1 @@
-(1:0)	comment	[]	"{123}"
-(1:4)	EOF	[]	" "
+(1:4)	EOF	[end of file]	"EOF"

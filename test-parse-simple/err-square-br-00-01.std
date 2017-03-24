@@ -1,0 +1,2 @@
+at (1:4): operator expected, but "a" found:
+a[i]a

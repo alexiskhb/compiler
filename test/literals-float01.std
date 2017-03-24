@@ -8,4 +8,4 @@
 (8:0)	float literal	[100000.000000]	"1.0e+5"
 (9:0)	float literal	[0.001000]	"0.001"
 (10:0)	float literal	[0.000000]	"10e-10"
-(10:6)	EOF	[]	" "
+(10:6)	EOF	[end of file]	"EOF"
