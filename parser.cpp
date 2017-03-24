@@ -49,7 +49,13 @@ bool init_precedence() {
     precedence_lst[Token::OP_MULT_ASSIGN]  = 4;
 
     precedence_sep_lst[Token::S_COMMA] = 3;
+
     precedence_sep_lst[Token::S_COLON] = 2;
+
+    precedence_lst[Token::OP_RIGHT_BRACKET] = 2;
+    precedence_lst[Token::OP_RIGHT_PAREN] = 2;
+
+
     precedence_sep_lst[Token::S_SCOLON] = 1;
 
     PREC_MAX = 0;
@@ -66,7 +72,7 @@ int precedence(const Token& token) {
     switch (token.category) {
     case Token::C_OPERATOR: return precedence_lst[token.subcategory];
     case Token::C_SEPARATOR: return precedence_sep_lst[token.subcategory];
-    default: return 0;
+    default: return PREC_MAX;
     }
 }
 
@@ -189,7 +195,7 @@ PNodeCommaSeparatedArgs Parser::parse_args() {
 PNodeExpression Parser::parse_expression(int prec) {
     PNodeExpression left = prec < PREC_MAX? parse_expression(prec + 1) : parse_factor();
     while (precedence(scanner) >= prec) {
-        require({Token::C_OPERATOR}, scanner.top(), "operator", scanner.top().strvalue());
+        require({Token::C_OPERATOR, Token::C_EOF}, scanner.top().position, "operator", scanner.top().strvalue());
         Token token = scanner++;
         PNodeExpression right;
         switch ((Token::Operator)token) {
@@ -210,6 +216,13 @@ PNodeExpression Parser::parse_expression(int prec) {
         } break;
         case Token::OP_RIGHT_PAREN: {
             throw ParseError(token, "unexpected ')', need '(' before");
+        } break;
+        case Token::NOT_OPERATOR: {
+            if (token != Token::C_EOF) {
+                throw ParseError(token, "unexpected token");
+            } else {
+                return left;
+            }
         } break;
         case Token::OP_DEREFERENCE: {
             return make_shared<NodeUnaryOperator>(Token::OP_DEREFERENCE, left);

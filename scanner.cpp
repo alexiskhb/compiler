@@ -479,7 +479,7 @@ void Scanner::next_token() {
         }
         if (unseparated_chars.size() == 0) {
             m_eof_returned = true;
-            m_tokens.emplace_back(m_current_token.position, Token::C_EOF, " ");
+            m_tokens.emplace_back(m_current_token.position, Token::C_EOF, "EOF");
             return;
         }
         unseparated_chars.push_back('\n');

@@ -11,7 +11,7 @@ struct Pos {
     bool operator==(const Pos& other) const {
         return fstream_pos == other.fstream_pos;
     }
-    operator bool() const {
+    explicit operator bool() const {
         return fstream_pos;
     }
     operator std::string() const {
@@ -41,7 +41,7 @@ public:
     static int is_reserved(std::string s);
     static int is_reserved_operator(Reserved);
     explicit operator bool() const {
-        return !(empty() || category == C_EOF);
+        return !empty();
     }
     explicit operator Token::Category() const {
         return category;

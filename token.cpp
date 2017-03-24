@@ -233,8 +233,9 @@ string Token::strvalue() const {
     case C_OPERATOR: return operator_lst[(Operator)subcategory];
     case C_RESERVED: return reversed_reserved_lst[(Reserved)subcategory];
     case C_SEPARATOR: return separator_lst[(Separator)subcategory];
-    case C_IDENTIFIER:
-    case C_EOF: case C_COMMENT: return "end of file";
+    case C_IDENTIFIER: return raw_value;
+    case C_EOF: return "end of file";
+    case C_COMMENT: return "";
     default:;
     }
 

@@ -95,7 +95,7 @@ string Node::str() {
 }
 
 string NodeEof::str() {
-    return "end of file";
+    return "END OF FILE";
 }
 
 string NodeInteger::str() {

@@ -8,18 +8,19 @@
 using namespace std;
 
 void lexical_analysis(const string& filename) {
-    Scanner scanner(filename);
-    if (!scanner.is_open()) {
-        std::cerr << "Could not open " << filename << endl;
-        return;
-    }
-    Token token;
+    Scanner scanner;
     try {
-        while (token = scanner++) {
+        scanner.open(filename);
+        if (!scanner.is_open()) {
+            std::cerr << "Could not open " << filename << endl;
+            return;
+        }
+        Token token;
+        while ((token = scanner++) != Token::C_EOF) {
             cout << token << endl;
         }
         cout << token << endl;
-    } catch(const BadToken& e) {
+    } catch(BadToken e) {
         cerr << "bad token " <<
                 e.value() << " at (" <<
                 e.position().line << ":" <<
