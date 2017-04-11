@@ -51,83 +51,83 @@ NodeEof::NodeEof(const Token&) {
 }
 
 NodeInteger::NodeInteger(const Token& token) {
-    value = Token::int_values[token.value_id];
+	value = Token::int_values[token.value_id];
 }
 
 NodeFloat::NodeFloat(const Token& token) {
-    value = Token::float_values[token.value_id];
+	value = Token::float_values[token.value_id];
 }
 
 NodeString::NodeString(const Token& token) {
-    value = Token::string_values[token.value_id];
+	value = Token::string_values[token.value_id];
 }
 
 NodeIdentifier::NodeIdentifier(const Token& token) :
-    name(token.raw_value) {
+	name(token.raw_value) {
 }
 
 NodeArrayAccess::NodeArrayAccess(PNodeExpression array, PNodeActualParameters index) :
-    array(array), index(index) {
+	array(array), index(index) {
 }
 
 NodeBinaryOperator::NodeBinaryOperator(Token::Operator operation, PNodeExpression left, PNodeExpression right) :
-    operation(operation), left(left), right(right) {
+	operation(operation), left(left), right(right) {
 }
 
 NodeActualParameters::NodeActualParameters(PNodeExpression expr) {
-    args.push_back(expr);
+	args.push_back(expr);
 }
 
 NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PNodeActualParameters args) :
-    function_identifier(func_id), args(args) {
+	function_identifier(func_id), args(args) {
 }
 
 NodeUnaryOperator::NodeUnaryOperator(Token::Operator operation, PNodeExpression node) :
-    operation(operation), node(node) {
+	operation(operation), node(node) {
 }
 
 NodeRecordAccess::NodeRecordAccess(PNodeExpression record, PNodeIdentifier field) :
-    record(record), field(field) {
+	record(record), field(field) {
 }
 
 NodeStmtAssign::NodeStmtAssign(PNodeExpression left, PNodeExpression right) :
-    NodeBinaryOperator(Token::OP_ASSIGN, left, right) {
+	NodeBinaryOperator(Token::OP_ASSIGN, left, right) {
 }
 
 string Node::str() {
-    return "";
+	return "";
 }
 
 string NodeEof::str() {
-    return "END OF FILE";
+	return "END OF FILE";
 }
 
 string NodeInteger::str() {
-    return to_string(value);
+	return to_string(value);
 }
 
 string NodeFloat::str() {
-    return to_string(value);
+	return to_string(value);
 }
 
 string NodeString::str() {
-    return "\"" + value + "\"";
+	return "\"" + value + "\"";
 }
 
 string NodeIdentifier::str() {
-    return name;
+	return name;
 }
 
 string NodeBinaryOperator::str() {
-    return operator_lst[operation];
+	return operator_lst[operation];
 }
 
 string NodeArrayAccess::str() {
-    return "[]";
+	return "[]";
 }
 
 string NodeActualParameters::str() {
-    return ",";
+	return ",";
 }
 
 //string NodeCommaSeparatedIdentifiers::str() {
@@ -135,63 +135,63 @@ string NodeActualParameters::str() {
 //}
 
 string NodeRecordAccess::str() {
-    return ".";
+	return ".";
 }
 
 string NodeExprStmtFunctionCall::str() {
-    return "FUNCTION CALL";
+	return "FUNCTION CALL";
 }
 
 string NodeUnaryOperator::str() {
-    return operator_lst[operation];
+	return operator_lst[operation];
 }
 
 bool Node::empty() const {
-    return false;
+	return false;
 }
 
 bool NodeIdentifier::empty() const {
-    return name.empty();
+	return name.empty();
 }
 
 string NodeStmtIf::str() {
-    return "IF";
+	return "IF";
 }
 string NodeStmtWhile::str() {
-    return "WHILE";
+	return "WHILE";
 }
 string NodeStmtAssign::str() {
-    return "ASSIGN";
+	return "ASSIGN";
 }
 string NodeStmtConst::str() {
-    return "CONST";
+	return "CONST";
 }
 string NodeStmtRepeat::str() {
-    return "REPEAT";
+	return "REPEAT";
 }
 string NodeStmtVar::str() {
-    return "VAR";
+	return "VAR";
 }
 string NodeStmtFor::str() {
-    return "FOR";
+	return "FOR";
 }
 string NodeStmtProcedure::str() {
-    return "PROCEDURE " + name->str();
+	return "PROCEDURE " + name->str();
 }
 string NodeFormalParameterSection::str() {
-    return (is_var ? "var " : "") + type->str() + " FORMAL PARAMETERS:";
+	return (is_var ? "var " : "") + type->str() + " FORMAL PARAMETERS:";
 }
 string NodeStmtFunction::str() {
-    return "FUNCTION " + name->str();
+	return "FUNCTION " + name->str();
 }
 string NodeStmtRecord::str() {
-    return "RECORD";
+	return "RECORD";
 }
 string NodeStmtType::str() {
-    return "TYPE";
+	return "TYPE";
 }
 string NodeStmtBlock::str() {
-    return "BLOCK";
+	return "BLOCK";
 }
 
 

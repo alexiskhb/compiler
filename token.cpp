@@ -115,200 +115,200 @@ std::map<Token::Reserved, Token::Operator> Token::reserved_operator_lst = {
 };
 
 Token::Token() {
-    position = {0, 0, 0};
-    raw_value = "";
+	position = {0, 0, 0};
+	raw_value = "";
 }
 
 Token::Token(Pos _position, Category _category, const std::string& _raw_value, int _subcategory) {
-    position = _position;
-    category = _category;
-    raw_value = _raw_value;
-    subcategory = _subcategory;
+	position = _position;
+	category = _category;
+	raw_value = _raw_value;
+	subcategory = _subcategory;
 }
 
 void Token::clear() {
-    raw_value.clear();
-    position = {0, 0, 0};
-    subcategory = 0;
+	raw_value.clear();
+	position = {0, 0, 0};
+	subcategory = 0;
 }
 
 int Token::eval_int_literal(string s) {
-    switch(s[0]){
-    case '$':
-        s[0] = '0';
-        return stoi(s, 0, 16);
-    case '%':
-        s[0] = '0';
-        return stoi(s, 0, 2);
-    default: return stoi(s);
-    }
+	switch(s[0]){
+	case '$':
+		s[0] = '0';
+		return stoi(s, 0, 16);
+	case '%':
+		s[0] = '0';
+		return stoi(s, 0, 2);
+	default: return stoi(s);
+	}
 }
 
 string Token::eval_str_literal(const string& s) {
-    vector<string> parts = {""};
-    for(char c: s) {
-        if (c == ETX) {
-            parts.push_back("");
-            continue;
-        }
-        parts.back().push_back(c);
-    }
-    for(size_t i = 0; i < parts.size(); i++) {
-        if (parts[i][0] == '#') {
-            parts[i][0] = '0';
-            int ord = stoi(parts[i]);
-            if (ord > 127) {
-                err_msg = "character ord is too big";
+	vector<string> parts = {""};
+	for(char c: s) {
+		if (c == ETX) {
+			parts.push_back("");
+			continue;
+		}
+		parts.back().push_back(c);
+	}
+	for(size_t i = 0; i < parts.size(); i++) {
+		if (parts[i][0] == '#') {
+			parts[i][0] = '0';
+			int ord = stoi(parts[i]);
+			if (ord > 127) {
+				err_msg = "character ord is too big";
 //                throw BadToken(*this, "character ord is too big");
-            }
-            parts[i] = string(1, ord);
-            continue;
-        }
-        if (i < parts.size() - 1 && parts[i + 1][0] == '\'') {
-            parts[i].push_back('\'');
-        }
-        parts[i] = string(parts[i].begin() + 1, parts[i].end() - 1);
-    }
-    for(int i = raw_value.size() - 1; i >= 0; i--) {
-        if (raw_value[i] == ETX) {
-            raw_value.erase(i, 1);
-        }
-    }
-    return accumulate(parts.begin(), parts.end(), string(""), plus<string>());
+			}
+			parts[i] = string(1, ord);
+			continue;
+		}
+		if (i < parts.size() - 1 && parts[i + 1][0] == '\'') {
+			parts[i].push_back('\'');
+		}
+		parts[i] = string(parts[i].begin() + 1, parts[i].end() - 1);
+	}
+	for(int i = raw_value.size() - 1; i >= 0; i--) {
+		if (raw_value[i] == ETX) {
+			raw_value.erase(i, 1);
+		}
+	}
+	return accumulate(parts.begin(), parts.end(), string(""), plus<string>());
 }
 
 
 Token& Token::evaluate() {
-    switch (category) {
-    case C_OPERATOR:
-    case C_SEPARATOR:
-    case C_IDENTIFIER:
-    case C_RESERVED:{
-        value_id = -1;
-        return *this;
-    }
-    default: break;
-    }
+	switch (category) {
+	case C_OPERATOR:
+	case C_SEPARATOR:
+	case C_IDENTIFIER:
+	case C_RESERVED:{
+		value_id = -1;
+		return *this;
+	}
+	default: break;
+	}
 
-    switch (subcategory) {
-    case L_INTEGER:{
-        value_id = int_values.size();
-        int_values.push_back(eval_int_literal(raw_value));
-    } break;
-    case L_FLOAT: {
-        value_id = float_values.size();
-        float_values.push_back(stold(raw_value));
-    } break;
-    case L_STRING: {
-        value_id = string_values.size();
-        string_values.push_back(eval_str_literal(raw_value));
-    } break;
-    default: break;
-    }
-    return *this;
+	switch (subcategory) {
+	case L_INTEGER:{
+		value_id = int_values.size();
+		int_values.push_back(eval_int_literal(raw_value));
+	} break;
+	case L_FLOAT: {
+		value_id = float_values.size();
+		float_values.push_back(stold(raw_value));
+	} break;
+	case L_STRING: {
+		value_id = string_values.size();
+		string_values.push_back(eval_str_literal(raw_value));
+	} break;
+	default: break;
+	}
+	return *this;
 }
 
 bool Token::empty() const {
-    return raw_value.empty();
+	return raw_value.empty();
 }
 
 bool Token::is_broken() const {
-    return !err_msg.empty();
+	return !err_msg.empty();
 }
 
 int Token::is_reserved(string s) {
-    static bool init_rr = init_reversed_reserved();
-    transform(s.begin(), s.end(), s.begin(), (int (*)(int))toupper);
-    auto result = Token::reserved_lst.find(s);
-    return result == Token::reserved_lst.end() ? 0 : result->second;
+	static bool init_rr = init_reversed_reserved();
+	transform(s.begin(), s.end(), s.begin(), (int (*)(int))toupper);
+	auto result = Token::reserved_lst.find(s);
+	return result == Token::reserved_lst.end() ? 0 : result->second;
 }
 
 int Token::is_reserved_operator(Reserved r) {
-    auto result = Token::reserved_operator_lst.find(r);
-    return result == Token::reserved_operator_lst.end() ? 0 : result->second;
+	auto result = Token::reserved_operator_lst.find(r);
+	return result == Token::reserved_operator_lst.end() ? 0 : result->second;
 }
 
 string Token::strvalue() const {
-    switch(category) {
-    case C_OPERATOR: return operator_lst[(Operator)subcategory];
-    case C_RESERVED: return reversed_reserved_lst[(Reserved)subcategory];
-    case C_SEPARATOR: return separator_lst[(Separator)subcategory];
-    case C_IDENTIFIER: return raw_value;
-    case C_EOF: return "end of file";
-    case C_COMMENT: return "";
-    default:;
-    }
+	switch(category) {
+	case C_OPERATOR: return operator_lst[(Operator)subcategory];
+	case C_RESERVED: return reversed_reserved_lst[(Reserved)subcategory];
+	case C_SEPARATOR: return separator_lst[(Separator)subcategory];
+	case C_IDENTIFIER: return raw_value;
+	case C_EOF: return "end of file";
+	case C_COMMENT: return "";
+	default:;
+	}
 
-    if (subcategory == -1) {
-        return "";
-    }
-    switch (subcategory) {
-    case L_INTEGER: {
-        return to_string(int_values[value_id]);
-    }
-    case L_FLOAT: {
-        return to_string(float_values[value_id]);
-    }
-    case L_STRING: {
-        return string_values[value_id];
-    }
-    default: return "";
-    }
+	if (subcategory == -1) {
+		return "";
+	}
+	switch (subcategory) {
+	case L_INTEGER: {
+		return to_string(int_values[value_id]);
+	}
+	case L_FLOAT: {
+		return to_string(float_values[value_id]);
+	}
+	case L_STRING: {
+		return string_values[value_id];
+	}
+	default: return "";
+	}
 }
 
 bool Token::init_reversed_reserved() {
-    for(auto& p: reserved_lst) {
-        reversed_reserved_lst.insert({p.second, p.first});
-    }
-    return true;
+	for(auto& p: reserved_lst) {
+		reversed_reserved_lst.insert({p.second, p.first});
+	}
+	return true;
 }
 
 string Token::strcategory() const {
-    static string cat[] = {"operator", "separator", "reserved", "literal", "identifier", "comment", "EOF"};
-    static string lit[] = {"string ", "integer ", "float ", "hex integer ", "bin integer "};
-    return (category == C_LITERAL ? lit[subcategory] : "") + cat[category];
+	static string cat[] = {"operator", "separator", "reserved", "literal", "identifier", "comment", "EOF"};
+	static string lit[] = {"string ", "integer ", "float ", "hex integer ", "bin integer "};
+	return (category == C_LITERAL ? lit[subcategory] : "") + cat[category];
 }
 
 std::ostream& operator<<(std::ostream& os, const Token& t) {
-    return os << t.position << "\t" <<
-                 t.strcategory() << "\t[" <<
-                 t.strvalue() << "]\t\"" <<
-                 t.raw_value << "\"";
+	return os << t.position << "\t" <<
+				 t.strcategory() << "\t[" <<
+				 t.strvalue() << "]\t\"" <<
+				 t.raw_value << "\"";
 }
 
 std::ostream& operator<<(std::ostream& os, const Pos& p) {
-    return os << "(" << p.line << ':' << p.column << ")";
+	return os << "(" << p.line << ':' << p.column << ")";
 }
 
 bool operator==(const Token& t, Token::Category cat) {
-    return t.category == cat;
+	return t.category == cat;
 }
 
 bool operator!=(const Token& t, Token::Category cat) {
-    return t.category != cat;
+	return t.category != cat;
 }
 
 bool operator==(const Token& t, Token::Operator op) {
-    return t.category == Token::C_OPERATOR && t.subcategory == op;
+	return t.category == Token::C_OPERATOR && t.subcategory == op;
 }
 
 bool operator!=(const Token& t, Token::Operator op) {
-    return !(t == op);
+	return !(t == op);
 }
 
 bool operator==(const Token& t, Token::Separator sep) {
-    return t.category == Token::C_SEPARATOR && t.subcategory == sep;
+	return t.category == Token::C_SEPARATOR && t.subcategory == sep;
 }
 
 bool operator!=(const Token& t, Token::Separator sep) {
-    return !(t == sep);
+	return !(t == sep);
 }
 
 bool operator==(const Token& t, Token::Reserved res) {
-    return t.category == Token::C_RESERVED && t.subcategory == res;
+	return t.category == Token::C_RESERVED && t.subcategory == res;
 }
 
 bool operator!=(const Token& t, Token::Reserved res) {
-    return !(t == res);
+	return !(t == res);
 }
 

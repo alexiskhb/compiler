@@ -6,13 +6,13 @@
 
 class Symbol {
 public:
-    Symbol();
-    std::string name;
+	Symbol();
+	std::string name;
 };
 
 class SymbolVariable : public Symbol {
 public:
-    PSymbolType type;
+	PSymbolType type;
 };
 
 class SymbolType : public Symbol {
@@ -32,17 +32,17 @@ class SymbolTypeChar : public SymbolType {
 };
 
 class SymbolTypePointer : public SymbolType {
-    PSymbolType type;
+	PSymbolType type;
 };
 
 class SymbolTypeArray : public SymbolType {
-    size_t low;
-    size_t high;
-    PSymbolType type;
+	size_t low;
+	size_t high;
+	PSymbolType type;
 };
 
 class SymbolTypeRecord : public SymbolType {
-    PSymTable symtable;
+	PSymTable symtable;
 };
 
 class SymbolConst : public Symbol {
@@ -50,12 +50,12 @@ class SymbolConst : public Symbol {
 };
 
 class SymbolProcedure : public Symbol {
-    PSymTable params;
-    PSymTable locals;
+	PSymTable params;
+	PSymTable locals;
 };
 
 class SymbolFunction : public SymbolProcedure {
-    PSymbolType type;
+	PSymbolType type;
 };
 
 

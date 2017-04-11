@@ -8,11 +8,11 @@
 
 class SymTable {
 public:
-    SymTable();
-    void add(PNodeIdentifier);
+	SymTable();
+	void add(PNodeIdentifier);
 private:
-    std::vector<PSymbol> m_symbol_list;
-    std::map<std::string, size_t> m_symbol_map;
+	std::vector<PSymbol> m_symbol_list;
+	std::map<std::string, size_t> m_symbol_map;
 };
 
 #endif // SYMBOLTABLE_H
