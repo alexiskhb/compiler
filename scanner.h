@@ -22,6 +22,7 @@ public:
     void next_token();
     Token top() const;
     Token require(std::initializer_list<Token::Operator>);
+    Token require(std::initializer_list<Token::Separator>);
     Token require(std::initializer_list<Token::Category>);
     Token require(std::initializer_list<Token::Reserved>);
     void open(const std::string& filename);

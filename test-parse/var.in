@@ -1,0 +1,5 @@
+var
+	i, k: integer;
+	c: char;
+begin
+end.

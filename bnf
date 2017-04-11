@@ -107,15 +107,15 @@
 					<compound statement> ::= begin <statement part> end;
 
 						<statement part> ::= [<statement> {; <statement>}]
-	
+
 							<statement> ::= <simple statement> | <structured statement>
-	
+
 								<simple statement> ::= <assignment statement> | <function call>
-	
+
 									<assignment statement> ::= <assignable> := <expression>
-	
+
 										<assignable> := <identifier> | <expression>^
-	
+
 								<structured statement> ::= <compound statement> | <if statement> | <while statement> | <repeat statemant> | <for statement>
 
 									<if statement> ::= if <expression> then <statement> [ else <statement> ]
@@ -127,8 +127,7 @@
 									<for statement> ::= for <identifier> := <for bounds> do <statement>
 
 										<for bounds> ::= <expresion> (to | downto) <expression>
-			
+
 			<function declaration> ::= <function heading> <block>
 
 				<function heading> ::= function <identifier> ["(" <formal parameter section> {;<formal parameter section>}")"] : <simple type>;
-				

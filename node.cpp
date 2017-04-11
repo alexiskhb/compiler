@@ -43,7 +43,7 @@ std::map<Token::Operator, std::string> operator_lst =
 std::map<Token::Separator, std::string> separator_lst =
 {
 {Token::S_COLON, ":"},
-{Token::S_SCOLON, ";"},
+{Token::S_SEMICOLON, ";"},
 {Token::S_COMMA, ","},
 };
 
@@ -66,7 +66,7 @@ NodeIdentifier::NodeIdentifier(const Token& token) :
     name(token.raw_value) {
 }
 
-NodeArrayAccess::NodeArrayAccess(PNodeExpression array, PNodeCommaSeparatedArgs index) :
+NodeArrayAccess::NodeArrayAccess(PNodeExpression array, PNodeActualParameters index) :
     array(array), index(index) {
 }
 
@@ -74,11 +74,11 @@ NodeBinaryOperator::NodeBinaryOperator(Token::Operator operation, PNodeExpressio
     operation(operation), left(left), right(right) {
 }
 
-NodeCommaSeparatedArgs::NodeCommaSeparatedArgs(PNodeExpression expr) {
+NodeActualParameters::NodeActualParameters(PNodeExpression expr) {
     args.push_back(expr);
 }
 
-NodeFunctionCall::NodeFunctionCall(PNodeIdentifier func_id, PNodeCommaSeparatedArgs args) :
+NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PNodeActualParameters args) :
     function_identifier(func_id), args(args) {
 }
 
@@ -88,6 +88,10 @@ NodeUnaryOperator::NodeUnaryOperator(Token::Operator operation, PNodeExpression 
 
 NodeRecordAccess::NodeRecordAccess(PNodeExpression record, PNodeIdentifier field) :
     record(record), field(field) {
+}
+
+NodeStmtAssign::NodeStmtAssign(PNodeExpression left, PNodeExpression right) :
+    NodeBinaryOperator(Token::OP_ASSIGN, left, right) {
 }
 
 string Node::str() {
@@ -122,19 +126,19 @@ string NodeArrayAccess::str() {
     return "[]";
 }
 
-string NodeCommaSeparatedArgs::str() {
+string NodeActualParameters::str() {
     return ",";
 }
 
-string NodeCommaSeparatedIdentifiers::str() {
-    return ",";
-}
+//string NodeCommaSeparatedIdentifiers::str() {
+//    return ",";
+//}
 
 string NodeRecordAccess::str() {
     return ".";
 }
 
-string NodeFunctionCall::str() {
+string NodeExprStmtFunctionCall::str() {
     return "FUNCTION CALL";
 }
 
@@ -172,10 +176,13 @@ string NodeStmtFor::str() {
     return "FOR";
 }
 string NodeStmtProcedure::str() {
-    return "PROCEDURE";
+    return "PROCEDURE " + name->str();
+}
+string NodeFormalParameterSection::str() {
+    return (is_var ? "var " : "") + type->str() + " FORMAL PARAMETERS:";
 }
 string NodeStmtFunction::str() {
-    return "FUNCTION";
+    return "FUNCTION " + name->str();
 }
 string NodeStmtRecord::str() {
     return "RECORD";

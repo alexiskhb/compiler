@@ -1,0 +1,6 @@
+begin
+	repeat
+		a := b
+	until
+		1 <> 2
+end.

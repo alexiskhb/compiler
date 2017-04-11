@@ -100,7 +100,7 @@ std::map<Token::Operator, std::string> Token::operator_lst =
 std::map<Token::Separator, std::string> Token::separator_lst = {
 {Token::S_COMMA, ","},
 {Token::S_COLON, ":"},
-{Token::S_SCOLON, ";"}
+{Token::S_SEMICOLON, ";"}
 };
 std::map<Token::Reserved, Token::Operator> Token::reserved_operator_lst = {
 {Token::R_SHL, Token::OP_SHL},

@@ -128,7 +128,7 @@ public:
     enum Separator : int {
         S_COMMA,
         S_COLON,
-        S_SCOLON,
+        S_SEMICOLON,
         NOT_SEPARATOR,
         SIZEOF_SEPARATORS,
     };

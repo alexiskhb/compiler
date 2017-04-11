@@ -3,3 +3,8 @@
 SymTable::SymTable() {
 
 }
+
+void SymTable::add(PNodeIdentifier node) {
+
+
+}

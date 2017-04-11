@@ -69,7 +69,7 @@ bool Scanner::init_states() {
     state_to_subcat[ST_DOT] = Token::OP_DOT;
     state_to_subcat[ST_AT] = Token::OP_AT;
 
-    state_to_subcat[ST_SCOLON] = Token::S_SCOLON;
+    state_to_subcat[ST_SCOLON] = Token::S_SEMICOLON;
     state_to_subcat[ST_COLON] = Token::S_COLON;
     state_to_subcat[ST_COMMA] = Token::S_COMMA;
 
@@ -132,7 +132,7 @@ bool Scanner::init_states() {
     sttoch [chtost[CH_CARET]   = ST_CARET  ] = CH_CARET;
 
 // Common signs
-    for(int s = 0; s < SIZEOF_STATES; ++s) {
+    for (int s = 0; s < SIZEOF_STATES; ++s) {
         st[s][CH_LF] = ST_START;
         st[s][CH_SPACE] = ST_START;
         st[s][CH_TAB] = ST_START;
@@ -148,7 +148,7 @@ bool Scanner::init_states() {
             continue;
         }
         Character C = sttoch[s];
-        for(int i = 0; i < SIZEOF_STATES; i++) {
+        for (int i = 0; i < SIZEOF_STATES; i++) {
             st[i][C] = (State)s;
         }
         st[ST_START][C] = (State)s;
@@ -159,7 +159,7 @@ bool Scanner::init_states() {
     //    st[ST_LPAREN][CH_ASTER] = ST_MLINECMT;
     st[ST_SLASH][CH_SLASH] = ST_COMMENT;
     // st[ST_LBRACE][CH_ASTER] = ST_MLINECMT;
-    for(int s = 0; s < SIZEOF_STATES; ++s) {
+    for (int s = 0; s < SIZEOF_STATES; ++s) {
         st[s][CH_LBRACE] = ST_MLINECMT;
     }
 // Identifiers
@@ -234,9 +234,9 @@ bool Scanner::init_fc() {
     auto sav_iddt = bind(&Scanner::save_int_dotdot_token, this);
     auto upd_sl = bind(&Scanner::upd_strlit, this);
     auto upsav_tk = bind(&Scanner::updatesave_token, this);
-    for(int s = 0; s < SIZEOF_STATES; s++) {
+    for (int s = 0; s < SIZEOF_STATES; s++) {
         if (sttoch[s] != Character(-1)) {
-            for(int i = 0; i < SIZEOF_STATES; i++) {
+            for (int i = 0; i < SIZEOF_STATES; i++) {
                 fc[i][s] = sav_tk;
             }
         }
@@ -255,7 +255,7 @@ bool Scanner::init_fc() {
 //        fc[ST_FLOAT][i] = sav_tk;
     }
     fc[ST_START][ST_START] = 0;
-    for(int s = 0; s < SIZEOF_STATES; ++s) {
+    for (int s = 0; s < SIZEOF_STATES; ++s) {
         fc[ST_MLINECMT][s] = 0;
         fc[s][ST_ERROR] = thr_er;
         if (sttoch[s] == Character(-1)) {
@@ -271,7 +271,7 @@ bool Scanner::init_fc() {
     }
 // Assign
     fc[ST_COLON][ST_ASSIGN] = sav_tk;
-    for(State s: {ST_ASSIGN, ST_PLUSAGN, ST_MINUSAGN, ST_FACAGN, ST_MULAGN, ST_GEQ, ST_LEQ, ST_NEQ}) {
+    for (State s: {ST_ASSIGN, ST_PLUSAGN, ST_MINUSAGN, ST_FACAGN, ST_MULAGN, ST_GEQ, ST_LEQ, ST_NEQ}) {
         fc[s][ST_IDENTIFIER] = sav_tk;
         fc[s][ST_INTEGER] = sav_tk;
     }
@@ -443,7 +443,7 @@ bool Scanner::eof() const {
 
 void Scanner::throw_error() {
     string msg;
-    switch(m_state){
+    switch (m_state){
     case ST_ERROR_INVALID_BININT: msg = "invalid binary integer"; break;
     case ST_ERROR_INVALID_HEXINT: msg = "invalid hex integer"; break;
     default: msg = "unrecognized token"; break;
@@ -527,6 +527,16 @@ Token Scanner::require(initializer_list<Token::Operator> ops) {
     Token token = top();
     for(Token::Operator op: ops) {
         if (token == op) {
+            return token;
+        }
+    }
+    return Token();
+}
+
+Token Scanner::require(initializer_list<Token::Separator> seps) {
+    Token token = top();
+    for(Token::Separator sep: seps) {
+        if (token == sep) {
             return token;
         }
     }

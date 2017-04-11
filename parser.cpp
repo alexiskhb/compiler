@@ -5,7 +5,7 @@ using namespace std;
 int precedence_lst[Token::SIZEOF_OPERATORS];
 int precedence_sep_lst[Token::SIZEOF_SEPARATORS];
 
-SymTable global_symtable;
+vector<PSymTable> symtables;
 
 int PREC_MAX;
 bool init_precedence() {
@@ -56,13 +56,13 @@ bool init_precedence() {
     precedence_lst[Token::OP_RIGHT_PAREN] = 2;
 
 
-    precedence_sep_lst[Token::S_SCOLON] = 1;
+    precedence_sep_lst[Token::S_SEMICOLON] = 1;
 
     PREC_MAX = 0;
-    for(auto t: precedence_lst) {
+    for (auto t: precedence_lst) {
         PREC_MAX = max(PREC_MAX, t);
     }
-    for(auto t: precedence_sep_lst) {
+    for (auto t: precedence_sep_lst) {
         PREC_MAX = max(PREC_MAX, t);
     }
     return true;
@@ -87,7 +87,7 @@ int precedence(Token::Operator op) {
 Parser::Parser(const string& filename, const bool strict) {
     static bool init = init_precedence();
     scanner.open(filename);
-    set_strict(strict);
+    set_strictness(strict);
 }
 
 bool Parser::is_open() const {
@@ -95,97 +95,340 @@ bool Parser::is_open() const {
 }
 
 PNodeProgram Parser::parse_program() {
-    PNodeProgram program;
-    while(scanner == Token::C_RESERVED) {
-        Token token = scanner++;
+    NodeProgram* program = new NodeProgram;
+    while (scanner == Token::C_RESERVED) {
+        Token token = scanner;
         switch((Token::Reserved)token) {
-        case Token::R_CONST:     program->parts.push_back(parse_const()); break;
-        case Token::R_VAR:       program->parts.push_back(parse_var()); break;
-        case Token::R_PROCEDURE: program->parts.push_back(parse_procedure()); break;
-        case Token::R_FUNCTION:  program->parts.push_back(parse_function()); break;
-        case Token::R_RECORD:    program->parts.push_back(parse_record()); break;
-        case Token::R_TYPE:      program->parts.push_back(parse_type()); break;
-        case Token::R_BEGIN:     program->parts.push_back(parse_block()); return program;
+        case Token::R_CONST: {
+            program->parts.push_back(parse_const());
+        } break;
+        case Token::R_VAR: {
+            program->parts.push_back(parse_var());
+//            symtables[1]->add(dynamic_pointer_cast<NodeStmtVar>(program->parts.back()));
+        } break;
+        case Token::R_PROCEDURE: {
+            program->parts.push_back(parse_procedure());
+        } break;
+        case Token::R_FUNCTION: {
+            program->parts.push_back(parse_function());
+        } break;
+        case Token::R_TYPE: {
+            program->parts.push_back(parse_type_part());
+        } break;
+        case Token::R_BEGIN: {
+            program->parts.push_back(parse_block());
+            require({Token::OP_DOT}, ".");
+            return PNodeProgram(program);
+        }
         default: throw ParseError(token, "unexpected \"" + token.raw_value + "\"");
         }
+        require({Token::S_SEMICOLON}, ";");
+        ++scanner;
     }
     if (require_main_block) {
-        require({Token::R_BEGIN}, scanner.top(), "begin", "end of file");
+        require({Token::R_BEGIN}, "keyword BEGIN");
     }
-    return program;
+    return PNodeProgram(program);
 }
 
-PNodeStmtIf Parser::parse_if() {
-    return nullptr;
+PNodeStmt Parser::parse_stmt() {
+    Token token = scanner;
+    switch((Token::Reserved)token) {
+    case Token::R_IF: return parse_if ();
+    case Token::R_WHILE: return parse_while ();
+    case Token::R_REPEAT: return parse_repeat();
+    case Token::R_FOR: return parse_for ();
+    case Token::R_BEGIN: return parse_block();
+    default: {
+        PNodeExpression expr = parse_expression(precedence(Token::OP_ASSIGN));
+        if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(expr)) {
+            return dynamic_pointer_cast<NodeExprStmtFunctionCall>(expr);
+        } else if (dynamic_pointer_cast<NodeBinaryOperator>(expr)) {
+            PNodeBinaryOperator op = dynamic_pointer_cast<NodeBinaryOperator>(expr);
+            switch (op->operation) {
+            case Token::OP_ASSIGN:
+                return make_shared<NodeStmtAssign>(op->left, op->right);
+            case Token::OP_MULT_ASSIGN: {
+                PNodeBinaryOperator mult_res = make_shared<NodeBinaryOperator>(Token::OP_MULT, op->left, op->right);
+                return make_shared<NodeStmtAssign>(op->left, mult_res);
+            }
+            case Token::OP_PLUS_ASSIGN: {
+                PNodeBinaryOperator plus_res = make_shared<NodeBinaryOperator>(Token::OP_PLUS, op->left, op->right);
+                return make_shared<NodeStmtAssign>(op->left, plus_res);
+            }
+            case Token::OP_DIV_ASSIGN: {
+                PNodeBinaryOperator div_res = make_shared<NodeBinaryOperator>(Token::OP_SLASH_DIV, op->left, op->right);
+                return make_shared<NodeStmtAssign>(op->left, div_res);
+            }
+            case Token::OP_MINUS_ASSIGN: {
+                PNodeBinaryOperator minus_res = make_shared<NodeBinaryOperator>(Token::OP_MINUS, op->left, op->right);
+                return make_shared<NodeStmtAssign>(op->left, minus_res);
+            }
+            default:/*throw*/;
+            }
+        } else {
+//            throw
+        }
+    }
+    }
+    throw ParseError(scanner.top().position, scanner.top().strvalue());
 }
 
-PNodeStmtWhile Parser::parse_while() {
-    return nullptr;
+PNodeStmtIf Parser::parse_if () {
+    NodeStmtIf* node = new NodeStmtIf;
+    ++scanner;
+    node->cond = parse_expression(precedence(Token::OP_EQUAL));
+    require({Token::R_THEN}, "keyword THEN");
+    ++scanner;
+    node->then_stmt = parse_stmt();
+    if (scanner == Token::R_ELSE) {
+        ++scanner;
+        node->else_stmt = parse_stmt();
+    } else {
+        node->else_stmt = nullptr;
+    }
+    return PNodeStmtIf(node);
+}
+
+PNodeStmtWhile Parser::parse_while () {
+    NodeStmtWhile* node = new NodeStmtWhile;
+    ++scanner;
+    node->cond = parse_expression(precedence(Token::OP_EQUAL));
+    require({Token::R_DO}, "keyword DO");
+    ++scanner;
+    node->stmt = parse_stmt();
+    return PNodeStmtWhile(node);
 }
 
 PNodeStmtRepeat Parser::parse_repeat() {
-    return nullptr;
+    NodeStmtRepeat* node = new NodeStmtRepeat;
+    ++scanner;
+    node->stmt = parse_stmt();
+    require({Token::R_UNTIL}, "keyword UNTIL");
+    ++scanner;
+    node->cond = parse_expression(precedence(Token::OP_EQUAL));
+    return PNodeStmtRepeat(node);
 }
 
 PNodeStmtConst Parser::parse_const() {
-    return nullptr;
+    //!TODO
+    NodeStmtConst* node = new NodeStmtConst;
+    ++scanner;
+    return PNodeStmtConst(node);
 }
 
 PNodeStmtVar Parser::parse_var() {
-    return nullptr;
+    //!TODO
+    NodeStmtVar* node = new NodeStmtVar;
+    ++scanner;
+    while (scanner == Token::C_IDENTIFIER) {
+        node->var_units.push_back(parse_var_declaration_unit(Initializer::on));
+        if (scanner == Token::C_RESERVED) {
+            break;
+        }
+        require({Token::S_SEMICOLON}, ";");
+    }
+    for (PNodeVarDeclarationUnit& vunit: node->var_units) {
+        for (PNodeIdentifier& var: vunit->vars) {
+            symtables.back()->add(var);
+        }
+    }
+    return PNodeStmtVar(node);
 }
 
-PNodeStmtFor Parser::parse_for() {
-    return nullptr;
+PNodeStmtFor Parser::parse_for () {
+    NodeStmtFor* node = new NodeStmtFor;
+    ++scanner;
+    require({Token::C_IDENTIFIER}, "identifier");
+    node->iter_var = make_shared<NodeIdentifier>(scanner++);
+    require({Token::OP_ASSIGN}, ":=");
+    ++scanner;
+    node->low = parse_expression(precedence(Token::OP_EQUAL));
+    require({Token::R_TO, Token::R_DOWNTO}, "keyword TO or DOWNTO");
+    node->is_inc = scanner++ == Token::R_TO;
+    node->high = parse_expression(precedence(Token::OP_EQUAL));
+    require({Token::R_DO}, "keyword DO");
+    ++scanner;
+    node->stmt = parse_stmt();
+    return PNodeStmtFor(node);
+}
+
+PNodeFormalParameterSection Parser::parse_formal_parameter_section() {
+    NodeFormalParameterSection* node = new NodeFormalParameterSection;
+    if (scanner == Token::R_VAR) {
+        node->is_var = true;
+        ++scanner;
+    }
+    while (scanner == Token::C_IDENTIFIER && scanner != Token::S_COLON) {
+        node->identifiers.push_back(make_shared<NodeIdentifier>(scanner++));
+        if (scanner == Token::S_COLON) {
+            break;
+        }
+        require({Token::S_COMMA}, ",");
+        ++scanner;
+    }
+    require({Token::S_COLON}, ":");
+    ++scanner;
+    require({Token::C_IDENTIFIER}, "type identifier");
+    node->type = make_shared<NodeIdentifier>(scanner++);
+    return PNodeFormalParameterSection(node);
+}
+
+std::vector<PNodeFormalParameterSection> Parser::parse_formal_parameters() {
+    std::vector<PNodeFormalParameterSection> params;
+    while (++scanner != Token::OP_RIGHT_PAREN) {
+        params.push_back(parse_formal_parameter_section());
+        if (scanner == Token::OP_RIGHT_PAREN) {
+            break;
+        }
+        require({Token::S_SEMICOLON}, ";");
+    }
+    ++scanner;
+    return params;
+}
+
+std::vector<PNodeStmt> Parser::parse_procedure_body() {
+    std::vector<PNodeStmt> body;
+    while (scanner == Token::C_RESERVED) {
+        switch((Token::Reserved)scanner) {
+        case Token::R_CONST: {
+            body.push_back(parse_const());
+        } break;
+        case Token::R_VAR: {
+            body.push_back(parse_var());
+        } break;
+        case Token::R_TYPE: {
+            body.push_back(parse_type_part());
+        } break;
+        case Token::R_BEGIN: {
+            body.push_back(parse_block());
+            return body;
+        }
+        default: throw ParseError(scanner.top(), "unexpected token \"" + scanner.top().raw_value + "\"");
+        }
+    }
+    require({Token::R_BEGIN}, "keyword BEGIN");
+    return body;
+}
+
+PNodeStmtType Parser::parse_type_part() {
+    //!TODO
+    NodeStmtType* node = new NodeStmtType;
 }
 
 PNodeStmtProcedure Parser::parse_procedure() {
-    return nullptr;
+    NodeStmtProcedure* node = new NodeStmtProcedure;
+    ++scanner;
+    require({Token::C_IDENTIFIER}, "procedure identifier");
+    node->name = make_shared<NodeIdentifier>(scanner++);
+    if (scanner == Token::OP_LEFT_PAREN) {
+        node->params = parse_formal_parameters();
+    }
+    require({Token::S_SEMICOLON}, ";");
+    ++scanner;
+    node->parts = parse_procedure_body();
+    return PNodeStmtProcedure(node);
 }
 
 PNodeStmtFunction Parser::parse_function() {
-    return nullptr;
+    NodeStmtFunction* node = new NodeStmtFunction;
+    ++scanner;
+    require({Token::C_IDENTIFIER}, "function identifier");
+    node->name = make_shared<NodeIdentifier>(scanner++);
+    if (scanner == Token::OP_LEFT_PAREN) {
+        node->params = parse_formal_parameters();
+    }
+    require({Token::S_COLON}, ":");
+    ++scanner;
+    require({Token::C_IDENTIFIER}, "simple function type");
+    node->result_type = make_shared<NodeIdentifier>(scanner++);
+    require({Token::S_SEMICOLON}, ";");
+    ++scanner;
+    node->parts = parse_procedure_body();
+    return PNodeStmtFunction(node);
+}
+
+std::vector<PNodeIdentifier> Parser::parse_comma_separated_identifiers() {
+    PNodeIdentifier first = make_shared<NodeIdentifier>(scanner++);
+    std::vector<PNodeIdentifier> result = {first};
+    while (scanner == Token::S_COMMA) {
+        ++scanner;
+        result.push_back(make_shared<NodeIdentifier>(scanner++));
+    }
+    return result;
+}
+
+PNodeInitializer Parser::parse_initializer() {
+    NodeInitializer* node = new NodeInitializer;
+    //!TODO
+    return PNodeInitializer(node);
+}
+
+PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(bool with_initialization) {
+    NodeVarDeclarationUnit* node = new NodeVarDeclarationUnit;
+    node->vars = parse_comma_separated_identifiers();
+    require({Token::S_COLON}, ":");
+    ++scanner;
+    node->type = parse_type();
+    node->initializer = nullptr;
+    if (with_initialization) {
+        if (scanner == Token::OP_EQUAL) {
+            ++scanner;
+            node->initializer = parse_initializer();
+        }
+    } else {
+        if (scanner == Token::OP_EQUAL) {
+            // throw
+        }
+    }
+    return PNodeVarDeclarationUnit(node);
 }
 
 PNodeStmtRecord Parser::parse_record() {
-    return nullptr;
+    NodeStmtRecord* node = new NodeStmtRecord;
+    ++scanner;
+///TODO
+    return PNodeStmtRecord(node);
 }
 
-PNodeStmtType Parser::parse_type() {
-    return nullptr;
+PNodeType Parser::parse_type() {
+///TODO
+    NodeType* node = new NodeType;
+    if (scanner == Token::R_ARRAY) {
+
+    } else if (scanner == Token::R_RECORD) {
+
+    } else if (scanner == Token::OP_DEREFERENCE) {
+
+    }
+    return PNodeType(node);
 }
 
 PNodeStmtBlock Parser::parse_block() {
-    return nullptr;
-}
-
-
-PNode Parser::parse_simple_expressions() {
-    return syntax_tree = parse_expression(1);
-}
-
-void Parser::require(initializer_list<Token::Operator> ops, Pos pos, const string& expected, const string& found) {
-    if (!scanner.require(ops)) {
-        throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+    NodeStmtBlock* node = new NodeStmtBlock;
+    while (++scanner != Token::R_END) {
+        node->stmts.push_back(parse_stmt());
+        if (scanner == Token::R_END) {
+            break;
+        }
+        require({Token::S_SEMICOLON}, ";");
     }
+    require({Token::R_END}, "keyword END");
+    ++scanner;
+    return PNodeStmtBlock(node);
 }
 
-void Parser::require(initializer_list<Token::Category> cats, Pos pos, const string& expected, const string& found) {
-    if (!scanner.require(cats)) {
-        throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
-    }
+PNode Parser::parse() {
+    syntax_tree = require_main_block ?
+                dynamic_pointer_cast<Node>(parse_program()) :
+                parse_expression(1);
+    return syntax_tree;
 }
 
-void Parser::require(initializer_list<Token::Reserved> rs, Pos pos, const string& expected, const string& found) {
-    if (!scanner.require(rs)) {
-        throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
-    }
-}
-
-PNodeCommaSeparatedArgs Parser::parse_args() {
+PNodeActualParameters Parser::parse_actual_parameters() {
     PNodeExpression first = parse_expression(precedence(Token::OP_EQUAL));
-    PNodeCommaSeparatedArgs result = make_shared<NodeCommaSeparatedArgs>(first);
-    while(scanner == Token::S_COMMA) {
+    PNodeActualParameters result = make_shared<NodeActualParameters>(first);
+    while (scanner == Token::S_COMMA) {
         ++scanner;
         result->args.push_back(parse_expression(precedence(Token::OP_EQUAL)));
     }
@@ -194,16 +437,16 @@ PNodeCommaSeparatedArgs Parser::parse_args() {
 
 PNodeExpression Parser::parse_expression(int prec) {
     PNodeExpression left = prec < PREC_MAX? parse_expression(prec + 1) : parse_factor();
-    while (precedence(scanner) >= prec) {
-        require({Token::C_OPERATOR, Token::C_EOF}, scanner.top().position, "operator", scanner.top().strvalue());
+    while (precedence(scanner) >= prec && scanner != Token::C_RESERVED) {
+        require({Token::C_OPERATOR, Token::C_EOF}, "operator");
         Token token = scanner++;
         PNodeExpression right;
         switch ((Token::Operator)token) {
         case Token::OP_LEFT_BRACKET: {
-            PNodeCommaSeparatedArgs index = parse_args();
+            PNodeActualParameters index = parse_actual_parameters();
             require({Token::OP_RIGHT_BRACKET}, token, "\"]\"", scanner.top().strvalue());
             ++scanner;
-//            check<IdentifierNode>(left.get(), token, "need array identifier to access");
+            // check<IdentifierNode>(left.get(), token, "need array identifier to access");
             left = make_shared<NodeArrayAccess>(left, index);
         } break;
         case Token::OP_DOT: {
@@ -228,11 +471,11 @@ PNodeExpression Parser::parse_expression(int prec) {
             return make_shared<NodeUnaryOperator>(Token::OP_DEREFERENCE, left);
         } break;
         case Token::OP_LEFT_PAREN: {
-            PNodeCommaSeparatedArgs args = parse_args();
+            PNodeActualParameters args = parse_actual_parameters();
             require({Token::OP_RIGHT_PAREN}, token, "\")\"", scanner.top().strvalue());
             check<NodeIdentifier>(left.get(), token, "need identifier to function call from");
             ++scanner;
-            return make_shared<NodeFunctionCall>(dynamic_pointer_cast<NodeIdentifier>(left), args);
+            return make_shared<NodeExprStmtFunctionCall>(dynamic_pointer_cast<NodeIdentifier>(left), args);
         } break;
         default: {
             right = parse_expression(prec + 1);
@@ -277,57 +520,85 @@ string Parser::get_line(int id) {
     return scanner.get_line(id);
 }
 
-void Parser::set_strict(const bool strict) {
+void Parser::set_strictness(const bool strict) {
     require_main_block = strict;
-    require_type_declared = strict;
+    require_symbol_declared = strict;
 }
 
 ostream& Parser::output_syntax_tree(ostream& os) {
     if (syntax_tree) {
         int node_id = 1;
-        output_subtree(syntax_tree, node_id, os);
+        output_subtree(syntax_tree, 0, node_id, os);
         os << '.' << endl;
     }
     return os;
 }
 
-void Parser::output_subtree(PNode node, int& id, ostream& os) {
-    int this_node = id;
+int Parser::output_subtree(PNode node, int parent, int& id, ostream& os) {
+    int this_node = id++;
+    if (parent) {
+        os << "- " << parent << ' ' << this_node << '\n';
+    }
     os << "+ " << this_node << ' ' << node->str() << '\n';
     if (dynamic_pointer_cast<NodeBinaryOperator>(node)) {
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeBinaryOperator>(node)->left, id, os);
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeBinaryOperator>(node)->right, id, os);
+        output_subtree(dynamic_pointer_cast<NodeBinaryOperator>(node)->left, this_node, id, os);
+        output_subtree(dynamic_pointer_cast<NodeBinaryOperator>(node)->right, this_node, id, os);
     } else if (dynamic_pointer_cast<NodeUnaryOperator>(node)) {
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeUnaryOperator>(node)->node, id, os);
-    } else if (dynamic_pointer_cast<NodeCommaSeparatedArgs>(node)) {
-        for(auto child: dynamic_pointer_cast<NodeCommaSeparatedArgs>(node)->args) {
-            os << "- " << this_node << ' ' << ++id << '\n';
-            output_subtree(child, id, os);
-        }
-    } else if (dynamic_pointer_cast<NodeCommaSeparatedIdentifiers>(node)) {
-        for(auto child: dynamic_pointer_cast<NodeCommaSeparatedIdentifiers>(node)->args) {
-            os << "- " << this_node << ' ' << ++id << '\n';
-            output_subtree(child, id, os);
+        output_subtree(dynamic_pointer_cast<NodeUnaryOperator>(node)->node, this_node, id, os);
+    } else if (dynamic_pointer_cast<NodeActualParameters>(node)) {
+        for (auto child: dynamic_pointer_cast<NodeActualParameters>(node)->args) {
+            output_subtree(child, this_node, id, os);
         }
     } else if (dynamic_pointer_cast<NodeArrayAccess>(node)) {
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->array, id, os);
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->index, id, os);
-    } else if (dynamic_pointer_cast<NodeFunctionCall>(node)) {
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeFunctionCall>(node)->function_identifier, id, os);
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeFunctionCall>(node)->args, id, os);
+        output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->array, this_node, id, os);
+        output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->index, this_node, id, os);
+    } else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)) {
+        output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->function_identifier, this_node, id, os);
+        output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->args,this_node,  id, os);
     } else if (dynamic_pointer_cast<NodeRecordAccess>(node)) {
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->record, id, os);
-        os << "- " << this_node << ' ' << ++id << '\n';
-        output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->field, id, os);
+        output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->record, this_node, id, os);
+        output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->field, this_node, id, os);
+    } else if (dynamic_pointer_cast<NodeStmtBlock>(node)) {
+        for (auto stmt: dynamic_pointer_cast<NodeStmtBlock>(node)->stmts) {
+            output_subtree(stmt, this_node, id, os);
+        }
+    } else if (dynamic_pointer_cast<NodeProgram>(node)) {
+        for (auto part: dynamic_pointer_cast<NodeProgram>(node)->parts) {
+            output_subtree(part, this_node, id, os);
+        }
+    } else if (dynamic_pointer_cast<NodeStmtIf>(node)) {
+        output_subtree(dynamic_pointer_cast<NodeStmtIf>(node)->cond, this_node, id, os);
+        output_subtree(dynamic_pointer_cast<NodeStmtIf>(node)->then_stmt, this_node, id, os);
+        if (dynamic_pointer_cast<NodeStmtIf>(node)->else_stmt) {
+            output_subtree(dynamic_pointer_cast<NodeStmtIf>(node)->else_stmt, this_node, id, os);
+        }
+    } else if (dynamic_pointer_cast<NodeStmtWhile>(node)) {
+        output_subtree(dynamic_pointer_cast<NodeStmtWhile>(node)->cond, this_node, id, os);
+        output_subtree(dynamic_pointer_cast<NodeStmtWhile>(node)->stmt, this_node, id, os);
+    } else if (dynamic_pointer_cast<NodeStmtRepeat>(node)) {
+        output_subtree(dynamic_pointer_cast<NodeStmtRepeat>(node)->stmt, this_node, id, os);
+        output_subtree(dynamic_pointer_cast<NodeStmtRepeat>(node)->cond, this_node, id, os);
+    } else if (dynamic_pointer_cast<NodeStmtFor>(node)) {
+        int iter_var = output_subtree(dynamic_pointer_cast<NodeStmtFor>(node)->iter_var, this_node, id, os);
+        output_subtree(dynamic_pointer_cast<NodeStmtFor>(node)->low, iter_var, id, os);
+        output_subtree(dynamic_pointer_cast<NodeStmtFor>(node)->high, iter_var, id, os);
+        output_subtree(dynamic_pointer_cast<NodeStmtFor>(node)->stmt, this_node, id, os);
+    } else if (dynamic_pointer_cast<NodeStmtProcedure>(node)) {
+        if (dynamic_pointer_cast<NodeStmtFunction>(node)) {
+            output_subtree(dynamic_pointer_cast<NodeStmtFunction>(node)->result_type, this_node, id, os);
+        }
+        for (auto param: dynamic_pointer_cast<NodeStmtProcedure>(node)->params) {
+            output_subtree(param, this_node, id, os);
+        }
+        for (auto part: dynamic_pointer_cast<NodeStmtProcedure>(node)->parts) {
+            output_subtree(part, this_node, id, os);
+        }
+    } else if (dynamic_pointer_cast<NodeFormalParameterSection>(node)) {
+        for (auto param: dynamic_pointer_cast<NodeFormalParameterSection>(node)->identifiers) {
+            output_subtree(param, this_node, id, os);
+        }
     }
+    return this_node;
 }
 
 PNodeExpression Parser::new_literal_factor(const Token& token) {
@@ -341,4 +612,44 @@ PNodeExpression Parser::new_literal_factor(const Token& token) {
     default:
         throw runtime_error("illegal literal type");
     }
+}
+
+void Parser::require(initializer_list<Token::Operator> ops, Pos pos, const string& expected, const string& found) {
+    if (!scanner.require(ops)) {
+        throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+    }
+}
+
+void Parser::require(initializer_list<Token::Operator> ops, const string& expected) {
+    require(ops, scanner.top().position, expected, scanner.top().strvalue());
+}
+
+void Parser::require(initializer_list<Token::Category> cats, Pos pos, const string& expected, const string& found) {
+    if (!scanner.require(cats)) {
+        throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+    }
+}
+
+void Parser::require(initializer_list<Token::Category> cats, const string& expected) {
+    require(cats, scanner.top().position, expected, scanner.top().strvalue());
+}
+
+void Parser::require(initializer_list<Token::Reserved> rs, Pos pos, const string& expected, const string& found) {
+    if (!scanner.require(rs)) {
+        throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+    }
+}
+
+void Parser::require(initializer_list<Token::Reserved> rs, const string& expected) {
+    require(rs, scanner.top().position, expected, scanner.top().strvalue());
+}
+
+void Parser::require(initializer_list<Token::Separator> seps, Pos pos, const string& expected, const string& found) {
+    if (!scanner.require(seps)) {
+        throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+    }
+}
+
+void Parser::require(initializer_list<Token::Separator> seps, const string& expected) {
+    require(seps, scanner.top().position, expected, scanner.top().strvalue());
 }

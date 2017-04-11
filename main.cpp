@@ -36,7 +36,7 @@ void parse(const string& filename, const bool strict) {
         return;
     }
     try {
-        parser.parse_simple_expressions();
+        parser.parse();
     } catch (ParseError pe) {
         cerr << pe.msg() << ":\n";
         cerr << parser.get_line(pe.pos().line) << endl;
@@ -45,11 +45,14 @@ void parse(const string& filename, const bool strict) {
 }
 
 int main(int argc, char *argv[]) {
+//    parse("./test-parse/main-block.in", true);
+//    return 0;
     cxxopts::Options options(argv[0]);
-    bool lexical = false, parser = false, not_strict = false;
+    bool mode_lexical = false, mode_parse_simple = false, mode_parse = false;
     options.add_options()
-            ("l,lexical", "lexical analysis", cxxopts::value<bool>(lexical))
-            ("p,parse", "parse", cxxopts::value<bool>(parser))
+            ("l,lexical", "lexical analysis", cxxopts::value<bool>(mode_lexical))
+            ("s,parse-simple", "parse-simple", cxxopts::value<bool>(mode_parse_simple))
+            ("p,parse", "parse", cxxopts::value<bool>(mode_parse))
             ("positional", "", cxxopts::value<vector<string>>());
     options.parse_positional({"", "", "positional"});
     options.parse(argc, argv);
@@ -61,10 +64,23 @@ int main(int argc, char *argv[]) {
         cerr << "Alexey Shchurov, 8303A, 2017" << endl;
         return 0;
     }
-    if (lexical) {
+    if (mode_lexical) {
         lexical_analysis(files[0]);
     }
-    if (parser) {
-        parse(files[0], !not_strict);
+    if (mode_parse_simple) {
+        parse(files[0], false);
+    }
+    if (mode_parse) {
+        parse(files[0], true);
     }
 }
+
+
+
+
+
+
+
+
+
+

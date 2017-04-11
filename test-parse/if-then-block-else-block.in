@@ -1,0 +1,9 @@
+begin
+	if a = b then begin
+		a := b;
+		c := d;
+	end else begin
+		e += f;
+		f += g;
+	end;
+end.

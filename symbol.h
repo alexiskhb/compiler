@@ -1,14 +1,8 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
-#include "symboltable.h"
+#include "types.h"
 #include <memory>
-
-class SymbolType;
-class SymTable;
-
-typedef std::shared_ptr<SymbolType> PSymbolType;
-typedef std::shared_ptr<SymTable> PSymTable;
 
 class Symbol {
 public:
