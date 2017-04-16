@@ -41,12 +41,13 @@ void parse(const string& filename, const bool strict) {
 		cerr << pe.msg() << ":\n";
 		cerr << parser.get_line(pe.pos().line) << endl;
 	}
+	parser.output_symbols(cout);
 	parser.output_syntax_tree(cout);
 }
 
 int main(int argc, char *argv[]) {
-//    parse("./test-parse/main-block.in", true);
-//    return 0;
+//	parse("./test-parse/procedure.in", true);
+//	return 0;
 	cxxopts::Options options(argv[0]);
 	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false;
 	options.add_options()

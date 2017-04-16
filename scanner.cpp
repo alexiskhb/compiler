@@ -45,7 +45,7 @@ bool Scanner::init_states() {
 	state_to_subcat[ST_LTHAN] = Token::OP_LESS;
 	state_to_subcat[ST_PLUS] = Token::OP_PLUS;
 	state_to_subcat[ST_MINUS] = Token::OP_MINUS;
-	state_to_subcat[ST_SLASH] = Token::OP_SLASH_DIV;
+	state_to_subcat[ST_SLASH] = Token::OP_DIV_SLASH;
 	state_to_subcat[ST_ASTER] = Token::OP_MULT;
 	state_to_subcat[ST_LBRACE] = Token::OP_LEFT_BRACE;
 	state_to_subcat[ST_LPAREN] = Token::OP_LEFT_PAREN;

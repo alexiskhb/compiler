@@ -16,6 +16,7 @@ public:
 	PNode parse();
 	bool is_open() const;
 	std::ostream& output_syntax_tree(std::ostream&);
+	std::ostream& output_symbols(std::ostream&);
 	std::string get_line(int);
 	void set_strictness(const bool);
 private:
@@ -41,8 +42,9 @@ private:
 	PNodeStmtProcedure parse_procedure();
 	PNodeStmtType parse_type_part();
 	PNodeStmtFunction parse_function();
-	PNodeStmtRecord parse_record();
+	PNodeTypeRecord parse_record();
 	PNodeStmtBlock parse_block();
+
 	std::vector<PNodeFormalParameterSection> parse_formal_parameters();
 	std::vector<PNodeStmt> parse_procedure_body();
 	PNodeFormalParameterSection parse_formal_parameter_section();
@@ -54,8 +56,6 @@ private:
 
 	Scanner scanner;
 	PNode syntax_tree = nullptr;
-	bool require_main_block = true;
-	bool require_symbol_declared = true;
 	std::vector<SymTable> m_current_scope;
 };
 
@@ -85,5 +85,6 @@ void check(Node* ptr, Pos pos, const std::string& msg) {
 		throw ParseError(pos, msg);
 	}
 }
+
 
 #endif // PARSER_H

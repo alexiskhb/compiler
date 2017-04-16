@@ -66,7 +66,7 @@ std::map<Token::Operator, std::string> Token::operator_lst =
 {Token::OP_LESS, "<"},
 {Token::OP_PLUS, "+"},
 {Token::OP_MINUS, "-"},
-{Token::OP_SLASH_DIV, "/"},
+{Token::OP_DIV_SLASH, "/"},
 {Token::OP_MULT, "*"},
 {Token::OP_LEFT_BRACE, "["},
 {Token::OP_LEFT_PAREN, "("},

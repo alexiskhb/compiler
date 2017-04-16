@@ -5,59 +5,67 @@ using namespace std;
 int precedence_lst[Token::SIZEOF_OPERATORS];
 int precedence_sep_lst[Token::SIZEOF_SEPARATORS];
 
-vector<PSymTable> symtables;
+struct Symtables : public vector<PSymTable> {
+	PSymbol operator[](const string& s) {
+		if (!Symbol::use_strict) {
+			return nullptr;
+		}
+		for (auto t = this->rbegin(); t != this->rend(); t++) {
+			SymTable& st = **t;
+			PSymbol r = st[s];
+			if (r) {
+				return r;
+			}
+		}
+		if (Symbol::use_strict) {
+			throw runtime_error("no symbol " + s);
+		}
+		return nullptr;
+	}
+	Symtables& operator<<(const PSymbol& symbol) {
+		this->back() << symbol;
+		return *this;
+	}
+} symtables;
 
 int PREC_MAX;
 bool init_precedence() {
 	fill(precedence_lst, precedence_lst + Token::SIZEOF_OPERATORS, 0);
 	fill(precedence_sep_lst, precedence_sep_lst + Token::SIZEOF_SEPARATORS, 0);
-
-	precedence_lst[Token::OP_DOT] = 10;
-
+	precedence_lst[Token::OP_DOT] = 10;///
 	precedence_lst[Token::OP_DEREFERENCE]  = 9;
 	precedence_lst[Token::OP_LEFT_BRACKET] = 9;
-	precedence_lst[Token::OP_LEFT_PAREN] = 9;
-
+	precedence_lst[Token::OP_LEFT_PAREN]   = 9;///
 	precedence_lst[Token::OP_AT]  = 8;
-	precedence_lst[Token::OP_NOT] = 8;
-
+	precedence_lst[Token::OP_NOT] = 8;///
 	precedence_lst[Token::OP_AND]       = 7;
 	precedence_lst[Token::OP_MULT]      = 7;
-	precedence_lst[Token::OP_SLASH_DIV] = 7;
+	precedence_lst[Token::OP_DIV_SLASH] = 7;
 	precedence_lst[Token::OP_DIV]       = 7;
 	precedence_lst[Token::OP_MOD]       = 7;
 	precedence_lst[Token::OP_SHL]       = 7;
-	precedence_lst[Token::OP_SHR]       = 7;
-	
+	precedence_lst[Token::OP_SHR]       = 7;///
 	precedence_lst[Token::OP_PLUS]  = 6;
 	precedence_lst[Token::OP_MINUS] = 6;
 	precedence_lst[Token::OP_OR]    = 6;
-	precedence_lst[Token::OP_XOR]   = 6;
-	
+	precedence_lst[Token::OP_XOR]   = 6;///
 	precedence_lst[Token::OP_IN]      = 5;
 	precedence_lst[Token::OP_LEQ]     = 5;
 	precedence_lst[Token::OP_GEQ]     = 5;
 	precedence_lst[Token::OP_NEQ]     = 5;
 	precedence_lst[Token::OP_EQUAL]   = 5;
 	precedence_lst[Token::OP_GREATER] = 5;
-	precedence_lst[Token::OP_LESS]    = 5;
-	
+	precedence_lst[Token::OP_LESS]    = 5;///
 	precedence_lst[Token::OP_ASSIGN]       = 4;
 	precedence_lst[Token::OP_PLUS_ASSIGN]  = 4;
 	precedence_lst[Token::OP_MINUS_ASSIGN] = 4;
 	precedence_lst[Token::OP_DIV_ASSIGN]   = 4;
-	precedence_lst[Token::OP_MULT_ASSIGN]  = 4;
-
+	precedence_lst[Token::OP_MULT_ASSIGN]  = 4;///
 	precedence_sep_lst[Token::S_COMMA] = 3;
-
-	precedence_sep_lst[Token::S_COLON] = 2;
-
+	precedence_sep_lst[Token::S_COLON] = 2;///
 	precedence_lst[Token::OP_RIGHT_BRACKET] = 2;
-	precedence_lst[Token::OP_RIGHT_PAREN] = 2;
-
-
-	precedence_sep_lst[Token::S_SEMICOLON] = 1;
-
+	precedence_lst[Token::OP_RIGHT_PAREN]   = 2;///
+	precedence_sep_lst[Token::S_SEMICOLON] = 1;///
 	PREC_MAX = 0;
 	for (auto t: precedence_lst) {
 		PREC_MAX = max(PREC_MAX, t);
@@ -84,10 +92,23 @@ int precedence(Token::Operator op) {
 	return precedence_lst[op];
 }
 
-Parser::Parser(const string& filename, const bool strict) {
+Parser::Parser(const string& filename, const bool is_strict) {
 	static bool init = init_precedence();
 	scanner.open(filename);
-	set_strictness(strict);
+	set_strictness(is_strict);
+	symtables.clear();
+	symtables.emplace_back(new SymTable);
+	symtables <<
+	             make_shared<SymbolTypeChar>("CHAR") <<
+	             make_shared<SymbolTypeFloat>("REAL") <<
+	             make_shared<SymbolTypeFloat>("FLOAT") <<
+	             make_shared<SymbolTypeString>("STRING") <<
+	             make_shared<SymbolTypeInt>("INTEGER");
+	NodeFloat::type_sym_ptr = dynamic_pointer_cast<SymbolTypeFloat>(symtables["FLOAT"]);
+	symtables["FLOAT"] >> NodeFloat::type_sym_ptr;
+	symtables["CHAR"] >> NodeString::char_type_sym_ptr;
+	symtables["STRING"] >> NodeString::str_type_sym_ptr;
+	symtables["INTEGER"] >> NodeInteger::type_sym_ptr;
 }
 
 bool Parser::is_open() const {
@@ -96,6 +117,7 @@ bool Parser::is_open() const {
 
 PNodeProgram Parser::parse_program() {
 	NodeProgram* program = new NodeProgram;
+	symtables.emplace_back(new SymTable);
 	while (scanner == Token::C_RESERVED) {
 		Token token = scanner;
 		switch((Token::Reserved)token) {
@@ -104,7 +126,6 @@ PNodeProgram Parser::parse_program() {
 		} break;
 		case Token::R_VAR: {
 			program->parts.push_back(parse_var());
-//            symtables[1]->add(dynamic_pointer_cast<NodeStmtVar>(program->parts.back()));
 		} break;
 		case Token::R_PROCEDURE: {
 			program->parts.push_back(parse_procedure());
@@ -119,14 +140,11 @@ PNodeProgram Parser::parse_program() {
 			program->parts.push_back(parse_block());
 			require({Token::OP_DOT}, ".");
 			return PNodeProgram(program);
-
 		}
-		default: throw ParseError(token, "unexpected \"" + token.raw_value + "\"");
+		default: throw ParseError(token, "unexpected \"" + token.raw_value + "\": CONST, VAR, PROCEDURE, FUNCTION, TYPE or BEGIN expected");
 		}
-		require({Token::S_SEMICOLON}, ";");
-		++scanner;
 	}
-	if (require_main_block) {
+	if (Symbol::use_strict) {
 		require({Token::R_BEGIN}, "keyword BEGIN");
 	}
 	return PNodeProgram(program);
@@ -158,7 +176,7 @@ PNodeStmt Parser::parse_stmt() {
 				return make_shared<NodeStmtAssign>(op->left, plus_res);
 			}
 			case Token::OP_DIV_ASSIGN: {
-				PNodeBinaryOperator div_res = make_shared<NodeBinaryOperator>(Token::OP_SLASH_DIV, op->left, op->right);
+				PNodeBinaryOperator div_res = make_shared<NodeBinaryOperator>(Token::OP_DIV_SLASH, op->left, op->right);
 				return make_shared<NodeStmtAssign>(op->left, div_res);
 			}
 			case Token::OP_MINUS_ASSIGN: {
@@ -219,7 +237,6 @@ PNodeStmtConst Parser::parse_const() {
 }
 
 PNodeStmtVar Parser::parse_var() {
-	//!TODO
 	NodeStmtVar* node = new NodeStmtVar;
 	++scanner;
 	while (scanner == Token::C_IDENTIFIER) {
@@ -228,10 +245,12 @@ PNodeStmtVar Parser::parse_var() {
 			break;
 		}
 		require({Token::S_SEMICOLON}, ";");
+		++scanner;
 	}
 	for (PNodeVarDeclarationUnit& vunit: node->var_units) {
+		auto type = vunit->nodetype->symtype;
 		for (PNodeIdentifier& var: vunit->vars) {
-			symtables.back()->add(var);
+			symtables << make_shared<SymbolVariable>(var->name, type);
 		}
 	}
 	return PNodeStmtVar(node);
@@ -270,8 +289,7 @@ PNodeFormalParameterSection Parser::parse_formal_parameter_section() {
 	}
 	require({Token::S_COLON}, ":");
 	++scanner;
-	require({Token::C_IDENTIFIER}, "type identifier");
-	node->type = make_shared<NodeIdentifier>(scanner++);
+	node->type = parse_type();
 	return PNodeFormalParameterSection(node);
 }
 
@@ -318,35 +336,58 @@ PNodeStmtType Parser::parse_type_part() {
 }
 
 PNodeStmtProcedure Parser::parse_procedure() {
-	NodeStmtProcedure* node = new NodeStmtProcedure;
+	NodeStmtProcedure* procedure = new NodeStmtProcedure;
 	++scanner;
 	require({Token::C_IDENTIFIER}, "procedure identifier");
-	node->name = make_shared<NodeIdentifier>(scanner++);
+	procedure->name = make_shared<NodeIdentifier>(scanner++);
 	if (scanner == Token::OP_LEFT_PAREN) {
-		node->params = parse_formal_parameters();
+		procedure->params = parse_formal_parameters();
 	}
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
-	node->parts = parse_procedure_body();
-	return PNodeStmtProcedure(node);
+	procedure->symbol = make_shared<SymbolProcedure>(procedure->name->name);
+	for (PNodeFormalParameterSection psection: procedure->params) {
+		for (PNodeIdentifier pidentifier: psection->identifiers) {
+			procedure->symbol->params << make_shared<SymbolVariable>(pidentifier->name, psection->type->symtype);
+			procedure->symbol->locals << procedure->symbol->params->back();
+		}
+	}
+	symtables << procedure->symbol;
+	symtables.push_back(procedure->symbol->locals);
+	procedure->parts = parse_procedure_body();
+	symtables.pop_back();
+	require({Token::S_SEMICOLON}, ";");
+	++scanner;
+	return PNodeStmtProcedure(procedure);
 }
 
 PNodeStmtFunction Parser::parse_function() {
-	NodeStmtFunction* node = new NodeStmtFunction;
+	NodeStmtFunction* function = new NodeStmtFunction;
 	++scanner;
 	require({Token::C_IDENTIFIER}, "function identifier");
-	node->name = make_shared<NodeIdentifier>(scanner++);
+	function->name = make_shared<NodeIdentifier>(scanner++);
 	if (scanner == Token::OP_LEFT_PAREN) {
-		node->params = parse_formal_parameters();
+		function->params = parse_formal_parameters();
 	}
 	require({Token::S_COLON}, ":");
 	++scanner;
-	require({Token::C_IDENTIFIER}, "simple function type");
-	node->result_type = make_shared<NodeIdentifier>(scanner++);
+	function->result_type = parse_type();
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
-	node->parts = parse_procedure_body();
-	return PNodeStmtFunction(node);
+	function->symbol = make_shared<SymbolFunction>(function->name->name);
+	for (PNodeFormalParameterSection psection: function->params) {
+		for (PNodeIdentifier pidentifier: psection->identifiers) {
+			function->symbol->params << make_shared<SymbolVariable>(pidentifier->name, psection->type->symtype);
+			function->symbol->locals << function->symbol->params->back();
+		}
+	}
+	symtables << function->symbol;
+	symtables.push_back(function->symbol->locals);
+	function->parts = parse_procedure_body();
+	symtables.pop_back();
+	require({Token::S_SEMICOLON}, ";");
+	++scanner;
+	return PNodeStmtFunction(function);
 }
 
 std::vector<PNodeIdentifier> Parser::parse_comma_separated_identifiers() {
@@ -370,7 +411,7 @@ PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(bool with_initializat
 	node->vars = parse_comma_separated_identifiers();
 	require({Token::S_COLON}, ":");
 	++scanner;
-	node->type = parse_type();
+	node->nodetype = parse_type();
 	node->initializer = nullptr;
 	if (with_initialization) {
 		if (scanner == Token::OP_EQUAL) {
@@ -379,17 +420,34 @@ PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(bool with_initializat
 		}
 	} else {
 		if (scanner == Token::OP_EQUAL) {
-			// throw
+			 throw runtime_error("unexpected initializer");
 		}
 	}
 	return PNodeVarDeclarationUnit(node);
 }
 
-PNodeStmtRecord Parser::parse_record() {
-	NodeStmtRecord* node = new NodeStmtRecord;
+PNodeTypeRecord Parser::parse_record() {
+	NodeTypeRecord* node = new NodeTypeRecord;
 	++scanner;
-///TODO
-	return PNodeStmtRecord(node);
+	while (scanner == Token::C_IDENTIFIER) {
+		node->fields.push_back(parse_var_declaration_unit(Initializer::off));
+		if (scanner == Token::R_END) {
+			break;
+		}
+		require({Token::S_SEMICOLON}, ";");
+		++scanner;
+	}
+	SymbolTypeRecord* stype = new SymbolTypeRecord;
+	require({Token::R_END}, "END");
+	++scanner;
+	for (PNodeVarDeclarationUnit& vunit: node->fields) {
+		auto type = vunit->nodetype->symtype;
+		for (PNodeIdentifier& var: vunit->vars) {
+			stype->symtable << make_shared<SymbolVariable>(var->name, type);
+		}
+	}
+	node->symtype = PSymbolTypeRecord(stype);
+	return PNodeTypeRecord(node);
 }
 
 PNodeType Parser::parse_type() {
@@ -398,9 +456,14 @@ PNodeType Parser::parse_type() {
 	if (scanner == Token::R_ARRAY) {
 
 	} else if (scanner == Token::R_RECORD) {
-
+		return parse_record();
 	} else if (scanner == Token::OP_DEREFERENCE) {
 
+	} else {
+		string name = NodeIdentifier(scanner++).name;
+		if (!(symtables[name] >> node->symtype) && Symbol::use_strict) {
+			throw runtime_error("no such type " + name);
+		}
 	}
 	return PNodeType(node);
 }
@@ -420,9 +483,9 @@ PNodeStmtBlock Parser::parse_block() {
 }
 
 PNode Parser::parse() {
-	syntax_tree = require_main_block ?
-				dynamic_pointer_cast<Node>(parse_program()) :
-				parse_expression(1);
+	syntax_tree = Symbol::use_strict ?
+	                dynamic_pointer_cast<Node>(parse_program()) :
+	                parse_expression(2);
 	return syntax_tree;
 }
 
@@ -445,13 +508,12 @@ PNodeExpression Parser::parse_expression(int prec) {
 		switch ((Token::Operator)token) {
 		case Token::OP_LEFT_BRACKET: {
 			PNodeActualParameters index = parse_actual_parameters();
-			require({Token::OP_RIGHT_BRACKET}, token, "\"]\"", scanner.top().strvalue());
+			require({Token::OP_RIGHT_BRACKET}, "]");
 			++scanner;
-			// check<IdentifierNode>(left.get(), token, "need array identifier to access");
 			left = make_shared<NodeArrayAccess>(left, index);
 		} break;
 		case Token::OP_DOT: {
-			require({Token::C_IDENTIFIER}, token, "indentifier", scanner.top().strvalue());
+			require({Token::C_IDENTIFIER}, "indentifier");
 			right = parse_factor();
 			left = make_shared<NodeRecordAccess>(left, dynamic_pointer_cast<NodeIdentifier>(right));
 		} break;
@@ -472,11 +534,16 @@ PNodeExpression Parser::parse_expression(int prec) {
 			return make_shared<NodeUnaryOperator>(Token::OP_DEREFERENCE, left);
 		} break;
 		case Token::OP_LEFT_PAREN: {
-			PNodeActualParameters args = parse_actual_parameters();
-			require({Token::OP_RIGHT_PAREN}, token, "\")\"", scanner.top().strvalue());
-			check<NodeIdentifier>(left.get(), token, "need identifier to function call from");
+			PNodeExprStmtFunctionCall f;
+			f = dynamic_pointer_cast<NodeExprStmtFunctionCall>(left);
+			if (!f) {
+				throw ParseError(token, "need procedure or function identifier");
+			}
+			f->args = parse_actual_parameters();
+			f->check_parameters();
+			require({Token::OP_RIGHT_PAREN}, ")");
 			++scanner;
-			return make_shared<NodeExprStmtFunctionCall>(dynamic_pointer_cast<NodeIdentifier>(left), args);
+			return f;
 		} break;
 		default: {
 			right = parse_expression(prec + 1);
@@ -490,8 +557,20 @@ PNodeExpression Parser::parse_expression(int prec) {
 PNodeExpression Parser::parse_factor() {
 	Token token = scanner++;
 	switch ((Token::Category)token) {
-	case Token::C_IDENTIFIER:
+	case Token::C_IDENTIFIER: {
+		NodeIdentifier *node = new NodeIdentifier(token);
+		PSymbolVariable s_var;
+		symtables[node->name] >> s_var;
+		if (s_var) {
+			return make_shared<NodeVariable>(PNodeIdentifier(node), s_var->type);
+		}
+		PSymbolProcedure s_f;
+		symtables[node->name] >> s_f;
+		if (s_f) {
+			return make_shared<NodeExprStmtFunctionCall>(PNodeIdentifier(node), s_f);
+		}
 		return make_shared<NodeIdentifier>(token);
+	}
 	case Token::C_LITERAL:
 		return new_literal_factor(token);
 	case Token::C_EOF:
@@ -500,7 +579,7 @@ PNodeExpression Parser::parse_factor() {
 		switch ((Token::Operator)token) {
 		case Token::OP_LEFT_PAREN: {
 			PNodeExpression node = parse_expression(precedence(Token::OP_EQUAL));
-			require({Token::OP_RIGHT_PAREN}, token, "\")\"", scanner.top().strvalue());
+			require({Token::OP_RIGHT_PAREN}, ")");
 			++scanner;
 			return node;
 		} break;
@@ -522,8 +601,18 @@ string Parser::get_line(int id) {
 }
 
 void Parser::set_strictness(const bool strict) {
-	require_main_block = strict;
-	require_symbol_declared = strict;
+	Symbol::use_strict = strict;
+}
+
+ostream& Parser::output_symbols(ostream& os) {
+	for (PSymTable pst: symtables) {
+		SymTable& st = *pst;
+		for (auto p: st) {
+			PSymbol ps = st[p.second];
+			os << ps->output_str() << endl;
+		}
+	}
+	return os;
 }
 
 ostream& Parser::output_syntax_tree(ostream& os) {
@@ -555,7 +644,7 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os) {
 		output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->index, this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)) {
 		output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->function_identifier, this_node, id, os);
-		output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->args,this_node,  id, os);
+		output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->args,this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeRecordAccess>(node)) {
 		output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->record, this_node, id, os);
 		output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->field, this_node, id, os);
@@ -598,6 +687,10 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os) {
 		for (auto param: dynamic_pointer_cast<NodeFormalParameterSection>(node)->identifiers) {
 			output_subtree(param, this_node, id, os);
 		}
+	} else if (dynamic_pointer_cast<NodeTypeRecord>(node)) {
+		cout << "record" << endl;
+	} else if (dynamic_pointer_cast<NodeStmtVar>(node)) {
+		cout << "var" << endl;
 	}
 	return this_node;
 }

@@ -30,6 +30,11 @@ public:
 
 class NodeExpression : public Node {
 public:
+	NodeExpression(){}
+	NodeExpression(PSymbolType);
+	virtual PSymbolType exprtype();
+protected:
+	PSymbolType m_exprtype;
 };
 
 class NodeEof : public NodeExpression {
@@ -42,36 +47,50 @@ class NodeInteger : public NodeExpression {
 public:
 	NodeInteger(const Token& token);
 	std::string str() override;
+	PSymbolType exprtype() override;
 	int value;
+	static PSymbolTypeInt type_sym_ptr;
 };
 
 class NodeFloat : public NodeExpression {
 public:
 	NodeFloat(const Token& token);
 	std::string str() override;
+	PSymbolType exprtype() override;
 	long double value;
+	static PSymbolTypeFloat type_sym_ptr;
 };
 
 class NodeString : public NodeExpression {
 public:
 	NodeString(const Token& token);
+	PSymbolType exprtype() override;
 	std::string str() override;
 	std::string value;
+	static PSymbolTypeChar char_type_sym_ptr;
+	static PSymbolTypeString str_type_sym_ptr;
 };
 
 class NodeIdentifier : public NodeExpression {
 public:
+	/// toupper in constructor
 	NodeIdentifier(const Token& token);
 	bool empty() const override;
 	std::string str() override;
 	std::string name;
-	PSymbolVariable var;
-	PSymbolType type;
+};
+
+class NodeVariable : public NodeExpression {
+public:
+	NodeVariable(PNodeIdentifier, PSymbolType);
+	std::string str() override;
+	PNodeIdentifier identifier;
 };
 
 class NodeBinaryOperator : public NodeExpression {
 public:
 	NodeBinaryOperator(Token::Operator, PNodeExpression, PNodeExpression);
+	PSymbolType exprtype() override;
 	std::string str() override;
 	Token::Operator operation;
 	PNodeExpression left = nullptr;
@@ -83,17 +102,18 @@ public:
 	NodeActualParameters(PNodeExpression);
 	std::string str() override;
 	std::vector<PNodeExpression> args;
+	size_t size() const {
+		return args.size();
+	}
+	PNodeExpression at(size_t n) {
+		return args.at(n);
+	}
 };
-
-//class NodeCommaSeparatedIdentifiers : public NodeSeparated {
-//public:
-//    std::string str() override;
-//    std::vector<PNodeIdentifier> args;
-//};
 
 class NodeUnaryOperator : public NodeExpression {
 public:
 	NodeUnaryOperator(Token::Operator, PNodeExpression);
+	PSymbolType exprtype() override;
 	std::string str() override;
 	Token::Operator operation;
 	PNodeExpression node;
@@ -144,7 +164,7 @@ public:
 class NodeStmtConst : public NodeStmt {
 public:
 	std::string str() override;
-	SymbolType type;
+//	SymbolType type;
 };
 
 class NodeStmtRepeat : public NodeStmt {
@@ -156,7 +176,8 @@ public:
 
 class NodeType : public Node {
 public:
-	PSymbolType type;
+	std::string str() override;
+	PSymbolType symtype;
 };
 
 class NodeInitializer : public Node {
@@ -167,7 +188,7 @@ public:
 class NodeVarDeclarationUnit : public Node {
 public:
 	std::vector<PNodeIdentifier> vars;
-	PNodeType type;
+	PNodeType nodetype;
 	PNodeInitializer initializer = nullptr;
 };
 
@@ -191,7 +212,7 @@ class NodeFormalParameterSection : public Node {
 public:
 	std::string str() override;
 	std::vector<PNodeIdentifier> identifiers;
-	PNodeIdentifier type;
+	PNodeType type;
 	bool is_var = false;
 };
 
@@ -201,17 +222,16 @@ public:
 	PNodeIdentifier name;
 	std::vector<PNodeFormalParameterSection> params;
 	std::vector<PNodeStmt> parts;
+	PSymbolProcedure symbol;
 };
 
 class NodeStmtFunction : public NodeStmtProcedure {
 public:
 	std::string str() override;
-	PNodeIdentifier result_type;
+	PNodeType result_type;
 };
 
-
-
-class NodeStmtRecord : public NodeStmt {
+class NodeTypeRecord : public NodeType {
 public:
 	std::string str() override;
 	std::vector<PNodeVarDeclarationUnit> fields;
@@ -230,33 +250,17 @@ public:
 
 class NodeExprStmtFunctionCall : public NodeStmt, public NodeExpression {
 public:
-	NodeExprStmtFunctionCall(PNodeIdentifier, PNodeActualParameters);
+	NodeExprStmtFunctionCall(PNodeIdentifier, PSymbolProcedure, PNodeActualParameters args = nullptr);
+	NodeExprStmtFunctionCall(PNodeIdentifier, PNodeActualParameters args = nullptr);
+	bool check_parameters();
 	std::string str() override;
 	PNodeIdentifier function_identifier;
+	PSymbolProcedure symbol;
 	PNodeActualParameters args;
 };
 
 
 #endif // NODE_H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

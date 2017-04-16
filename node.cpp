@@ -1,6 +1,12 @@
 #include "node.h"
+#include "symboltable.h"
 
 using namespace std;
+
+PSymbolTypeInt NodeInteger::type_sym_ptr = nullptr;
+PSymbolTypeFloat NodeFloat::type_sym_ptr = nullptr;
+PSymbolTypeChar NodeString::char_type_sym_ptr = nullptr;
+PSymbolTypeString NodeString::str_type_sym_ptr = nullptr;
 
 std::map<Token::Operator, std::string> operator_lst =
 {
@@ -9,7 +15,7 @@ std::map<Token::Operator, std::string> operator_lst =
 {Token::OP_LESS, "<"},
 {Token::OP_PLUS, "+"},
 {Token::OP_MINUS, "-"},
-{Token::OP_SLASH_DIV, "/"},
+{Token::OP_DIV_SLASH, "/"},
 {Token::OP_MULT, "*"},
 {Token::OP_LEFT_BRACE, "{"},
 {Token::OP_LEFT_PAREN, "("},
@@ -50,6 +56,10 @@ std::map<Token::Separator, std::string> separator_lst =
 NodeEof::NodeEof(const Token&) {
 }
 
+NodeExpression::NodeExpression(PSymbolType type) :
+    m_exprtype(type) {
+}
+
 NodeInteger::NodeInteger(const Token& token) {
 	value = Token::int_values[token.value_id];
 }
@@ -62,8 +72,10 @@ NodeString::NodeString(const Token& token) {
 	value = Token::string_values[token.value_id];
 }
 
-NodeIdentifier::NodeIdentifier(const Token& token) :
-	name(token.raw_value) {
+NodeIdentifier::NodeIdentifier(const Token& token) {
+	name.resize(token.raw_value.size());
+	std::transform(token.raw_value.begin(), token.raw_value.end(), name.begin(), (int (*)(int))toupper);
+	m_exprtype = nullptr;
 }
 
 NodeArrayAccess::NodeArrayAccess(PNodeExpression array, PNodeActualParameters index) :
@@ -72,6 +84,11 @@ NodeArrayAccess::NodeArrayAccess(PNodeExpression array, PNodeActualParameters in
 
 NodeBinaryOperator::NodeBinaryOperator(Token::Operator operation, PNodeExpression left, PNodeExpression right) :
 	operation(operation), left(left), right(right) {
+	m_exprtype = nullptr;
+}
+
+NodeVariable::NodeVariable(PNodeIdentifier identifier, PSymbolType type) :
+    NodeExpression(type), identifier(identifier) {
 }
 
 NodeActualParameters::NodeActualParameters(PNodeExpression expr) {
@@ -80,6 +97,10 @@ NodeActualParameters::NodeActualParameters(PNodeExpression expr) {
 
 NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PNodeActualParameters args) :
 	function_identifier(func_id), args(args) {
+}
+
+NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PSymbolProcedure sym, PNodeActualParameters args) :
+    function_identifier(func_id), symbol(sym), args(args) {
 }
 
 NodeUnaryOperator::NodeUnaryOperator(Token::Operator operation, PNodeExpression node) :
@@ -146,6 +167,10 @@ string NodeUnaryOperator::str() {
 	return operator_lst[operation];
 }
 
+string NodeVariable::str() {
+	return identifier->name;
+}
+
 bool Node::empty() const {
 	return false;
 }
@@ -157,42 +182,151 @@ bool NodeIdentifier::empty() const {
 string NodeStmtIf::str() {
 	return "IF";
 }
+
 string NodeStmtWhile::str() {
 	return "WHILE";
 }
+
 string NodeStmtAssign::str() {
 	return "ASSIGN";
 }
+
 string NodeStmtConst::str() {
 	return "CONST";
 }
+
 string NodeStmtRepeat::str() {
 	return "REPEAT";
 }
+
 string NodeStmtVar::str() {
 	return "VAR";
 }
+
 string NodeStmtFor::str() {
 	return "FOR";
 }
+
 string NodeStmtProcedure::str() {
 	return "PROCEDURE " + name->str();
 }
+
 string NodeFormalParameterSection::str() {
-	return (is_var ? "var " : "") + type->str() + " FORMAL PARAMETERS:";
+	return (is_var ? "VAR " : "") + type->str() + " FORMAL PARAMETERS:";
 }
+
 string NodeStmtFunction::str() {
 	return "FUNCTION " + name->str();
 }
-string NodeStmtRecord::str() {
+
+string NodeTypeRecord::str() {
 	return "RECORD";
 }
+
+string NodeType::str() {
+	return symtype->str();
+}
+
 string NodeStmtType::str() {
 	return "TYPE";
 }
+
 string NodeStmtBlock::str() {
 	return "BLOCK";
 }
+
+PSymbolType NodeExpression::exprtype() {
+	return m_exprtype;
+}
+
+PSymbolType NodeInteger::exprtype() {
+	return NodeInteger::type_sym_ptr;
+}
+
+PSymbolType NodeFloat::exprtype() {
+	return NodeFloat::type_sym_ptr;
+}
+
+PSymbolType NodeString::exprtype() {
+	return value.size() == 1 ?
+	            dynamic_pointer_cast<SymbolType>(NodeString::char_type_sym_ptr) :
+	            dynamic_pointer_cast<SymbolType>(NodeString::str_type_sym_ptr);
+}
+
+PSymbolType NodeBinaryOperator::exprtype() {
+	if (m_exprtype) {
+		return m_exprtype;
+	}
+	if (Symbol::use_strict)
+	switch (operation) {
+	case Token::OP_PLUS:
+	case Token::OP_MINUS:
+	case Token::OP_MULT:
+	case Token::OP_DIV_SLASH: {
+		/// float > integer
+		/// throws if types are incompatible
+		m_exprtype = SymbolType::max(left->exprtype(), right->exprtype());
+		break;
+	}
+	case Token::OP_EQUAL:
+	case Token::OP_GREATER:
+	case Token::OP_LESS:
+	case Token::OP_LEQ:
+	case Token::OP_GEQ:
+	case Token::OP_NEQ: {
+		if (SymbolType::is_arithmetic({left->exprtype(), right->exprtype()})) {
+			m_exprtype = NodeInteger::type_sym_ptr;
+			break;
+		}
+		if (Symbol::use_strict) {
+			throw runtime_error("compare non-arithmetic expressions");
+		}
+	}
+	case Token::OP_AND:
+	case Token::OP_OR:
+	case Token::OP_XOR:
+	case Token::OP_SHL:
+	case Token::OP_SHR:
+	case Token::OP_DIV:
+	case Token::OP_MOD: {
+		if (SymbolType::equals({left->exprtype(), right->exprtype()}, NodeInteger::type_sym_ptr)) {
+			m_exprtype = NodeInteger::type_sym_ptr;
+			break;
+		}
+		if (Symbol::use_strict) {
+			throw runtime_error("illegal expression");
+		}
+	}
+	case Token::OP_ASSIGN: {
+		break;
+	}
+	default: {
+		if (Symbol::use_strict) {
+			throw runtime_error("something wrong with binary operation");
+		}
+	}
+	}
+	return m_exprtype;
+}
+
+PSymbolType NodeUnaryOperator::exprtype() {
+
+}
+
+bool NodeExprStmtFunctionCall::check_parameters() {
+	if (symbol->params->size() != args->size()) {
+
+	}
+	SymTable& st = *symbol->params;
+	for (size_t i = 0; i < args->size(); i++) {
+		PSymbolType formal, actual = args->at(i)->exprtype();
+		st[i] >> formal;
+	}
+	return true;
+}
+
+
+
 
 
 
