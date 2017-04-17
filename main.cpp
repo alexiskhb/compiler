@@ -46,7 +46,8 @@ void parse(const string& filename, const bool strict) {
 }
 
 int main(int argc, char *argv[]) {
-//	parse("./test-parse/procedure.in", true);
+//	parse("./test-parse/record-record-access.in", true);
+//	parse("./test-parse-simple/dot-01.in", false);
 //	return 0;
 	cxxopts::Options options(argv[0]);
 	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false;

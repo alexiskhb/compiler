@@ -20,7 +20,8 @@ public:
 	std::string get_line(int);
 	void set_strictness(const bool);
 private:
-	int output_subtree(PNode, int, int&, std::ostream&);
+	int output_subtree(PNode, int, int&, std::ostream&, bool silent = false);
+	int output_subtree(std::string, int, int&, std::ostream&, bool silent = false);
 	void require(std::initializer_list<Token::Operator>, Pos, const std::string&, const std::string&);
 	void require(std::initializer_list<Token::Separator>,Pos, const std::string&, const std::string&);
 	void require(std::initializer_list<Token::Category>, Pos, const std::string&, const std::string&);
@@ -44,13 +45,14 @@ private:
 	PNodeStmtFunction parse_function();
 	PNodeTypeRecord parse_record();
 	PNodeStmtBlock parse_block();
+	PNodeIdentifier parse_identifier();
 
 	std::vector<PNodeFormalParameterSection> parse_formal_parameters();
 	std::vector<PNodeStmt> parse_procedure_body();
 	PNodeFormalParameterSection parse_formal_parameter_section();
 	PNodeActualParameters parse_actual_parameters();
 	std::vector<PNodeIdentifier> parse_comma_separated_identifiers();
-	PNodeVarDeclarationUnit parse_var_declaration_unit(bool with_initialization);
+	PNodeVarDeclarationUnit parse_var_declaration_unit(PSymTable, bool with_initialization);
 	PNodeInitializer parse_initializer();
 	PNodeType parse_type();
 

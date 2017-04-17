@@ -23,13 +23,38 @@ std::string Symbol::str() {
 }
 
 std::string Symbol::output_str() {
-	string result = "* " + to_string((uint64_t)this) + " " + str();
+	string result = "* " + to_string((uint64_t)this) + " " + str() + '\n';
 	return result;
 }
 
 std::string SymbolVariable::output_str() {
 	string result = "* " + to_string((uint64_t)this) + " " + str() + "\n";
-	result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)type.get());
+	result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)type.get()) + '\n';
+	result += type->output_str();
+	return result;
+}
+
+std::string SymbolTypeRecord::output_str() {
+	string result = "* " + to_string((uint64_t)this) + " " + str() + "\n";
+	SymTable& st = *symtable;
+	for (auto& p: st) {
+		result += st[p.second]->output_str();
+		result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)st[p.second].get()) + '\n';
+	}
+	return result;
+}
+
+std::string SymbolProcedure::output_str() {
+	string result = "* " + to_string((uint64_t)this) + " " + str() + "\n";
+	if (dynamic_cast<SymbolFunction*>(this)) {
+		result += "^ " + to_string((uint64_t)this) + ' ' + to_string((uint64_t)dynamic_cast<SymbolFunction*>(this)->type.get()) + '\n';
+		result += dynamic_cast<SymbolFunction*>(this)->type->output_str();
+	}
+	SymTable& lc = *locals;
+	for (auto& p: lc) {
+		result += lc[p.second]->output_str();
+		result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)lc[p.second].get()) + '\n';
+	}
 	return result;
 }
 
@@ -76,12 +101,10 @@ SymbolTypeFloat::SymbolTypeFloat(const std::string& name) :
 
 SymbolTypeChar::SymbolTypeChar(const std::string& name) :
 	SymbolType(name) {
-
 }
 
 SymbolTypeString::SymbolTypeString(const std::string& name) :
     SymbolType(name) {
-
 }
 
 uint64_t SymbolTypeRecord::counter = 0;
@@ -93,7 +116,6 @@ SymbolTypeRecord::SymbolTypeRecord() :
 
 SymbolConst::SymbolConst(const std::string& name) :
 	Symbol(name) {
-
 }
 
 SymbolProcedure::SymbolProcedure(const std::string& name) :
@@ -104,5 +126,4 @@ SymbolProcedure::SymbolProcedure(const std::string& name) :
 
 SymbolFunction::SymbolFunction(const std::string& name) :
 	SymbolProcedure(name) {
-
 }

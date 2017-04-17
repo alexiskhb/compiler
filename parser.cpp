@@ -100,13 +100,11 @@ Parser::Parser(const string& filename, const bool is_strict) {
 	symtables.emplace_back(new SymTable);
 	symtables <<
 	             make_shared<SymbolTypeChar>("CHAR") <<
-	             make_shared<SymbolTypeFloat>("REAL") <<
 	             make_shared<SymbolTypeFloat>("FLOAT") <<
 	             make_shared<SymbolTypeString>("STRING") <<
 	             make_shared<SymbolTypeInt>("INTEGER");
-	NodeFloat::type_sym_ptr = dynamic_pointer_cast<SymbolTypeFloat>(symtables["FLOAT"]);
-	symtables["FLOAT"] >> NodeFloat::type_sym_ptr;
 	symtables["CHAR"] >> NodeString::char_type_sym_ptr;
+	symtables["FLOAT"] >> NodeFloat::type_sym_ptr;
 	symtables["STRING"] >> NodeString::str_type_sym_ptr;
 	symtables["INTEGER"] >> NodeInteger::type_sym_ptr;
 }
@@ -141,7 +139,7 @@ PNodeProgram Parser::parse_program() {
 			require({Token::OP_DOT}, ".");
 			return PNodeProgram(program);
 		}
-		default: throw ParseError(token, "unexpected \"" + token.raw_value + "\": CONST, VAR, PROCEDURE, FUNCTION, TYPE or BEGIN expected");
+		default: throw ParseError(token, "unexpected \"" + token.raw_value + "\": BEGIN expected");
 		}
 	}
 	if (Symbol::use_strict) {
@@ -193,7 +191,7 @@ PNodeStmt Parser::parse_stmt() {
 	throw ParseError(scanner.top().position, scanner.top().strvalue());
 }
 
-PNodeStmtIf Parser::parse_if () {
+PNodeStmtIf Parser::parse_if() {
 	NodeStmtIf* node = new NodeStmtIf;
 	++scanner;
 	node->cond = parse_expression(precedence(Token::OP_EQUAL));
@@ -209,7 +207,7 @@ PNodeStmtIf Parser::parse_if () {
 	return PNodeStmtIf(node);
 }
 
-PNodeStmtWhile Parser::parse_while () {
+PNodeStmtWhile Parser::parse_while() {
 	NodeStmtWhile* node = new NodeStmtWhile;
 	++scanner;
 	node->cond = parse_expression(precedence(Token::OP_EQUAL));
@@ -240,18 +238,12 @@ PNodeStmtVar Parser::parse_var() {
 	NodeStmtVar* node = new NodeStmtVar;
 	++scanner;
 	while (scanner == Token::C_IDENTIFIER) {
-		node->var_units.push_back(parse_var_declaration_unit(Initializer::on));
+		node->var_units.push_back(parse_var_declaration_unit(symtables.back(), Initializer::on));
 		if (scanner == Token::C_RESERVED) {
 			break;
 		}
 		require({Token::S_SEMICOLON}, ";");
 		++scanner;
-	}
-	for (PNodeVarDeclarationUnit& vunit: node->var_units) {
-		auto type = vunit->nodetype->symtype;
-		for (PNodeIdentifier& var: vunit->vars) {
-			symtables << make_shared<SymbolVariable>(var->name, type);
-		}
 	}
 	return PNodeStmtVar(node);
 }
@@ -374,7 +366,9 @@ PNodeStmtFunction Parser::parse_function() {
 	function->result_type = parse_type();
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
-	function->symbol = make_shared<SymbolFunction>(function->name->name);
+	PSymbolFunction sf = make_shared<SymbolFunction>(function->name->name);
+	sf->type = function->result_type->symtype;
+	function->symbol = sf;
 	for (PNodeFormalParameterSection psection: function->params) {
 		for (PNodeIdentifier pidentifier: psection->identifiers) {
 			function->symbol->params << make_shared<SymbolVariable>(pidentifier->name, psection->type->symtype);
@@ -406,9 +400,9 @@ PNodeInitializer Parser::parse_initializer() {
 	return PNodeInitializer(node);
 }
 
-PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(bool with_initialization) {
+PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(PSymTable st, bool with_initialization) {
 	NodeVarDeclarationUnit* node = new NodeVarDeclarationUnit;
-	node->vars = parse_comma_separated_identifiers();
+	vector<PNodeIdentifier> vars = parse_comma_separated_identifiers();
 	require({Token::S_COLON}, ":");
 	++scanner;
 	node->nodetype = parse_type();
@@ -423,29 +417,28 @@ PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(bool with_initializat
 			 throw runtime_error("unexpected initializer");
 		}
 	}
+	for (PNodeIdentifier var: vars) {
+		PSymbolVariable sv = make_shared<SymbolVariable>(var->name, node->nodetype->symtype);
+		st << sv;
+		node->vars.push_back(make_shared<NodeVariable>(var, sv));
+	}
 	return PNodeVarDeclarationUnit(node);
 }
 
 PNodeTypeRecord Parser::parse_record() {
 	NodeTypeRecord* node = new NodeTypeRecord;
 	++scanner;
+	SymbolTypeRecord* stype = new SymbolTypeRecord;
 	while (scanner == Token::C_IDENTIFIER) {
-		node->fields.push_back(parse_var_declaration_unit(Initializer::off));
+		node->fields.push_back(parse_var_declaration_unit(stype->symtable, Initializer::off));
 		if (scanner == Token::R_END) {
 			break;
 		}
 		require({Token::S_SEMICOLON}, ";");
 		++scanner;
 	}
-	SymbolTypeRecord* stype = new SymbolTypeRecord;
 	require({Token::R_END}, "END");
 	++scanner;
-	for (PNodeVarDeclarationUnit& vunit: node->fields) {
-		auto type = vunit->nodetype->symtype;
-		for (PNodeIdentifier& var: vunit->vars) {
-			stype->symtable << make_shared<SymbolVariable>(var->name, type);
-		}
-	}
 	node->symtype = PSymbolTypeRecord(stype);
 	return PNodeTypeRecord(node);
 }
@@ -490,6 +483,9 @@ PNode Parser::parse() {
 }
 
 PNodeActualParameters Parser::parse_actual_parameters() {
+	if (scanner == Token::OP_RIGHT_PAREN) {
+		return nullptr;
+	}
 	PNodeExpression first = parse_expression(precedence(Token::OP_EQUAL));
 	PNodeActualParameters result = make_shared<NodeActualParameters>(first);
 	while (scanner == Token::S_COMMA) {
@@ -513,9 +509,18 @@ PNodeExpression Parser::parse_expression(int prec) {
 			left = make_shared<NodeArrayAccess>(left, index);
 		} break;
 		case Token::OP_DOT: {
-			require({Token::C_IDENTIFIER}, "indentifier");
-			right = parse_factor();
-			left = make_shared<NodeRecordAccess>(left, dynamic_pointer_cast<NodeIdentifier>(right));
+			PSymbolTypeRecord rec;
+			left->exprtype() >> rec;
+			if (!rec) {
+				throw ParseError(token, "left operand of '.' must be a record");
+			}
+			PNodeIdentifier field = parse_identifier();
+			PSymbolVariable r;
+			(*rec->symtable)[field->name] >> r;
+			if (!r) {
+				throw ParseError(token, "no such field " + field->name + " of " + rec->str());
+			}
+			left = make_shared<NodeRecordAccess>(left, r);
 		} break;
 		case Token::OP_RIGHT_BRACKET: {
 			throw ParseError(token, "unexpected ']', need '[' before");
@@ -524,11 +529,8 @@ PNodeExpression Parser::parse_expression(int prec) {
 			throw ParseError(token, "unexpected ')', need '(' before");
 		} break;
 		case Token::NOT_OPERATOR: {
-			if (token != Token::C_EOF) {
-				throw ParseError(token, "unexpected token");
-			} else {
-				return left;
-			}
+			require({Token::C_EOF}, "end of file");
+			return left;
 		} break;
 		case Token::OP_DEREFERENCE: {
 			return make_shared<NodeUnaryOperator>(Token::OP_DEREFERENCE, left);
@@ -536,7 +538,7 @@ PNodeExpression Parser::parse_expression(int prec) {
 		case Token::OP_LEFT_PAREN: {
 			PNodeExprStmtFunctionCall f;
 			f = dynamic_pointer_cast<NodeExprStmtFunctionCall>(left);
-			if (!f) {
+			if (Symbol::use_strict && !f) {
 				throw ParseError(token, "need procedure or function identifier");
 			}
 			f->args = parse_actual_parameters();
@@ -554,6 +556,11 @@ PNodeExpression Parser::parse_expression(int prec) {
 	return left;
 }
 
+PNodeIdentifier Parser::parse_identifier() {
+	require({Token::C_IDENTIFIER}, "indentifier");
+	return make_shared<NodeIdentifier>(scanner++);
+}
+
 PNodeExpression Parser::parse_factor() {
 	Token token = scanner++;
 	switch ((Token::Category)token) {
@@ -562,7 +569,7 @@ PNodeExpression Parser::parse_factor() {
 		PSymbolVariable s_var;
 		symtables[node->name] >> s_var;
 		if (s_var) {
-			return make_shared<NodeVariable>(PNodeIdentifier(node), s_var->type);
+			return make_shared<NodeVariable>(PNodeIdentifier(node), s_var);
 		}
 		PSymbolProcedure s_f;
 		symtables[node->name] >> s_f;
@@ -624,36 +631,59 @@ ostream& Parser::output_syntax_tree(ostream& os) {
 	return os;
 }
 
-int Parser::output_subtree(PNode node, int parent, int& id, ostream& os) {
-	int this_node = id++;
-	if (parent) {
-		os << "- " << parent << ' ' << this_node << '\n';
+int Parser::output_subtree(string str, int parent, int& id, ostream& os, bool silent) {
+	int this_node = silent ? parent : id++;
+	if (!silent) {
+		if (parent) {
+			os << "- " << parent << ' ' << this_node << '\n';
+		}
+		os << "+ " << this_node << ' ' << str << '\n';
 	}
-	os << "+ " << this_node << ' ' << node->str() << '\n';
-	if (dynamic_pointer_cast<NodeBinaryOperator>(node)) {
+	return this_node;
+}
+
+int Parser::output_subtree(PNode node, int parent, int& id, ostream& os, bool silent) {
+	if (!node) {
+		return id;
+	}
+	int this_node = silent ? parent : id++;
+	if (!silent) {
+		if (parent) {
+			os << "- " << parent << ' ' << this_node << '\n';
+		}
+		os << "+ " << this_node << ' ' << node->str() << '\n';
+	}
+	if (dynamic_pointer_cast<NodeVariable>(node)) {
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeVariable>(node)->symbol.get() << '\n';
+	} else if (dynamic_pointer_cast<NodeBinaryOperator>(node)) {
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeBinaryOperator>(node)->exprtype().get() << '\n';
 		output_subtree(dynamic_pointer_cast<NodeBinaryOperator>(node)->left, this_node, id, os);
 		output_subtree(dynamic_pointer_cast<NodeBinaryOperator>(node)->right, this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeUnaryOperator>(node)) {
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeUnaryOperator>(node)->exprtype().get() << '\n';
 		output_subtree(dynamic_pointer_cast<NodeUnaryOperator>(node)->node, this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeActualParameters>(node)) {
-		for (auto child: dynamic_pointer_cast<NodeActualParameters>(node)->args) {
+		for (PNodeExpression child: dynamic_pointer_cast<NodeActualParameters>(node)->args) {
 			output_subtree(child, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeArrayAccess>(node)) {
 		output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->array, this_node, id, os);
 		output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->index, this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)) {
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->symbol.get() << '\n';
 		output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->function_identifier, this_node, id, os);
 		output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->args,this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeRecordAccess>(node)) {
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeRecordAccess>(node)->field->type.get() << '\n';
 		output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->record, this_node, id, os);
-		output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->field, this_node, id, os);
+		int rf = output_subtree(dynamic_pointer_cast<NodeRecordAccess>(node)->field->name, this_node, id, os);
+		os << "> " << rf << ' ' << (uint64_t)dynamic_pointer_cast<NodeRecordAccess>(node)->field.get() << '\n';
 	} else if (dynamic_pointer_cast<NodeStmtBlock>(node)) {
-		for (auto stmt: dynamic_pointer_cast<NodeStmtBlock>(node)->stmts) {
+		for (PNodeStmt stmt: dynamic_pointer_cast<NodeStmtBlock>(node)->stmts) {
 			output_subtree(stmt, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeProgram>(node)) {
-		for (auto part: dynamic_pointer_cast<NodeProgram>(node)->parts) {
+		for (PNodeStmt part: dynamic_pointer_cast<NodeProgram>(node)->parts) {
 			output_subtree(part, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeStmtIf>(node)) {
@@ -674,23 +704,35 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os) {
 		output_subtree(dynamic_pointer_cast<NodeStmtFor>(node)->high, iter_var, id, os);
 		output_subtree(dynamic_pointer_cast<NodeStmtFor>(node)->stmt, this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeStmtProcedure>(node)) {
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeStmtProcedure>(node)->symbol.get() << '\n';
 		if (dynamic_pointer_cast<NodeStmtFunction>(node)) {
 			output_subtree(dynamic_pointer_cast<NodeStmtFunction>(node)->result_type, this_node, id, os);
 		}
-		for (auto param: dynamic_pointer_cast<NodeStmtProcedure>(node)->params) {
+		for (PNodeFormalParameterSection param: dynamic_pointer_cast<NodeStmtProcedure>(node)->params) {
 			output_subtree(param, this_node, id, os);
 		}
-		for (auto part: dynamic_pointer_cast<NodeStmtProcedure>(node)->parts) {
+		for (PNodeStmt part: dynamic_pointer_cast<NodeStmtProcedure>(node)->parts) {
 			output_subtree(part, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeFormalParameterSection>(node)) {
-		for (auto param: dynamic_pointer_cast<NodeFormalParameterSection>(node)->identifiers) {
+		for (PNodeIdentifier param: dynamic_pointer_cast<NodeFormalParameterSection>(node)->identifiers) {
 			output_subtree(param, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeTypeRecord>(node)) {
-		cout << "record" << endl;
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeTypeRecord>(node)->symtype.get() << '\n';
+		for (PNodeVarDeclarationUnit f: dynamic_pointer_cast<NodeTypeRecord>(node)->fields) {
+			output_subtree(f, this_node, id, os);
+		}
 	} else if (dynamic_pointer_cast<NodeStmtVar>(node)) {
-		cout << "var" << endl;
+		for (PNodeVarDeclarationUnit vu: dynamic_pointer_cast<NodeStmtVar>(node)->var_units) {
+			output_subtree(vu, this_node, id, os);
+		}
+	} else if (dynamic_pointer_cast<NodeVarDeclarationUnit>(node)) {
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->nodetype->symtype.get() << '\n';
+		output_subtree(dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->nodetype, this_node, id, os, true);
+		for (PNodeVariable v: dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->vars) {
+			output_subtree(v, this_node, id, os);
+		}
 	}
 	return this_node;
 }

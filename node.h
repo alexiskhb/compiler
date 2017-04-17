@@ -82,9 +82,10 @@ public:
 
 class NodeVariable : public NodeExpression {
 public:
-	NodeVariable(PNodeIdentifier, PSymbolType);
+	NodeVariable(PNodeIdentifier, PSymbolVariable);
 	std::string str() override;
 	PNodeIdentifier identifier;
+	PSymbolVariable symbol;
 };
 
 class NodeBinaryOperator : public NodeExpression {
@@ -129,12 +130,11 @@ public:
 
 class NodeRecordAccess : public NodeExpression {
 public:
-	NodeRecordAccess(PNodeExpression, PNodeIdentifier);
+	NodeRecordAccess(PNodeExpression, PSymbolVariable);
 	std::string str() override;
 	PNodeExpression record;
-	PNodeIdentifier field;
+	PSymbolVariable field;
 };
-
 
 class NodeStmt : public Node {
 
@@ -164,7 +164,6 @@ public:
 class NodeStmtConst : public NodeStmt {
 public:
 	std::string str() override;
-//	SymbolType type;
 };
 
 class NodeStmtRepeat : public NodeStmt {
@@ -187,7 +186,8 @@ public:
 
 class NodeVarDeclarationUnit : public Node {
 public:
-	std::vector<PNodeIdentifier> vars;
+	std::string str() override;
+	std::vector<PNodeVariable> vars;
 	PNodeType nodetype;
 	PNodeInitializer initializer = nullptr;
 };
@@ -237,6 +237,11 @@ public:
 	std::vector<PNodeVarDeclarationUnit> fields;
 };
 
+class NodeTypeArray : public NodeType {
+public:
+
+};
+
 class NodeStmtType : public NodeStmt {
 public:
 	std::string str() override;
@@ -251,7 +256,7 @@ public:
 class NodeExprStmtFunctionCall : public NodeStmt, public NodeExpression {
 public:
 	NodeExprStmtFunctionCall(PNodeIdentifier, PSymbolProcedure, PNodeActualParameters args = nullptr);
-	NodeExprStmtFunctionCall(PNodeIdentifier, PNodeActualParameters args = nullptr);
+//	NodeExprStmtFunctionCall(PNodeIdentifier, PNodeActualParameters args = nullptr);
 	bool check_parameters();
 	std::string str() override;
 	PNodeIdentifier function_identifier;

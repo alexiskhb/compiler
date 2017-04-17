@@ -84,6 +84,7 @@ class SymbolTypeRecord : public SymbolType {
 public:
 	SymbolTypeRecord();
 	PSymTable symtable;
+	std::string output_str() override;
 private:
 	static uint64_t counter;
 };
@@ -96,6 +97,7 @@ public:
 
 class SymbolProcedure : public Symbol {
 public:
+	std::string output_str() override;
 	SymbolProcedure(const std::string& name);
 	PSymTable params;
 	PSymTable locals;

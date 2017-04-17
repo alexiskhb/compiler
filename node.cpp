@@ -87,28 +87,36 @@ NodeBinaryOperator::NodeBinaryOperator(Token::Operator operation, PNodeExpressio
 	m_exprtype = nullptr;
 }
 
-NodeVariable::NodeVariable(PNodeIdentifier identifier, PSymbolType type) :
-    NodeExpression(type), identifier(identifier) {
+NodeVariable::NodeVariable(PNodeIdentifier identifier, PSymbolVariable s_var) :
+    NodeExpression(s_var->type), identifier(identifier), symbol(s_var) {
 }
 
 NodeActualParameters::NodeActualParameters(PNodeExpression expr) {
 	args.push_back(expr);
 }
 
-NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PNodeActualParameters args) :
-	function_identifier(func_id), args(args) {
-}
+//NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PNodeActualParameters args) :
+//	function_identifier(func_id), args(args) {
+//	//!
+//}
 
 NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PSymbolProcedure sym, PNodeActualParameters args) :
     function_identifier(func_id), symbol(sym), args(args) {
+	if (!dynamic_pointer_cast<SymbolFunction>(sym)) {
+		m_exprtype = nullptr;
+	} else {
+		SymbolFunction& f = *dynamic_pointer_cast<SymbolFunction>(sym);
+		m_exprtype = f.type;
+	}
 }
 
 NodeUnaryOperator::NodeUnaryOperator(Token::Operator operation, PNodeExpression node) :
 	operation(operation), node(node) {
 }
 
-NodeRecordAccess::NodeRecordAccess(PNodeExpression record, PNodeIdentifier field) :
-	record(record), field(field) {
+NodeRecordAccess::NodeRecordAccess(PNodeExpression expr, PSymbolVariable var) :
+    record(expr), field(var) {
+	m_exprtype = field->type;
 }
 
 NodeStmtAssign::NodeStmtAssign(PNodeExpression left, PNodeExpression right) :
@@ -129,6 +137,10 @@ string NodeInteger::str() {
 
 string NodeFloat::str() {
 	return to_string(value);
+}
+
+string NodeVarDeclarationUnit::str() {
+	return nodetype->symtype->str();
 }
 
 string NodeString::str() {
@@ -314,8 +326,11 @@ PSymbolType NodeUnaryOperator::exprtype() {
 }
 
 bool NodeExprStmtFunctionCall::check_parameters() {
+	if (symbol->params->size() == 0 && !args) {
+		return true;
+	}
 	if (symbol->params->size() != args->size()) {
-
+		throw runtime_error("bad actual parameters");
 	}
 	SymTable& st = *symbol->params;
 	for (size_t i = 0; i < args->size(); i++) {
