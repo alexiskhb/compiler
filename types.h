@@ -83,6 +83,7 @@ class NodeTypeRecord;
 class NodeStmtType;
 class NodeStmtBlock;
 class NodeVarDeclarationUnit;
+class NodeTypeDeclarationUnit;
 class NodeVariable;
 
 class NodeExprStmtFunctionCall;
@@ -102,6 +103,7 @@ typedef std::shared_ptr<NodeTypeRecord> PNodeTypeRecord;
 typedef std::shared_ptr<NodeStmtType> PNodeStmtType;
 typedef std::shared_ptr<NodeStmtBlock> PNodeStmtBlock;
 typedef std::shared_ptr<NodeVarDeclarationUnit> PNodeVarDeclarationUnit;
+typedef std::shared_ptr<NodeTypeDeclarationUnit> PNodeTypeDeclarationUnit;
 typedef std::shared_ptr<NodeVariable> PNodeVariable;
 
 typedef std::shared_ptr<NodeExprStmtFunctionCall> PNodeExprStmtFunctionCall;

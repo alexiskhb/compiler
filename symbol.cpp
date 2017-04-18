@@ -37,9 +37,9 @@ std::string SymbolVariable::output_str() {
 std::string SymbolTypeRecord::output_str() {
 	string result = "* " + to_string((uint64_t)this) + " " + str() + "\n";
 	SymTable& st = *symtable;
-	for (auto& p: st) {
-		result += st[p.second]->output_str();
-		result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)st[p.second].get()) + '\n';
+	for (PSymbol p: st) {
+		result += p->output_str();
+		result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)p.get()) + '\n';
 	}
 	return result;
 }
@@ -51,9 +51,9 @@ std::string SymbolProcedure::output_str() {
 		result += dynamic_cast<SymbolFunction*>(this)->type->output_str();
 	}
 	SymTable& lc = *locals;
-	for (auto& p: lc) {
-		result += lc[p.second]->output_str();
-		result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)lc[p.second].get()) + '\n';
+	for (PSymbol p: lc) {
+		result += p->output_str();
+		result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)p.get()) + '\n';
 	}
 	return result;
 }
@@ -111,6 +111,11 @@ uint64_t SymbolTypeRecord::counter = 0;
 
 SymbolTypeRecord::SymbolTypeRecord() :
     SymbolType("$record_" + to_string(++SymbolTypeRecord::counter)) {
+	symtable = make_shared<SymTable>();
+}
+
+SymbolTypeRecord::SymbolTypeRecord(const string& name) :
+    SymbolType(name) {
 	symtable = make_shared<SymTable>();
 }
 

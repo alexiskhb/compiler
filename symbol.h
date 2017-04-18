@@ -83,6 +83,7 @@ private:
 class SymbolTypeRecord : public SymbolType {
 public:
 	SymbolTypeRecord();
+	SymbolTypeRecord(const std::string& name);
 	PSymTable symtable;
 	std::string output_str() override;
 private:

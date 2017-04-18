@@ -8,12 +8,12 @@ SymTable::SymTable() {
 }
 
 void SymTable::add(PSymbol symbol) {
-	auto result = this->find(symbol->name);
-	if (result != this->end()) {
+	auto result = m_symbol_map.find(symbol->name);
+	if (result != m_symbol_map.end()) {
 		throw runtime_error("redefenition of symbol <" + symbol->name + ">");
 	} else {
-		insert({symbol->name, m_symbol_list.size()});
-		m_symbol_list.push_back(symbol);
+		m_symbol_map.insert({symbol->name, size()});
+		this->push_back(symbol);
 	}
 }
 

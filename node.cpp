@@ -143,6 +143,10 @@ string NodeVarDeclarationUnit::str() {
 	return nodetype->symtype->str();
 }
 
+string NodeTypeDeclarationUnit::str() {
+	return "ALIAS " + alias->name;
+}
+
 string NodeString::str() {
 	return "\"" + value + "\"";
 }

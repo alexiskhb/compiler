@@ -192,10 +192,18 @@ public:
 	PNodeInitializer initializer = nullptr;
 };
 
+class NodeTypeDeclarationUnit : public Node {
+public:
+	std::string str() override;
+	PSymbolType alias;
+	PNodeType nodetype;
+};
+
+
 class NodeStmtVar : public NodeStmt {
 public:
 	std::string str() override;
-	std::vector<PNodeVarDeclarationUnit> var_units;
+	std::vector<PNodeVarDeclarationUnit> units;
 };
 
 class NodeStmtFor : public NodeStmt {
@@ -211,7 +219,7 @@ public:
 class NodeFormalParameterSection : public Node {
 public:
 	std::string str() override;
-	std::vector<PNodeIdentifier> identifiers;
+	std::vector<PNodeVariable> identifiers;
 	PNodeType type;
 	bool is_var = false;
 };
@@ -234,17 +242,17 @@ public:
 class NodeTypeRecord : public NodeType {
 public:
 	std::string str() override;
-	std::vector<PNodeVarDeclarationUnit> fields;
+	std::vector<PNodeVarDeclarationUnit> units;
 };
 
 class NodeTypeArray : public NodeType {
 public:
-
 };
 
 class NodeStmtType : public NodeStmt {
 public:
 	std::string str() override;
+	std::vector<PNodeTypeDeclarationUnit> units;
 };
 
 class NodeStmtBlock : public NodeStmt {
@@ -256,7 +264,6 @@ public:
 class NodeExprStmtFunctionCall : public NodeStmt, public NodeExpression {
 public:
 	NodeExprStmtFunctionCall(PNodeIdentifier, PSymbolProcedure, PNodeActualParameters args = nullptr);
-//	NodeExprStmtFunctionCall(PNodeIdentifier, PNodeActualParameters args = nullptr);
 	bool check_parameters();
 	std::string str() override;
 	PNodeIdentifier function_identifier;

@@ -238,7 +238,7 @@ PNodeStmtVar Parser::parse_var() {
 	NodeStmtVar* node = new NodeStmtVar;
 	++scanner;
 	while (scanner == Token::C_IDENTIFIER) {
-		node->var_units.push_back(parse_var_declaration_unit(symtables.back(), Initializer::on));
+		node->units.push_back(parse_var_declaration_unit(symtables.back(), Initializer::on));
 		if (scanner == Token::C_RESERVED) {
 			break;
 		}
@@ -271,8 +271,9 @@ PNodeFormalParameterSection Parser::parse_formal_parameter_section() {
 		node->is_var = true;
 		++scanner;
 	}
+	vector<PNodeIdentifier> vars;
 	while (scanner == Token::C_IDENTIFIER && scanner != Token::S_COLON) {
-		node->identifiers.push_back(make_shared<NodeIdentifier>(scanner++));
+		vars.push_back(make_shared<NodeIdentifier>(scanner++));
 		if (scanner == Token::S_COLON) {
 			break;
 		}
@@ -282,6 +283,10 @@ PNodeFormalParameterSection Parser::parse_formal_parameter_section() {
 	require({Token::S_COLON}, ":");
 	++scanner;
 	node->type = parse_type();
+	for (PNodeIdentifier var: vars) {
+		PSymbolVariable pv = make_shared<SymbolVariable>(var->name, node->type->symtype);
+		node->identifiers.push_back(make_shared<NodeVariable>(var, pv));
+	}
 	return PNodeFormalParameterSection(node);
 }
 
@@ -323,8 +328,37 @@ std::vector<PNodeStmt> Parser::parse_procedure_body() {
 }
 
 PNodeStmtType Parser::parse_type_part() {
-	//!TODO
 	NodeStmtType* node = new NodeStmtType;
+	++scanner;
+	require({Token::C_IDENTIFIER}, "identifier");
+	while (scanner == Token::C_IDENTIFIER) {
+		NodeTypeDeclarationUnit* tdu = new NodeTypeDeclarationUnit;
+		PNodeIdentifier identifier = parse_identifier();
+		require({Token::OP_EQUAL}, "=");
+		++scanner;
+		tdu->nodetype = parse_type();
+		require({Token::S_SEMICOLON}, ";");
+		++scanner;
+		if (dynamic_pointer_cast<SymbolTypeArray>(tdu->nodetype->symtype)) {
+//			tdu->alias = make_shared<SymbolTypeArray>();
+		} else if (dynamic_pointer_cast<SymbolTypeChar>(tdu->nodetype->symtype)) {
+			tdu->alias = make_shared<SymbolTypeChar>(identifier->name);				
+		} else if (dynamic_pointer_cast<SymbolTypeFloat>(tdu->nodetype->symtype)) {
+			tdu->alias = make_shared<SymbolTypeFloat>(identifier->name);	
+		} else if (dynamic_pointer_cast<SymbolTypeInt>(tdu->nodetype->symtype)) {
+			tdu->alias = make_shared<SymbolTypeInt>(identifier->name);	
+		} else if (dynamic_pointer_cast<SymbolTypePointer>(tdu->nodetype->symtype)) {
+			tdu->alias = make_shared<SymbolTypePointer>(identifier->name, dynamic_pointer_cast<SymbolTypePointer>(tdu->nodetype->symtype)->type);
+		} else if (dynamic_pointer_cast<SymbolTypeRecord>(tdu->nodetype->symtype)) {
+			tdu->alias = make_shared<SymbolTypeRecord>(identifier->name);	
+			dynamic_pointer_cast<SymbolTypeRecord>(tdu->alias)->symtable = dynamic_pointer_cast<SymbolTypeRecord>(tdu->nodetype->symtype)->symtable;
+		} else if (dynamic_pointer_cast<SymbolTypeString>(tdu->nodetype->symtype)) {
+			tdu->alias = make_shared<SymbolTypeString>(identifier->name);	
+		}
+		symtables << tdu->alias;
+		node->units.push_back(PNodeTypeDeclarationUnit(tdu));
+	}
+	return PNodeStmtType(node);
 }
 
 PNodeStmtProcedure Parser::parse_procedure() {
@@ -339,9 +373,9 @@ PNodeStmtProcedure Parser::parse_procedure() {
 	++scanner;
 	procedure->symbol = make_shared<SymbolProcedure>(procedure->name->name);
 	for (PNodeFormalParameterSection psection: procedure->params) {
-		for (PNodeIdentifier pidentifier: psection->identifiers) {
-			procedure->symbol->params << make_shared<SymbolVariable>(pidentifier->name, psection->type->symtype);
-			procedure->symbol->locals << procedure->symbol->params->back();
+		for (PNodeVariable var: psection->identifiers) {
+			procedure->symbol->params << var->symbol;
+			procedure->symbol->locals << var->symbol;
 		}
 	}
 	symtables << procedure->symbol;
@@ -370,9 +404,9 @@ PNodeStmtFunction Parser::parse_function() {
 	sf->type = function->result_type->symtype;
 	function->symbol = sf;
 	for (PNodeFormalParameterSection psection: function->params) {
-		for (PNodeIdentifier pidentifier: psection->identifiers) {
-			function->symbol->params << make_shared<SymbolVariable>(pidentifier->name, psection->type->symtype);
-			function->symbol->locals << function->symbol->params->back();
+		for (PNodeVariable var: psection->identifiers) {
+			function->symbol->params << var->symbol;
+			function->symbol->locals << var->symbol;
 		}
 	}
 	symtables << function->symbol;
@@ -430,7 +464,7 @@ PNodeTypeRecord Parser::parse_record() {
 	++scanner;
 	SymbolTypeRecord* stype = new SymbolTypeRecord;
 	while (scanner == Token::C_IDENTIFIER) {
-		node->fields.push_back(parse_var_declaration_unit(stype->symtable, Initializer::off));
+		node->units.push_back(parse_var_declaration_unit(stype->symtable, Initializer::off));
 		if (scanner == Token::R_END) {
 			break;
 		}
@@ -614,9 +648,8 @@ void Parser::set_strictness(const bool strict) {
 ostream& Parser::output_symbols(ostream& os) {
 	for (PSymTable pst: symtables) {
 		SymTable& st = *pst;
-		for (auto p: st) {
-			PSymbol ps = st[p.second];
-			os << ps->output_str() << endl;
+		for (PSymbol p: st) {
+			os << p->output_str() << endl;
 		}
 	}
 	return os;
@@ -671,7 +704,8 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os, bool si
 		output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->index, this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)) {
 		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->symbol.get() << '\n';
-		output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->function_identifier, this_node, id, os);
+		int fid = output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->function_identifier, this_node, id, os);
+		os << "> " << fid << ' ' << (uint64_t)dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->symbol.get() << '\n';
 		output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->args,this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeRecordAccess>(node)) {
 		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeRecordAccess>(node)->field->type.get() << '\n';
@@ -715,16 +749,16 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os, bool si
 			output_subtree(part, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeFormalParameterSection>(node)) {
-		for (PNodeIdentifier param: dynamic_pointer_cast<NodeFormalParameterSection>(node)->identifiers) {
+		for (PNodeVariable param: dynamic_pointer_cast<NodeFormalParameterSection>(node)->identifiers) {
 			output_subtree(param, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeTypeRecord>(node)) {
 		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeTypeRecord>(node)->symtype.get() << '\n';
-		for (PNodeVarDeclarationUnit f: dynamic_pointer_cast<NodeTypeRecord>(node)->fields) {
+		for (PNodeVarDeclarationUnit f: dynamic_pointer_cast<NodeTypeRecord>(node)->units) {
 			output_subtree(f, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeStmtVar>(node)) {
-		for (PNodeVarDeclarationUnit vu: dynamic_pointer_cast<NodeStmtVar>(node)->var_units) {
+		for (PNodeVarDeclarationUnit vu: dynamic_pointer_cast<NodeStmtVar>(node)->units) {
 			output_subtree(vu, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeVarDeclarationUnit>(node)) {
@@ -733,6 +767,13 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os, bool si
 		for (PNodeVariable v: dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->vars) {
 			output_subtree(v, this_node, id, os);
 		}
+	} else if (dynamic_pointer_cast<NodeStmtType>(node)) {
+		for (PNodeTypeDeclarationUnit tdu: dynamic_pointer_cast<NodeStmtType>(node)->units) {
+			output_subtree(tdu, this_node, id, os);
+		}
+	} else if (dynamic_pointer_cast<NodeTypeDeclarationUnit>(node)) {
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeTypeDeclarationUnit>(node)->alias.get() << '\n';
+		output_subtree(dynamic_pointer_cast<NodeTypeDeclarationUnit>(node)->nodetype, this_node, id, os);
 	}
 	return this_node;
 }

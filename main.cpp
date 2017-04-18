@@ -46,7 +46,7 @@ void parse(const string& filename, const bool strict) {
 }
 
 int main(int argc, char *argv[]) {
-//	parse("./test-parse/record-record-access.in", true);
+//	parse("./test-parse/type.in", true);
 //	parse("./test-parse-simple/dot-01.in", false);
 //	return 0;
 	cxxopts::Options options(argv[0]);
