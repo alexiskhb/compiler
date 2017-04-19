@@ -1,2 +1,2 @@
-at (1:1): indentifier expected, but "[" found:
+at (1:2): indentifier expected, but "[" found:
 a.[f]

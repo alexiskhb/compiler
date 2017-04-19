@@ -1,0 +1,13 @@
+var
+	R: record
+		RR: record
+			RRR: record
+				I: integer
+			end
+		end
+	end;
+	k: integer;
+begin
+	k := 0;
+	R.RR.RRR.i := k;
+end.

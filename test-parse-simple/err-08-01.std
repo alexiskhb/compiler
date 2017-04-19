@@ -1,2 +1,2 @@
-at (1:1): "]" expected, but ";" found:
+at (1:3): ] expected, but ";" found:
 w[1;3]

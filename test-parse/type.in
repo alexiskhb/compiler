@@ -1,0 +1,11 @@
+type
+	r_t = record
+		k: integer;
+		c: char;
+	end;
+var
+	i: integer;
+	r: r_t;
+begin
+	r.k := i;
+end.

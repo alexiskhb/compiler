@@ -1,3 +1,7 @@
+var
+	a, i, k: integer;
+	b: integer = 4;
+
 begin
 	while 1 = 2 do
 		a /= b;

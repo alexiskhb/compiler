@@ -1,8 +1,10 @@
 function f(i, k: integer; var c: char):integer;
+var
+	p, t: float;
 begin
 	i := k;
 end;
 
 begin
-	f(1, 2, c)
+	f(1, 2, 'c')
 end.

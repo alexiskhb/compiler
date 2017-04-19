@@ -1,0 +1,8 @@
+var
+	r: record
+		i: integer;
+		c: char; 
+	end;
+
+begin
+end.

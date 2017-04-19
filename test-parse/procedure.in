@@ -4,5 +4,5 @@ begin
 end;
 
 begin
-	f(1, 2, c)
+	f(1, 2, 'c')
 end.

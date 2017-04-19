@@ -1,0 +1,11 @@
+function F(): record i: integer end;
+begin
+end;
+
+var
+	k: integer;
+
+begin
+	k := f().i;
+	k := F.I;
+end.

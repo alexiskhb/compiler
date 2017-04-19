@@ -1,4 +1,8 @@
+var
+	a,b ,c: integer;
+
 begin
 	a := 3;
-	f(a);
+	b := (a + a*a/a)-a;
+	c -= a - b;
 end.

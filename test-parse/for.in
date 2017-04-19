@@ -1,5 +1,7 @@
+var
+	k: integer;
+
 begin
 	for k := -1 to 2*2 do begin
-		f(k);
 	end;
 end.

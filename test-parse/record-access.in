@@ -1,0 +1,7 @@
+var
+	i: integer;
+	r: record k: float end;
+begin
+	i := 1;
+	r.k := i;
+end.
