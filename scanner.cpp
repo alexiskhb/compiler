@@ -523,7 +523,7 @@ bool Scanner::last_token_success() const {
 	return m_last_token_success;
 }
 
-Token Scanner::require(initializer_list<Token::Operator> ops) {
+Token Scanner::require(const initializer_list<Token::Operator>& ops) {
 	Token token = top();
 	for(Token::Operator op: ops) {
 		if (token == op) {
@@ -533,7 +533,7 @@ Token Scanner::require(initializer_list<Token::Operator> ops) {
 	return Token();
 }
 
-Token Scanner::require(initializer_list<Token::Separator> seps) {
+Token Scanner::require(const initializer_list<Token::Separator>& seps) {
 	Token token = top();
 	for(Token::Separator sep: seps) {
 		if (token == sep) {
@@ -543,7 +543,7 @@ Token Scanner::require(initializer_list<Token::Separator> seps) {
 	return Token();
 }
 
-Token Scanner::require(initializer_list<Token::Category> cats) {
+Token Scanner::require(const initializer_list<Token::Category>& cats) {
 	Token token = top();
 	for(Token::Category cat: cats) {
 		if (token == cat) {
@@ -553,7 +553,7 @@ Token Scanner::require(initializer_list<Token::Category> cats) {
 	return Token();
 }
 
-Token Scanner::require(initializer_list<Token::Reserved> rs) {
+Token Scanner::require(const initializer_list<Token::Reserved>& rs) {
 	Token token = top();
 	for(Token::Reserved r: rs) {
 		if (token == r) {

@@ -108,5 +108,28 @@ typedef std::shared_ptr<NodeVariable> PNodeVariable;
 
 typedef std::shared_ptr<NodeExprStmtFunctionCall> PNodeExprStmtFunctionCall;
 
+class AsmOperand;
+class AsmOperandReg;
+class AsmOperandImm;
+class AsmOperandOfffset;
+class AsmOperandIndirect;
+class AsmCode;
+class AsmCmd;
+class AsmCmd0;
+class AsmCmd1;
+class AsmCmd2;
+class AsmComment;
+
+typedef std::shared_ptr<AsmOperand> PAsmOperand; 
+typedef std::shared_ptr<AsmOperandReg> PAsmOperandReg; 
+typedef std::shared_ptr<AsmOperandImm> PAsmOperandImm; 
+typedef std::shared_ptr<AsmOperandOfffset> PAsmOperandOfffset; 
+typedef std::shared_ptr<AsmOperandIndirect> PAsmOperandIndirect; 
+typedef std::shared_ptr<AsmCode> PAsmCode; 
+typedef std::shared_ptr<AsmCmd> PAsmCmd; 
+typedef std::shared_ptr<AsmCmd0> PAsmCmd0; 
+typedef std::shared_ptr<AsmCmd1> PAsmCmd1; 
+typedef std::shared_ptr<AsmCmd2> PAsmCmd2; 
+typedef std::shared_ptr<AsmComment> PAsmComment; 
 
 #endif // TYPES_H

@@ -4,6 +4,8 @@
 #include <vector>
 #include "scanner.h"
 #include "parser.h"
+#include "asmgenerator.h"
+#include <fstream>
 
 using namespace std;
 
@@ -45,16 +47,41 @@ void parse(const string& filename, const bool strict) {
 	parser.output_syntax_tree(cout);
 }
 
+void generate(const string& filename, string output_filename) {
+	Generator generator(filename);
+	if (!generator.is_open()) {
+		std::cerr << "Could not open " << filename << endl;
+		return;
+	}
+	if (output_filename.size() == 0) {
+		output_filename = "/dev/stdout";
+	}
+	ofstream output(output_filename);
+	if (!output.is_open()) {
+		std::cerr << "Could not open " << output_filename << endl;
+		return;
+	}
+	try {
+		generator.generate(output);
+	} catch (ParseError pe) {
+		cerr << pe.msg() << ":\n";
+		cerr << generator.get_line(pe.pos().line) << endl;
+	}
+}
+
 int main(int argc, char *argv[]) {
-//	parse("./test-parse/type.in", true);
+	generate("./test-gen/write.in", "");
 //	parse("./test-parse-simple/dot-01.in", false);
-//	return 0;
+	return 0;
 	cxxopts::Options options(argv[0]);
-	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false;
+	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false, mode_generate = false;
+	string asm_output_filename;
 	options.add_options()
 			("l,lexical", "lexical analysis", cxxopts::value<bool>(mode_lexical))
-			("s,parse-simple", "parse-simple", cxxopts::value<bool>(mode_parse_simple))
+	        ("s,parse-simple", "parse simple", cxxopts::value<bool>(mode_parse_simple))
 			("p,parse", "parse", cxxopts::value<bool>(mode_parse))
+	        ("S,generate", "generate", cxxopts::value<bool>(mode_generate))
+	        ("o,output", "asm output filename", cxxopts::value<string>(asm_output_filename))
 			("positional", "", cxxopts::value<vector<string>>());
 	options.parse_positional({"", "", "positional"});
 	options.parse(argc, argv);
@@ -74,6 +101,9 @@ int main(int argc, char *argv[]) {
 	}
 	if (mode_parse) {
 		parse(files[0], true);
+	}
+	if (mode_generate) {
+		generate(files[0], asm_output_filename);
 	}
 }
 

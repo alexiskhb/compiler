@@ -5,29 +5,6 @@ using namespace std;
 int precedence_lst[Token::SIZEOF_OPERATORS];
 int precedence_sep_lst[Token::SIZEOF_SEPARATORS];
 
-struct Symtables : public vector<PSymTable> {
-	PSymbol operator[](const string& s) {
-		if (!Symbol::use_strict) {
-			return nullptr;
-		}
-		for (auto t = this->rbegin(); t != this->rend(); t++) {
-			SymTable& st = **t;
-			PSymbol r = st[s];
-			if (r) {
-				return r;
-			}
-		}
-		if (Symbol::use_strict) {
-			throw runtime_error("no symbol " + s);
-		}
-		return nullptr;
-	}
-	Symtables& operator<<(const PSymbol& symbol) {
-		this->back() << symbol;
-		return *this;
-	}
-} symtables;
-
 int PREC_MAX;
 bool init_precedence() {
 	fill(precedence_lst, precedence_lst + Token::SIZEOF_OPERATORS, 0);
@@ -96,17 +73,18 @@ Parser::Parser(const string& filename, const bool is_strict) {
 	static bool init = init_precedence();
 	scanner.open(filename);
 	set_strictness(is_strict);
-	symtables.clear();
-	symtables.emplace_back(new SymTable);
-	symtables <<
+	m_symtables.clear();
+	m_symtables.emplace_back(new SymTable);
+	m_symtables <<
 	             make_shared<SymbolTypeChar>("CHAR") <<
 	             make_shared<SymbolTypeFloat>("FLOAT") <<
 	             make_shared<SymbolTypeString>("STRING") <<
-	             make_shared<SymbolTypeInt>("INTEGER");
-	symtables["CHAR"] >> NodeString::char_type_sym_ptr;
-	symtables["FLOAT"] >> NodeFloat::type_sym_ptr;
-	symtables["STRING"] >> NodeString::str_type_sym_ptr;
-	symtables["INTEGER"] >> NodeInteger::type_sym_ptr;
+	             make_shared<SymbolTypeInt>("INTEGER") <<
+	             make_shared<SymbolProcedure>("WRITE");
+	m_symtables["CHAR"] >> NodeString::char_type_sym_ptr;
+	m_symtables["FLOAT"] >> NodeFloat::type_sym_ptr;
+	m_symtables["STRING"] >> NodeString::str_type_sym_ptr;
+	m_symtables["INTEGER"] >> NodeInteger::type_sym_ptr;
 }
 
 bool Parser::is_open() const {
@@ -115,7 +93,7 @@ bool Parser::is_open() const {
 
 PNodeProgram Parser::parse_program() {
 	NodeProgram* program = new NodeProgram;
-	symtables.emplace_back(new SymTable);
+	m_symtables.emplace_back(new SymTable);
 	while (scanner == Token::C_RESERVED) {
 		Token token = scanner;
 		switch((Token::Reserved)token) {
@@ -238,7 +216,7 @@ PNodeStmtVar Parser::parse_var() {
 	NodeStmtVar* node = new NodeStmtVar;
 	++scanner;
 	while (scanner == Token::C_IDENTIFIER) {
-		node->units.push_back(parse_var_declaration_unit(symtables.back(), Initializer::on));
+		node->units.push_back(parse_var_declaration_unit(m_symtables.back(), Initializer::on));
 		if (scanner == Token::C_RESERVED) {
 			break;
 		}
@@ -355,7 +333,7 @@ PNodeStmtType Parser::parse_type_part() {
 		} else if (dynamic_pointer_cast<SymbolTypeString>(tdu->nodetype->symtype)) {
 			tdu->alias = make_shared<SymbolTypeString>(identifier->name);	
 		}
-		symtables << tdu->alias;
+		m_symtables << tdu->alias;
 		node->units.push_back(PNodeTypeDeclarationUnit(tdu));
 	}
 	return PNodeStmtType(node);
@@ -378,10 +356,10 @@ PNodeStmtProcedure Parser::parse_procedure() {
 			procedure->symbol->locals << var->symbol;
 		}
 	}
-	symtables << procedure->symbol;
-	symtables.push_back(procedure->symbol->locals);
+	m_symtables << procedure->symbol;
+	m_symtables.push_back(procedure->symbol->locals);
 	procedure->parts = parse_procedure_body();
-	symtables.pop_back();
+	m_symtables.pop_back();
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
 	return PNodeStmtProcedure(procedure);
@@ -409,10 +387,10 @@ PNodeStmtFunction Parser::parse_function() {
 			function->symbol->locals << var->symbol;
 		}
 	}
-	symtables << function->symbol;
-	symtables.push_back(function->symbol->locals);
+	m_symtables << function->symbol;
+	m_symtables.push_back(function->symbol->locals);
 	function->parts = parse_procedure_body();
-	symtables.pop_back();
+	m_symtables.pop_back();
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
 	return PNodeStmtFunction(function);
@@ -488,7 +466,7 @@ PNodeType Parser::parse_type() {
 
 	} else {
 		string name = NodeIdentifier(scanner++).name;
-		if (!(symtables[name] >> node->symtype) && Symbol::use_strict) {
+		if (!(m_symtables[name] >> node->symtype) && Symbol::use_strict) {
 			throw runtime_error("no such type " + name);
 		}
 	}
@@ -510,10 +488,10 @@ PNodeStmtBlock Parser::parse_block() {
 }
 
 PNode Parser::parse() {
-	syntax_tree = Symbol::use_strict ?
-	                dynamic_pointer_cast<Node>(parse_program()) :
-	                parse_expression(2);
-	return syntax_tree;
+	m_syntax_tree = Symbol::use_strict ?
+	                  dynamic_pointer_cast<Node>(parse_program()) :
+	                  parse_expression(2);
+	return m_syntax_tree;
 }
 
 PNodeActualParameters Parser::parse_actual_parameters() {
@@ -524,7 +502,7 @@ PNodeActualParameters Parser::parse_actual_parameters() {
 	PNodeActualParameters result = make_shared<NodeActualParameters>(first);
 	while (scanner == Token::S_COMMA) {
 		++scanner;
-		result->args.push_back(parse_expression(precedence(Token::OP_EQUAL)));
+		result->arglist.push_back(parse_expression(precedence(Token::OP_EQUAL)));
 	}
 	return result;
 }
@@ -601,12 +579,12 @@ PNodeExpression Parser::parse_factor() {
 	case Token::C_IDENTIFIER: {
 		NodeIdentifier *node = new NodeIdentifier(token);
 		PSymbolVariable s_var;
-		symtables[node->name] >> s_var;
+		m_symtables[node->name] >> s_var;
 		if (s_var) {
 			return make_shared<NodeVariable>(PNodeIdentifier(node), s_var);
 		}
 		PSymbolProcedure s_f;
-		symtables[node->name] >> s_f;
+		m_symtables[node->name] >> s_f;
 		if (s_f) {
 			return make_shared<NodeExprStmtFunctionCall>(PNodeIdentifier(node), s_f);
 		}
@@ -641,12 +619,13 @@ string Parser::get_line(int id) {
 	return scanner.get_line(id);
 }
 
-void Parser::set_strictness(const bool strict) {
+Parser& Parser::set_strictness(const bool strict) {
 	Symbol::use_strict = strict;
+	return *this;
 }
 
 ostream& Parser::output_symbols(ostream& os) {
-	for (PSymTable pst: symtables) {
+	for (PSymTable pst: m_symtables) {
 		SymTable& st = *pst;
 		for (PSymbol p: st) {
 			os << p->output_str() << endl;
@@ -656,9 +635,9 @@ ostream& Parser::output_symbols(ostream& os) {
 }
 
 ostream& Parser::output_syntax_tree(ostream& os) {
-	if (syntax_tree) {
+	if (m_syntax_tree) {
 		int node_id = 1;
-		output_subtree(syntax_tree, 0, node_id, os);
+		output_subtree(m_syntax_tree, 0, node_id, os);
 		os << '.' << endl;
 	}
 	return os;
@@ -696,7 +675,7 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os, bool si
 		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeUnaryOperator>(node)->exprtype().get() << '\n';
 		output_subtree(dynamic_pointer_cast<NodeUnaryOperator>(node)->node, this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeActualParameters>(node)) {
-		for (PNodeExpression child: dynamic_pointer_cast<NodeActualParameters>(node)->args) {
+		for (PNodeExpression child: dynamic_pointer_cast<NodeActualParameters>(node)->arglist) {
 			output_subtree(child, this_node, id, os);
 		}
 	} else if (dynamic_pointer_cast<NodeArrayAccess>(node)) {
@@ -791,42 +770,46 @@ PNodeExpression Parser::new_literal_factor(const Token& token) {
 	}
 }
 
-void Parser::require(initializer_list<Token::Operator> ops, Pos pos, const string& expected, const string& found) {
+void Parser::require(const initializer_list<Token::Operator>& ops, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(ops)) {
 		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
 	}
 }
 
-void Parser::require(initializer_list<Token::Operator> ops, const string& expected) {
+void Parser::require(const initializer_list<Token::Operator>& ops, const string& expected) {
 	require(ops, scanner.top().position, expected, scanner.top().strvalue());
 }
 
-void Parser::require(initializer_list<Token::Category> cats, Pos pos, const string& expected, const string& found) {
+void Parser::require(const initializer_list<Token::Category>& cats, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(cats)) {
 		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
 	}
 }
 
-void Parser::require(initializer_list<Token::Category> cats, const string& expected) {
+void Parser::require(const initializer_list<Token::Category>& cats, const string& expected) {
 	require(cats, scanner.top().position, expected, scanner.top().strvalue());
 }
 
-void Parser::require(initializer_list<Token::Reserved> rs, Pos pos, const string& expected, const string& found) {
+void Parser::require(const initializer_list<Token::Reserved>& rs, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(rs)) {
 		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
 	}
 }
 
-void Parser::require(initializer_list<Token::Reserved> rs, const string& expected) {
+void Parser::require(const initializer_list<Token::Reserved>& rs, const string& expected) {
 	require(rs, scanner.top().position, expected, scanner.top().strvalue());
 }
 
-void Parser::require(initializer_list<Token::Separator> seps, Pos pos, const string& expected, const string& found) {
+void Parser::require(const initializer_list<Token::Separator>& seps, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(seps)) {
 		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
 	}
 }
 
-void Parser::require(initializer_list<Token::Separator> seps, const string& expected) {
+void Parser::require(const initializer_list<Token::Separator>& seps, const string& expected) {
 	require(seps, scanner.top().position, expected, scanner.top().strvalue());
+}
+
+PNode Parser::tree() {
+	return m_syntax_tree;
 }

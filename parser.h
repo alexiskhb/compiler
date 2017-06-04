@@ -9,6 +9,29 @@
 #include "token.h"
 #include "symboltable.h"
 
+struct Symtables : public std::vector<PSymTable> {
+	PSymbol operator[](const std::string& s) {
+		if (!Symbol::use_strict) {
+			return nullptr;
+		}
+		for (auto t = this->rbegin(); t != this->rend(); t++) {
+			SymTable& st = **t;
+			PSymbol r = st[s];
+			if (r) {
+				return r;
+			}
+		}
+		if (Symbol::use_strict) {
+			throw std::runtime_error("no symbol " + s);
+		}
+		return nullptr;
+	}
+	Symtables& operator<<(const PSymbol& symbol) {
+		this->back() << symbol;
+		return *this;
+	}
+};
+
 class Parser {
 public:
 	Parser(const std::string& filename, const bool strict = true);
@@ -18,18 +41,20 @@ public:
 	std::ostream& output_syntax_tree(std::ostream&);
 	std::ostream& output_symbols(std::ostream&);
 	std::string get_line(int);
-	void set_strictness(const bool);
+	Parser& set_strictness(const bool);
+	PNode tree();
+
 private:
 	int output_subtree(PNode, int, int&, std::ostream&, bool silent = false);
 	int output_subtree(std::string, int, int&, std::ostream&, bool silent = false);
-	void require(std::initializer_list<Token::Operator>, Pos, const std::string&, const std::string&);
-	void require(std::initializer_list<Token::Separator>,Pos, const std::string&, const std::string&);
-	void require(std::initializer_list<Token::Category>, Pos, const std::string&, const std::string&);
-	void require(std::initializer_list<Token::Reserved>, Pos, const std::string&, const std::string&);
-	void require(std::initializer_list<Token::Operator>, const std::string&);
-	void require(std::initializer_list<Token::Separator>,const std::string&);
-	void require(std::initializer_list<Token::Category>, const std::string&);
-	void require(std::initializer_list<Token::Reserved>, const std::string&);
+	void require(const std::initializer_list<Token::Operator>&, Pos, const std::string&, const std::string&);
+	void require(const std::initializer_list<Token::Separator>&,Pos, const std::string&, const std::string&);
+	void require(const std::initializer_list<Token::Category>&, Pos, const std::string&, const std::string&);
+	void require(const std::initializer_list<Token::Reserved>&, Pos, const std::string&, const std::string&);
+	void require(const std::initializer_list<Token::Operator>&, const std::string&);
+	void require(const std::initializer_list<Token::Separator>&,const std::string&);
+	void require(const std::initializer_list<Token::Category>&, const std::string&);
+	void require(const std::initializer_list<Token::Reserved>&, const std::string&);
 	PNodeExpression parse_factor();
 	PNodeExpression parse_expression(int);
 	PNodeExpression new_literal_factor(const Token&);
@@ -57,7 +82,8 @@ private:
 	PNodeType parse_type();
 
 	Scanner scanner;
-	PNode syntax_tree = nullptr;
+	PNode m_syntax_tree = nullptr;
+	Symtables m_symtables;
 	std::vector<SymTable> m_current_scope;
 };
 

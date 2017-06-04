@@ -18,23 +18,23 @@ PSymbolType SymbolType::max(PSymbolType a, PSymbolType b) {
 	return a;
 }
 
-std::string Symbol::str() {
+std::string Symbol::str() const {
 	return name;
 }
 
-std::string Symbol::output_str() {
+std::string Symbol::output_str() const {
 	string result = "* " + to_string((uint64_t)this) + " " + str() + '\n';
 	return result;
 }
 
-std::string SymbolVariable::output_str() {
+std::string SymbolVariable::output_str() const {
 	string result = "* " + to_string((uint64_t)this) + " " + str() + "\n";
 	result += "^ " + to_string((uint64_t)this) + " " + to_string((uint64_t)type.get()) + '\n';
 	result += type->output_str();
 	return result;
 }
 
-std::string SymbolTypeRecord::output_str() {
+std::string SymbolTypeRecord::output_str() const {
 	string result = "* " + to_string((uint64_t)this) + " " + str() + "\n";
 	SymTable& st = *symtable;
 	for (PSymbol p: st) {
@@ -44,11 +44,11 @@ std::string SymbolTypeRecord::output_str() {
 	return result;
 }
 
-std::string SymbolProcedure::output_str() {
+std::string SymbolProcedure::output_str() const {
 	string result = "* " + to_string((uint64_t)this) + " " + str() + "\n";
-	if (dynamic_cast<SymbolFunction*>(this)) {
-		result += "^ " + to_string((uint64_t)this) + ' ' + to_string((uint64_t)dynamic_cast<SymbolFunction*>(this)->type.get()) + '\n';
-		result += dynamic_cast<SymbolFunction*>(this)->type->output_str();
+	if (dynamic_cast<const SymbolFunction*>(this)) {
+		result += "^ " + to_string((uint64_t)this) + ' ' + to_string((uint64_t)dynamic_cast<const SymbolFunction*>(this)->type.get()) + '\n';
+		result += dynamic_cast<const SymbolFunction*>(this)->type->output_str();
 	}
 	SymTable& lc = *locals;
 	for (PSymbol p: lc) {
@@ -132,3 +132,43 @@ SymbolProcedure::SymbolProcedure(const std::string& name) :
 SymbolFunction::SymbolFunction(const std::string& name) :
 	SymbolProcedure(name) {
 }
+
+unsigned Symbol::size() const {
+	return 0;
+}
+
+unsigned SymbolVariable::size() const {
+	return type->size();
+}
+
+unsigned SymbolTypePointer::size() const {
+	return 8;
+}
+
+unsigned SymbolTypeArray::size() const {
+	return (high - low + 1)*type->size();
+}
+
+unsigned SymbolTypeInt::size() const {
+	return 8;
+}
+
+unsigned SymbolTypeFloat::size() const {
+	return 8;
+}
+
+unsigned SymbolTypeChar::size() const {
+	return 1;
+}
+
+unsigned SymbolTypeString::size() const {
+	return 255;
+}
+
+unsigned SymbolTypeRecord::size() const {
+	return symtable->bsize();
+}
+
+
+
+

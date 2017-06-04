@@ -14,22 +14,13 @@ public:
 	PSymbol operator[](size_t n) {
 		return this->at(n);
 	}
-
 	PSymbol operator[](const std::string& s) {
 		auto r = m_symbol_map.find(s);
 		return r == m_symbol_map.end() ? nullptr : this->at(r->second);
 	}
-
-//	size_t size() const {
-//		return m_symbol_list.size();
-//	}
-
-//	PSymbol back() {
-//		return m_symbol_list.back();
-//	}
-
+	/// Size of variables in bytes, if any
+	unsigned bsize() const;
 private:
-//	std::vector<PSymbol> m_symbol_list;
 	std::map<std::string, size_t> m_symbol_map;
 };
 

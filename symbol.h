@@ -17,15 +17,18 @@ public:
 	Symbol(const std::string& name);
 	std::string name;
 	static bool use_strict;
-	virtual std::string str();
-	virtual std::string output_str();
+	virtual std::string str() const;
+	virtual std::string output_str() const;
+	/// Size in bytes
+	virtual unsigned size() const;
 };
 
 class SymbolVariable : public Symbol {
 public:
 	SymbolVariable(const std::string& name, PSymbolType);
-	std::string output_str() override;
+	std::string output_str() const override;
 	PSymbolType type;
+	unsigned size() const override;
 };
 
 class SymbolType : public Symbol {
@@ -47,45 +50,50 @@ public:
 class SymbolTypeInt : public SymbolType {
 public:
 	SymbolTypeInt(const std::string& name);
+	unsigned size() const override;
 };
 
 class SymbolTypeFloat : public SymbolType {
 public:
 	SymbolTypeFloat(const std::string& name);
+	unsigned size() const override;
 };
 
 class SymbolTypeChar : public SymbolType {
 public:
 	SymbolTypeChar(const std::string& name);
+	unsigned size() const override;
 };
 
 class SymbolTypeString : public SymbolType {
 public:
 	SymbolTypeString(const std::string& name);
+	unsigned size() const override;
 };
 
 class SymbolTypePointer : public SymbolType {
 public:
 	SymbolTypePointer(const std::string& name, PSymbolType);
+	unsigned size() const override;
 	PSymbolType type;
 };
 
 class SymbolTypeArray : public SymbolType {
 public:
 	SymbolTypeArray(int low, int high, PSymbolType type);
+	unsigned size() const override;
 	int low;
 	int high;
 	PSymbolType type;
-private:
-
 };
 
 class SymbolTypeRecord : public SymbolType {
 public:
 	SymbolTypeRecord();
 	SymbolTypeRecord(const std::string& name);
+	unsigned size() const override;
 	PSymTable symtable;
-	std::string output_str() override;
+	std::string output_str() const override;
 private:
 	static uint64_t counter;
 };
@@ -93,12 +101,11 @@ private:
 class SymbolConst : public Symbol {
 public:
 	SymbolConst(const std::string& name);
-
 };
 
 class SymbolProcedure : public Symbol {
 public:
-	std::string output_str() override;
+	std::string output_str() const override;
 	SymbolProcedure(const std::string& name);
 	PSymTable params;
 	PSymTable locals;

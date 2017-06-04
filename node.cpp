@@ -68,7 +68,9 @@ NodeFloat::NodeFloat(const Token& token) {
 	value = Token::float_values[token.value_id];
 }
 
-NodeString::NodeString(const Token& token) {
+NodeString::NodeString(const Token& token) :
+    strlabel_id(NodeString::nofstrs++)
+{
 	value = Token::string_values[token.value_id];
 }
 
@@ -92,7 +94,7 @@ NodeVariable::NodeVariable(PNodeIdentifier identifier, PSymbolVariable s_var) :
 }
 
 NodeActualParameters::NodeActualParameters(PNodeExpression expr) {
-	args.push_back(expr);
+	arglist.push_back(expr);
 }
 
 //NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PNodeActualParameters args) :
@@ -107,6 +109,9 @@ NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PSym
 	} else {
 		SymbolFunction& f = *dynamic_pointer_cast<SymbolFunction>(sym);
 		m_exprtype = f.type;
+	}
+	if (func_id->name == "WRITE") {
+		m_predefined = Predefined::WRITE;
 	}
 }
 
@@ -123,67 +128,67 @@ NodeStmtAssign::NodeStmtAssign(PNodeExpression left, PNodeExpression right) :
 	NodeBinaryOperator(Token::OP_ASSIGN, left, right) {
 }
 
-string Node::str() {
+string Node::str() const {
 	return "";
 }
 
-string NodeEof::str() {
+string NodeEof::str() const {
 	return "END OF FILE";
 }
 
-string NodeInteger::str() {
+string NodeInteger::str() const {
 	return to_string(value);
 }
 
-string NodeFloat::str() {
+string NodeFloat::str() const {
 	return to_string(value);
 }
 
-string NodeVarDeclarationUnit::str() {
+string NodeVarDeclarationUnit::str() const {
 	return nodetype->symtype->str();
 }
 
-string NodeTypeDeclarationUnit::str() {
+string NodeTypeDeclarationUnit::str() const {
 	return "ALIAS " + alias->name;
 }
 
-string NodeString::str() {
+string NodeString::str() const {
 	return "\"" + value + "\"";
 }
 
-string NodeIdentifier::str() {
+string NodeIdentifier::str() const {
 	return name;
 }
 
-string NodeBinaryOperator::str() {
+string NodeBinaryOperator::str() const {
 	return operator_lst[operation];
 }
 
-string NodeArrayAccess::str() {
+string NodeArrayAccess::str() const {
 	return "[]";
 }
 
-string NodeActualParameters::str() {
+string NodeActualParameters::str() const {
 	return ",";
 }
 
-//string NodeCommaSeparatedIdentifiers::str() {
+//string NodeCommaSeparatedIdentifiers::str() const {
 //    return ",";
 //}
 
-string NodeRecordAccess::str() {
+string NodeRecordAccess::str() const {
 	return ".";
 }
 
-string NodeExprStmtFunctionCall::str() {
+string NodeExprStmtFunctionCall::str() const {
 	return "FUNCTION CALL";
 }
 
-string NodeUnaryOperator::str() {
+string NodeUnaryOperator::str() const {
 	return operator_lst[operation];
 }
 
-string NodeVariable::str() {
+string NodeVariable::str() const {
 	return identifier->name;
 }
 
@@ -195,59 +200,59 @@ bool NodeIdentifier::empty() const {
 	return name.empty();
 }
 
-string NodeStmtIf::str() {
+string NodeStmtIf::str() const {
 	return "IF";
 }
 
-string NodeStmtWhile::str() {
+string NodeStmtWhile::str() const {
 	return "WHILE";
 }
 
-string NodeStmtAssign::str() {
+string NodeStmtAssign::str() const {
 	return "ASSIGN";
 }
 
-string NodeStmtConst::str() {
+string NodeStmtConst::str() const {
 	return "CONST";
 }
 
-string NodeStmtRepeat::str() {
+string NodeStmtRepeat::str() const {
 	return "REPEAT";
 }
 
-string NodeStmtVar::str() {
+string NodeStmtVar::str() const {
 	return "VAR";
 }
 
-string NodeStmtFor::str() {
+string NodeStmtFor::str() const {
 	return "FOR";
 }
 
-string NodeStmtProcedure::str() {
+string NodeStmtProcedure::str() const {
 	return "PROCEDURE " + name->str();
 }
 
-string NodeFormalParameterSection::str() {
+string NodeFormalParameterSection::str() const {
 	return (is_var ? "VAR " : "") + type->str() + " FORMAL PARAMETERS:";
 }
 
-string NodeStmtFunction::str() {
+string NodeStmtFunction::str() const {
 	return "FUNCTION " + name->str();
 }
 
-string NodeTypeRecord::str() {
+string NodeTypeRecord::str() const {
 	return "RECORD";
 }
 
-string NodeType::str() {
+string NodeType::str() const {
 	return symtype->str();
 }
 
-string NodeStmtType::str() {
+string NodeStmtType::str() const {
 	return "TYPE";
 }
 
-string NodeStmtBlock::str() {
+string NodeStmtBlock::str() const {
 	return "BLOCK";
 }
 
@@ -326,11 +331,14 @@ PSymbolType NodeBinaryOperator::exprtype() {
 }
 
 PSymbolType NodeUnaryOperator::exprtype() {
-
+	return nullptr;
 }
 
 bool NodeExprStmtFunctionCall::check_parameters() {
 	if (symbol->params->size() == 0 && !args) {
+		return true;
+	}
+	if (m_predefined) {
 		return true;
 	}
 	if (symbol->params->size() != args->size()) {
@@ -343,6 +351,112 @@ bool NodeExprStmtFunctionCall::check_parameters() {
 	}
 	return true;
 }
+
+AsmCode& Node::generate(AsmCode& ac) {
+	return ac;
+}
+
+AsmCode& NodeInteger::generate(AsmCode& ac) {
+	ac << AsmComment{"int access"};
+	return ac;
+}
+
+AsmCode& NodeFloat::generate(AsmCode& ac) {
+	ac << AsmComment{"float access"};
+	return ac;
+}
+
+uint NodeString::nofstrs = 0;
+
+AsmCode& NodeString::generate(AsmCode& ac) {
+	ac << AsmComment{"string access"};
+	return ac;
+}
+
+AsmCode& NodeVariable::generate(AsmCode& ac) {
+	ac << AsmComment{"variable access"};
+	return ac;
+}
+
+AsmCode& NodeBinaryOperator::generate(AsmCode& ac) {
+	ac << AsmComment{"binary operator"};
+	return ac;
+}
+
+AsmCode& NodeUnaryOperator::generate(AsmCode& ac) {
+	ac << AsmComment{"unary operator"};
+	return ac;
+}
+
+AsmCode& NodeArrayAccess::generate(AsmCode& ac) {
+	ac << AsmComment{"array access"};
+	return ac;
+}
+
+AsmCode& NodeRecordAccess::generate(AsmCode& ac) {
+	ac << AsmComment{"record access"};
+	return ac;
+}
+
+AsmCode& NodeStmtAssign::generate(AsmCode& ac) {
+	ac << AsmComment{"stmt assign"};
+	return ac;
+}
+
+AsmCode& NodeStmtVar::generate(AsmCode& ac) {
+	ac << AsmComment{"variables part"};
+	return ac;
+}
+
+AsmCode& NodeExprStmtFunctionCall::generate(AsmCode& ac) {
+	ac << AsmComment{"function call"};
+	if (m_predefined == Predefined::WRITE) {
+		ac << AsmComment{"\t(write)"};
+		for (PNodeExpression expr: this->args->arglist) {
+			m_write(ac, expr);
+		}
+	}
+	return ac;
+}
+
+void NodeExprStmtFunctionCall::m_write(AsmCode& ac, PNodeExpression expr) {
+	expr->generate(ac);
+//	expr->exprtype()->write();
+//	__LINE__;
+}
+
+AsmCode& NodeStmtBlock::generate(AsmCode& ac) {
+	ac << AsmComment{"start block"};
+	for (PNode stmt: this->stmts) {
+		stmt->generate(ac);
+	}
+	ac << AsmComment{"end block"};
+	return ac;
+}
+
+AsmCode& NodeProgram::generate(AsmCode& ac) {
+	ac << AsmComment{"start program"};
+	for (PNode part: this->parts) {
+		part->generate(ac);
+	}
+	return ac;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
