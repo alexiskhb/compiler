@@ -1,5 +1,33 @@
 #include "asmcode.h"
 
+using namespace std;
+
+const std::map<Syscall, string> syscalls = {{PRINTF, "printf"}};
+const std::map<Register, string> registers =
+{
+    {RAX, "rax"},
+    {RBX, "rbx"},
+    {RCX, "rcx"},
+    {RDX, "rdx"},
+    {RDI, "rdi"},
+    {RSP, "rsp"},
+    {RBP, "rbp"},
+    {XMM0, "xmm0"}
+};
+const string reg_prefix = "%";
+const std::map<Opcode, string> opcodes =
+{
+	{MOVQ, "movq"},
+	{XORQ, "xorq"},
+	{PUSHQ, "pushq"},
+	{POPQ, "popq"},
+	{ADDQ, "addq"},
+	{CALL, "call"},
+    {LEAQ, "leaq"},
+    {RET, "ret"},
+	{NONE, ""}
+};
+
 AsmCmd::AsmCmd(Opcode oc) :
     m_opcode(oc)
 {}
@@ -12,10 +40,27 @@ void AsmCode::push(PAsmCmd cmd) {
 	m_commands.push_back(cmd);
 }
 
+bool AsmCode::add_label(PAsmLabel a_label) {
+	bool is_found = m_labels[a_label->name] != 0;
+	m_labels[a_label->name] = a_label;
+	return is_found;
+}
+
+PAsmLabel AsmCode::add_data(PAsmLabel a_label) {
+	if (!add_label(a_label)) {
+		m_header_labels.push_back(a_label);
+	}
+	return a_label;
+}
+
 std::ostream& AsmCode::output(std::ostream& os) {
+	for (PAsmLabel label: m_header_labels) {
+		label->output(os);
+	}
 	for (PAsmCmd cmd: this->m_commands) {
 		cmd->output(os);
 	}
+	os << '\n';
 	return os;
 }
 
@@ -23,9 +68,48 @@ std::ostream& AsmCmd::output(std::ostream& os) {
 	return os;
 }
 
-AsmCmd1::AsmCmd1(Opcode oc, PAsmOperand pao) :
-    AsmCmd(oc), operand(pao)
+AsmOperandReg::AsmOperandReg(Register a_register) :
+    m_register(a_register)
 {}
+
+AsmCmd1::AsmCmd1(Opcode oc, PAsmOperand a_operand) :
+    AsmCmd(oc), operand(a_operand)
+{}
+
+AsmCmd1::AsmCmd1(Opcode oc, PAsmVar a_label) :
+    AsmCmd(oc), operand(a_label)
+{}
+
+AsmCmd1::AsmCmd1(Opcode oc, Syscall sc) :
+    AsmCmd(oc), operand(make_shared<AsmVar>(syscalls.at(sc)))
+{}
+
+AsmCmd1::AsmCmd1(Opcode oc, Register a_register) :
+    AsmCmd(oc), operand(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmCmd2::AsmCmd2(Opcode oc, Register a_register_1, Register a_register_2) :
+    AsmCmd(oc), operand1(make_shared<AsmOperandReg>(a_register_1)), operand2(make_shared<AsmOperandReg>(a_register_2))
+{}
+
+AsmCmd2::AsmCmd2(Opcode oc, PAsmVar a_var, Register a_register) :
+    AsmCmd(oc), operand1(a_var), operand2(make_shared<AsmOperandReg>(a_register))
+{}
+
+std::ostream& AsmCmd0::output(std::ostream& os) {
+	os << '\t' << opcodes.at(this->m_opcode) << "\n";
+	return os;
+}
+
+std::ostream& AsmCmd1::output(std::ostream& os) {
+	os << '\t' << opcodes.at(this->m_opcode) << "\t" << operand->str() << '\n';
+	return os;
+}
+
+std::ostream& AsmCmd2::output(std::ostream& os) {
+	os << '\t' << opcodes.at(this->m_opcode) << "\t" << operand1->str() << ", " << operand2->str() << '\n';
+	return os;
+}
 
 std::ostream& AsmComment::output(std::ostream& os) {
 	os << "// " + m_string + "\n";
@@ -36,7 +120,62 @@ AsmCmd0::AsmCmd0(Opcode oc) :
     AsmCmd(oc)
 {}
 
+AsmLabel::AsmLabel(const std::string& a_label) :
+    AsmCmd(NONE), name(a_label)
+{}
+
+AsmVar::AsmVar(const std::string& a_name) :
+    AsmLabel(a_name)
+{}
+
+AsmGlobl::AsmGlobl(const std::string& a_name) :
+    AsmLabel(a_name)
+{}
+
+AsmVarString::AsmVarString(const std::string& a_var, const std::string& a_value) :
+    AsmVar(a_var), value(a_value)
+{}
+
+std::ostream& AsmVarString::output(std::ostream& os) {
+	os << name << ":\n\t.string \"" << value << "\"\n";
+	return os;
+}
+
+std::ostream& AsmLabel::output(std::ostream& os) {
+	os << name + ":\n";
+	return os;
+}
+
+std::ostream& AsmGlobl::output(std::ostream& os) {
+	os << "\t.globl " << name << '\n';
+	return os;
+}
+
 AsmCode& operator<<(AsmCode& ac, PAsmCmd cmd) {
 	ac.push(cmd);
 	return ac;
 }
+
+std::string AsmOperandReg::str() const {
+	return reg_prefix + registers.at(m_register);
+}
+
+std::string AsmVar::str() const {
+	return name;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

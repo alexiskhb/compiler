@@ -69,7 +69,7 @@ NodeFloat::NodeFloat(const Token& token) {
 }
 
 NodeString::NodeString(const Token& token) :
-    strlabel_id(NodeString::nofstrs++)
+    strlabel_id(NodeString::strcounter++)
 {
 	value = Token::string_values[token.value_id];
 }
@@ -357,19 +357,24 @@ AsmCode& Node::generate(AsmCode& ac) {
 }
 
 AsmCode& NodeInteger::generate(AsmCode& ac) {
-	ac << AsmComment{"int access"};
 	return ac;
 }
 
 AsmCode& NodeFloat::generate(AsmCode& ac) {
-	ac << AsmComment{"float access"};
 	return ac;
 }
 
-uint NodeString::nofstrs = 0;
+uint NodeString::strcounter = 0;
+string NodeString::str_prefix = ".str";
+
+//std::string NodeString::label() const {
+//	return NodeString::str_prefix + to_string(this->strlabel_id);
+//}
 
 AsmCode& NodeString::generate(AsmCode& ac) {
-	ac << AsmComment{"string access"};
+	PAsmLabel str = ac.add_data(make_shared<AsmVarString>(str_prefix + to_string(strlabel_id), value));
+	ac << AsmCmd2{LEAQ, dynamic_pointer_cast<AsmVar>(str), RDI};
+	ac << AsmCmd1{CALL, PRINTF};
 	return ac;
 }
 
@@ -409,9 +414,7 @@ AsmCode& NodeStmtVar::generate(AsmCode& ac) {
 }
 
 AsmCode& NodeExprStmtFunctionCall::generate(AsmCode& ac) {
-	ac << AsmComment{"function call"};
 	if (m_predefined == Predefined::WRITE) {
-		ac << AsmComment{"\t(write)"};
 		for (PNodeExpression expr: this->args->arglist) {
 			m_write(ac, expr);
 		}
@@ -421,8 +424,7 @@ AsmCode& NodeExprStmtFunctionCall::generate(AsmCode& ac) {
 
 void NodeExprStmtFunctionCall::m_write(AsmCode& ac, PNodeExpression expr) {
 	expr->generate(ac);
-//	expr->exprtype()->write();
-//	__LINE__;
+//	expr->write(ac);
 }
 
 AsmCode& NodeStmtBlock::generate(AsmCode& ac) {
@@ -435,13 +437,22 @@ AsmCode& NodeStmtBlock::generate(AsmCode& ac) {
 }
 
 AsmCode& NodeProgram::generate(AsmCode& ac) {
-	ac << AsmComment{"start program"};
+	ac.add_data(make_shared<AsmGlobl>("main"));
+	ac << AsmLabel{"main"};
+	ac << AsmCmd1{PUSHQ, RBP}
+	   << AsmCmd2{MOVQ, RSP, RBP};
 	for (PNode part: this->parts) {
 		part->generate(ac);
 	}
+	ac << AsmCmd1{POPQ, RBP}
+	   << AsmCmd2{XORQ, RAX, RAX}
+	   << AsmCmd0{RET};
 	return ac;
 }
 
+void NodeExpression::write() {
+//	this->exprtype()->write();
+}
 
 
 

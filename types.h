@@ -119,6 +119,10 @@ class AsmCmd0;
 class AsmCmd1;
 class AsmCmd2;
 class AsmComment;
+class AsmVar;
+class AsmVarString;
+
+class AsmLabel;
 
 typedef std::shared_ptr<AsmOperand> PAsmOperand; 
 typedef std::shared_ptr<AsmOperandReg> PAsmOperandReg; 
@@ -131,5 +135,10 @@ typedef std::shared_ptr<AsmCmd0> PAsmCmd0;
 typedef std::shared_ptr<AsmCmd1> PAsmCmd1; 
 typedef std::shared_ptr<AsmCmd2> PAsmCmd2; 
 typedef std::shared_ptr<AsmComment> PAsmComment; 
+typedef std::shared_ptr<AsmVar> PAsmVar;
+typedef std::shared_ptr<AsmVarString> PAsmVarString;
+
+typedef std::shared_ptr<AsmLabel> PAsmLabel;
+
 
 #endif // TYPES_H

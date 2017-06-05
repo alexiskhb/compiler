@@ -34,6 +34,7 @@ public:
 	NodeExpression() {}
 	NodeExpression(PSymbolType);
 	virtual PSymbolType exprtype();
+	virtual void write();
 protected:
 	PSymbolType m_exprtype;
 };
@@ -70,12 +71,14 @@ public:
 	PSymbolType exprtype() override;
 	std::string str() const override;
 	AsmCode& generate(AsmCode&) override;
+//	std::string label() const;
 	std::string value;
 	static PSymbolTypeChar char_type_sym_ptr;
 	static PSymbolTypeString str_type_sym_ptr;
 	const uint strlabel_id;
+	static std::string str_prefix;
 private:
-	static uint nofstrs;
+	static uint strcounter;
 };
 
 class NodeIdentifier : public NodeExpression {

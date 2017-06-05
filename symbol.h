@@ -45,6 +45,7 @@ public:
 		}
 		return ptr;
 	}
+	virtual void write(AsmCode&);
 };
 
 class SymbolTypeInt : public SymbolType {

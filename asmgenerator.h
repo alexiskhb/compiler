@@ -10,9 +10,9 @@
 class Generator {
 public:
 	Generator(const std::string& filename);
+	void generate(std::ostream&);
 	bool is_open() const;
 	std::string get_line(int);
-	void generate(std::ostream&);
 private:
 	void m_generate(PNode);
 	Parser m_parser;

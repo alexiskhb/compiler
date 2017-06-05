@@ -169,6 +169,8 @@ unsigned SymbolTypeRecord::size() const {
 	return symtable->bsize();
 }
 
+void SymbolType::write(AsmCode&) {
 
+}
 
 
