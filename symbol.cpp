@@ -4,6 +4,8 @@
 using namespace std;
 
 bool Symbol::use_strict;
+std::string SymbolTypeInt::fml_label = "._int_fmt_";
+std::string SymbolTypeFloat::fml_label = "._float_fmt_";
 
 PSymbolType SymbolType::max(PSymbolType a, PSymbolType b) {
 	if (!SymbolType::is_arithmetic({a, b})) {
@@ -171,6 +173,12 @@ unsigned SymbolTypeRecord::size() const {
 
 void SymbolType::write(AsmCode&) {
 
+}
+
+void SymbolTypeInt::write(AsmCode& ac) {
+	ac << AsmCmd2{LEAQ, AsmVar{SymbolTypeInt::fml_label}, RDI}
+	   << AsmCmd1{POPQ, RSI}
+	   << AsmCmd1{CALL, PRINTF};
 }
 
 

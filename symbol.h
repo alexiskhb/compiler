@@ -4,6 +4,7 @@
 #include "types.h"
 #include <memory>
 #include <string>
+#include "asmcode.h"
 
 template <class T>
 std::shared_ptr<T>& operator>>(PSymbol symbol, std::shared_ptr<T>& symbol_derived) {
@@ -52,11 +53,14 @@ class SymbolTypeInt : public SymbolType {
 public:
 	SymbolTypeInt(const std::string& name);
 	unsigned size() const override;
+	void write(AsmCode&) override;
+	static std::string fml_label;
 };
 
 class SymbolTypeFloat : public SymbolType {
 public:
 	SymbolTypeFloat(const std::string& name);
+	static std::string fml_label;
 	unsigned size() const override;
 };
 

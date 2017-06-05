@@ -5,27 +5,33 @@ using namespace std;
 const std::map<Syscall, string> syscalls = {{PRINTF, "printf"}};
 const std::map<Register, string> registers =
 {
-    {RAX, "rax"},
-    {RBX, "rbx"},
-    {RCX, "rcx"},
-    {RDX, "rdx"},
-    {RDI, "rdi"},
-    {RSP, "rsp"},
-    {RBP, "rbp"},
-    {XMM0, "xmm0"}
+    {RAX,	"rax"},
+    {RBX,	"rbx"},
+    {RCX,	"rcx"},
+    {RDX,	"rdx"},
+    {RDI,	"rdi"},
+    {RSI,	"rsi"},
+    {RSP,	"rsp"},
+    {RBP,	"rbp"},
+    {XMM0,	"xmm0"}
 };
 const string reg_prefix = "%";
+const string imm_prefix = "$";
 const std::map<Opcode, string> opcodes =
 {
-	{MOVQ, "movq"},
-	{XORQ, "xorq"},
-	{PUSHQ, "pushq"},
-	{POPQ, "popq"},
-	{ADDQ, "addq"},
-	{CALL, "call"},
-    {LEAQ, "leaq"},
-    {RET, "ret"},
-	{NONE, ""}
+	{MOVQ,	"movq"},
+	{XORQ,	"xorq"},
+	{PUSHQ,	"pushq"},
+	{POPQ,	"popq"},
+	{CALL,	"call"},
+	{LEAQ,	"leaq"},
+	{RET,	"ret"},
+	{ADDQ,	"addq"},
+	{SUBQ,	"subq"},
+	{IMULQ,	"imulq"},
+	{IDIVQ,	"idivq"},
+    {CQO,	"cqo"},
+	{NONE,	""}
 };
 
 AsmCmd::AsmCmd(Opcode oc) :
@@ -35,6 +41,11 @@ AsmCmd::AsmCmd(Opcode oc) :
 AsmComment::AsmComment(const std::string& str) :
     AsmCmd(NONE), m_string(str)
 {}
+
+AsmImmInt::AsmImmInt(int64_t a_value) :
+    m_value(a_value){
+
+}
 
 void AsmCode::push(PAsmCmd cmd) {
 	m_commands.push_back(cmd);
@@ -88,12 +99,20 @@ AsmCmd1::AsmCmd1(Opcode oc, Register a_register) :
     AsmCmd(oc), operand(make_shared<AsmOperandReg>(a_register))
 {}
 
+AsmCmd1::AsmCmd1(Opcode oc, int64_t a_value) :
+    AsmCmd(oc), operand(make_shared<AsmImmInt>(a_value))
+{}
+
 AsmCmd2::AsmCmd2(Opcode oc, Register a_register_1, Register a_register_2) :
     AsmCmd(oc), operand1(make_shared<AsmOperandReg>(a_register_1)), operand2(make_shared<AsmOperandReg>(a_register_2))
 {}
 
 AsmCmd2::AsmCmd2(Opcode oc, PAsmVar a_var, Register a_register) :
     AsmCmd(oc), operand1(a_var), operand2(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmCmd2::AsmCmd2(Opcode oc, AsmVar a_var, Register a_register) :
+    AsmCmd(oc), operand1(make_shared<AsmVar>(a_var)), operand2(make_shared<AsmOperandReg>(a_register))
 {}
 
 std::ostream& AsmCmd0::output(std::ostream& os) {
@@ -160,8 +179,16 @@ std::string AsmOperandReg::str() const {
 	return reg_prefix + registers.at(m_register);
 }
 
+std::string AsmOperandImm::str() const {
+    return "";
+}
+
 std::string AsmVar::str() const {
 	return name;
+}
+
+std::string AsmImmInt::str() const {
+    return imm_prefix + to_string(m_value);
 }
 
 

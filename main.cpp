@@ -70,7 +70,7 @@ void generate(const string& filename, string output_filename) {
 }
 
 int main(int argc, char *argv[]) {
-	generate("./test-gen/write.in", "");
+	generate("./test-gen/write-int-expr.in", "");
 //	parse("./test-parse-simple/dot-01.in", false);
 	return 0;
 	cxxopts::Options options(argv[0]);

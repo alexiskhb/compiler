@@ -16,6 +16,7 @@ enum Register {
 	RCX,
 	RDX,
 	RDI,
+	RSI,
 	RSP,
 	RBP,
 	XMM0,
@@ -30,6 +31,10 @@ enum Opcode {
 	CALL,
 	LEAQ,
 	RET,
+	SUBQ,
+	IMULQ,
+	IDIVQ,
+	CQO,
 	NONE,
 };
 
@@ -53,6 +58,14 @@ private:
 class AsmOperandImm : public AsmOperand {
 public:
 	std::string str() const override;
+};
+
+class AsmImmInt : public AsmOperandImm {
+public:
+	AsmImmInt(int64_t);
+	std::string str() const override;
+private:
+	int64_t m_value;
 };
 
 class AsmOperandOfffset : public AsmOperand {
@@ -124,6 +137,7 @@ public:
 	AsmCmd1(Opcode, PAsmVar);
 	AsmCmd1(Opcode, Syscall);
 	AsmCmd1(Opcode, Register);
+	AsmCmd1(Opcode, int64_t);
 	std::ostream& output(std::ostream&) override;
 	PAsmOperand operand;
 };
@@ -132,6 +146,7 @@ class AsmCmd2 : public AsmCmd {
 public:
 	AsmCmd2(Opcode, Register, Register);
 	AsmCmd2(Opcode, PAsmVar, Register);
+	AsmCmd2(Opcode, AsmVar, Register);
 	std::ostream& output(std::ostream&) override;
 	PAsmOperand operand1;
 	PAsmOperand operand2;

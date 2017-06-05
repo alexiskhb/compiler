@@ -8,6 +8,9 @@ PSymbolTypeFloat NodeFloat::type_sym_ptr = nullptr;
 PSymbolTypeChar NodeString::char_type_sym_ptr = nullptr;
 PSymbolTypeString NodeString::str_type_sym_ptr = nullptr;
 
+uint NodeString::strcounter = 0;
+string NodeString::str_prefix = ".str";
+
 std::map<Token::Operator, std::string> operator_lst =
 {
 {Token::OP_EQUAL, "="},
@@ -357,6 +360,7 @@ AsmCode& Node::generate(AsmCode& ac) {
 }
 
 AsmCode& NodeInteger::generate(AsmCode& ac) {
+	ac << AsmCmd1{PUSHQ, value};
 	return ac;
 }
 
@@ -364,17 +368,14 @@ AsmCode& NodeFloat::generate(AsmCode& ac) {
 	return ac;
 }
 
-uint NodeString::strcounter = 0;
-string NodeString::str_prefix = ".str";
-
 //std::string NodeString::label() const {
 //	return NodeString::str_prefix + to_string(this->strlabel_id);
 //}
 
 AsmCode& NodeString::generate(AsmCode& ac) {
-	PAsmLabel str = ac.add_data(make_shared<AsmVarString>(str_prefix + to_string(strlabel_id), value));
-	ac << AsmCmd2{LEAQ, dynamic_pointer_cast<AsmVar>(str), RDI};
-	ac << AsmCmd1{CALL, PRINTF};
+	if (!m_label) {
+		m_label = ac.add_data(make_shared<AsmVarString>(str_prefix + to_string(strlabel_id), value));
+	}
 	return ac;
 }
 
@@ -384,7 +385,23 @@ AsmCode& NodeVariable::generate(AsmCode& ac) {
 }
 
 AsmCode& NodeBinaryOperator::generate(AsmCode& ac) {
-	ac << AsmComment{"binary operator"};
+	left->generate(ac);
+	right->generate(ac);
+	ac << AsmCmd1{POPQ, RBX}
+	   << AsmCmd1{POPQ, RAX};
+	switch (this->operation) {
+	case Token::OP_PLUS:
+		ac << AsmCmd2{ADDQ, RBX, RAX}; break;
+	case Token::OP_MINUS:
+		ac << AsmCmd2{SUBQ, RBX, RAX}; break;
+	case Token::OP_MULT:
+		ac << AsmCmd2{IMULQ, RBX, RAX}; break;
+	case Token::OP_DIV:
+		ac << AsmCmd0{CQO}
+		   << AsmCmd1{IDIVQ, RBX}; break;
+	default:;
+	}
+	ac << AsmCmd1{PUSHQ, RAX};
 	return ac;
 }
 
@@ -424,7 +441,7 @@ AsmCode& NodeExprStmtFunctionCall::generate(AsmCode& ac) {
 
 void NodeExprStmtFunctionCall::m_write(AsmCode& ac, PNodeExpression expr) {
 	expr->generate(ac);
-//	expr->write(ac);
+	expr->write(ac);
 }
 
 AsmCode& NodeStmtBlock::generate(AsmCode& ac) {
@@ -437,8 +454,9 @@ AsmCode& NodeStmtBlock::generate(AsmCode& ac) {
 }
 
 AsmCode& NodeProgram::generate(AsmCode& ac) {
-	ac.add_data(make_shared<AsmGlobl>("main"));
-	ac << AsmLabel{"main"};
+	ac << *ac.add_data(make_shared<AsmGlobl>("main"));
+	ac.add_data(make_shared<AsmVarString>(SymbolTypeInt::fml_label, "%Ld"));
+	ac.add_data(make_shared<AsmVarString>(SymbolTypeFloat::fml_label, "%lf"));
 	ac << AsmCmd1{PUSHQ, RBP}
 	   << AsmCmd2{MOVQ, RSP, RBP};
 	for (PNode part: this->parts) {
@@ -450,10 +468,22 @@ AsmCode& NodeProgram::generate(AsmCode& ac) {
 	return ac;
 }
 
-void NodeExpression::write() {
+void NodeExpression::write(AsmCode& ac) {
+	this->exprtype()->write(ac);
+}
+
+void NodeInteger::write(AsmCode& ac) {
+	NodeInteger::type_sym_ptr->write(ac);
+}
+
+void NodeFloat::write(AsmCode& ac) {
 //	this->exprtype()->write();
 }
 
+void NodeString::write(AsmCode& ac) {
+	ac << AsmCmd2{LEAQ, dynamic_pointer_cast<AsmVar>(m_label), RDI}
+	   << AsmCmd1{CALL, PRINTF};
+}
 
 
 
