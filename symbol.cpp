@@ -4,8 +4,9 @@
 using namespace std;
 
 bool Symbol::use_strict;
-std::string SymbolTypeInt::fml_label = "._int_fmt_";
-std::string SymbolTypeFloat::fml_label = "._float_fmt_";
+std::string SymbolTypeInt::fml_label = "._fmt_int_";
+std::string SymbolTypeFloat::fml_label = "._fmt_float_";
+std::string var_prefix = ".__";
 
 PSymbolType SymbolType::max(PSymbolType a, PSymbolType b) {
 	if (!SymbolType::is_arithmetic({a, b})) {
@@ -85,10 +86,6 @@ SymbolTypePointer::SymbolTypePointer(const string& name, PSymbolType type) :
 	SymbolType(name), type(type) {
 }
 
-SymbolTypeArray::SymbolTypeArray(int low, int high, PSymbolType type) :
-	SymbolType(name), low(low), high(high), type(type) {
-}
-
 SymbolVariable::SymbolVariable(const std::string& name, PSymbolType type) :
     Symbol(name), type(type) {
 }
@@ -107,6 +104,18 @@ SymbolTypeChar::SymbolTypeChar(const std::string& name) :
 
 SymbolTypeString::SymbolTypeString(const std::string& name) :
     SymbolType(name) {
+}
+
+uint64_t SymbolTypeArray::counter = 0;
+
+SymbolTypeArray::SymbolTypeArray() :
+    SymbolType("$array_" + to_string(++SymbolTypeArray::counter)) {
+}
+
+SymbolTypeArray::SymbolTypeArray(const std::string& name, const SymbolTypeArray& sym) :
+    SymbolType(name) {
+	this->bounds = sym.bounds;
+	this->type = sym.type;
 }
 
 uint64_t SymbolTypeRecord::counter = 0;
@@ -148,7 +157,8 @@ unsigned SymbolTypePointer::size() const {
 }
 
 unsigned SymbolTypeArray::size() const {
-	return (high - low + 1)*type->size();
+	return 0;
+//	return (high - low + 1)*type->size();
 }
 
 unsigned SymbolTypeInt::size() const {
@@ -171,14 +181,69 @@ unsigned SymbolTypeRecord::size() const {
 	return symtable->bsize();
 }
 
-void SymbolType::write(AsmCode&) {
-
-}
+void SymbolType::write(AsmCode&) {}
+void SymbolType::declare(AsmCode&, const string&) {}
 
 void SymbolTypeInt::write(AsmCode& ac) {
 	ac << AsmCmd2{LEAQ, AsmVar{SymbolTypeInt::fml_label}, RDI}
 	   << AsmCmd1{POPQ, RSI}
 	   << AsmCmd1{CALL, PRINTF};
+}
+
+void SymbolTypeFloat::write(AsmCode& ac) {
+	ac << AsmCmd2{LEAQ, AsmVar{SymbolTypeFloat::fml_label}, RDI}
+	   << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{MOVQ, RAX, XMM0}
+	   << AsmCmd2{MOVQ, (int64_t)1, RAX}
+	   << AsmCmd1{CALL, PRINTF};
+}
+
+void SymbolTypeRecord::declare(AsmCode& ac, const std::string& a_name) {
+	ac << AsmComment{"record " + a_name};
+}
+
+void SymbolTypeInt::declare(AsmCode& ac, const string& a_name) {
+	ac.add_data(make_shared<AsmVarInt>(var_prefix + a_name));
+}
+
+bool SymbolType       ::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypeInt    ::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypeFloat  ::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypeChar   ::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypeString ::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypePointer::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypeArray  ::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypeRecord ::equals(PSymbolType symt) const {return symt->equals(*this);}
+
+bool SymbolType::equals(const SymbolType       &) const {return false;}
+bool SymbolType::equals(const SymbolTypeInt    &) const {return false;}
+bool SymbolType::equals(const SymbolTypeFloat  &) const {return false;}
+bool SymbolType::equals(const SymbolTypeChar   &) const {return false;}
+bool SymbolType::equals(const SymbolTypeString &) const {return false;}
+bool SymbolType::equals(const SymbolTypePointer&) const {return false;}
+bool SymbolType::equals(const SymbolTypeArray  &) const {return false;}
+bool SymbolType::equals(const SymbolTypeRecord &) const {return false;}
+
+bool SymbolTypeInt   ::equals(const SymbolTypeInt   &) const {return true;}
+bool SymbolTypeFloat ::equals(const SymbolTypeFloat &) const {return true;}
+bool SymbolTypeChar  ::equals(const SymbolTypeChar  &) const {return true;}
+bool SymbolTypeString::equals(const SymbolTypeString&) const {return true;}
+
+bool SymbolTypePointer::equals(const SymbolTypePointer& sym) const {
+	return this->type == sym.type;
+}
+
+bool SymbolTypeArray::equals(const SymbolTypeArray& sym) const {
+	return this->type == sym.type && this->bounds == sym.bounds;
+}
+
+bool SymbolTypeRecord::equals(const SymbolTypeRecord& sym) const {
+	return this->symtable == sym.symtable;
+}
+
+
+bool operator==(PSymbolType a, PSymbolType b) {
+	return a->equals(b);
 }
 
 

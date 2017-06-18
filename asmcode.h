@@ -38,6 +38,10 @@ enum Opcode {
 	NONE,
 };
 
+enum Directive {
+	DATA,
+};
+
 enum Syscall {
 	PRINTF,
 };
@@ -66,6 +70,14 @@ public:
 	std::string str() const override;
 private:
 	int64_t m_value;
+};
+
+class AsmImmFloat : public AsmOperandImm {
+public:
+	AsmImmFloat(double);
+	std::string str() const override;
+private:
+	double m_value;
 };
 
 class AsmOperandOfffset : public AsmOperand {
@@ -112,6 +124,14 @@ public:
 	std::string value;
 };
 
+class AsmVarInt : public AsmVar {
+public:
+	AsmVarInt(const std::string&, int64_t value = 0);
+	std::ostream& output(std::ostream&);
+private:
+	int64_t m_value;
+};
+
 class AsmCode {
 public:
 	std::ostream& output(std::ostream&);
@@ -137,7 +157,8 @@ public:
 	AsmCmd1(Opcode, PAsmVar);
 	AsmCmd1(Opcode, Syscall);
 	AsmCmd1(Opcode, Register);
-	AsmCmd1(Opcode, int64_t);
+	explicit AsmCmd1(Opcode, int64_t);
+	explicit AsmCmd1(Opcode, double);
 	std::ostream& output(std::ostream&) override;
 	PAsmOperand operand;
 };
@@ -147,9 +168,18 @@ public:
 	AsmCmd2(Opcode, Register, Register);
 	AsmCmd2(Opcode, PAsmVar, Register);
 	AsmCmd2(Opcode, AsmVar, Register);
+	AsmCmd2(Opcode, double, Register);
+	AsmCmd2(Opcode, int64_t, Register);
 	std::ostream& output(std::ostream&) override;
 	PAsmOperand operand1;
 	PAsmOperand operand2;
+};
+
+class AsmDirective : public AsmCmd {
+public:
+	AsmDirective(Directive);
+private:
+	Directive m_directive;
 };
 
 class AsmComment : public AsmCmd {

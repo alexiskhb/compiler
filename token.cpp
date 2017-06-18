@@ -58,7 +58,10 @@ std::map<std::string, Token::Reserved> Token::reserved_lst =
 {"VAR", R_VAR},
 {"WHILE", R_WHILE},
 {"WITH", R_WITH},
-{"XOR", R_XOR}};
+{"XOR", R_XOR},
+{"BREAK", R_BREAK},
+{"CONTINUE", R_CONTINUE},
+};
 std::map<Token::Operator, std::string> Token::operator_lst =
 {
 {Token::OP_EQUAL, "="},
@@ -310,5 +313,13 @@ bool operator==(const Token& t, Token::Reserved res) {
 
 bool operator!=(const Token& t, Token::Reserved res) {
 	return !(t == res);
+}
+
+bool operator==(const Token& t, Token::Literal lit) {
+	return t.category == Token::C_LITERAL && t.subcategory == lit;
+}
+
+bool operator!=(const Token& t, Token::Literal lit) {
+	return !(t == lit);
 }
 

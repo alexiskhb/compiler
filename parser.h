@@ -5,31 +5,14 @@
 #include <ostream>
 #include "scanner.h"
 #include <algorithm>
+#include <stack>
 #include "node.h"
 #include "token.h"
 #include "symboltable.h"
 
 struct Symtables : public std::vector<PSymTable> {
-	PSymbol operator[](const std::string& s) {
-		if (!Symbol::use_strict) {
-			return nullptr;
-		}
-		for (auto t = this->rbegin(); t != this->rend(); t++) {
-			SymTable& st = **t;
-			PSymbol r = st[s];
-			if (r) {
-				return r;
-			}
-		}
-		if (Symbol::use_strict) {
-			throw std::runtime_error("no symbol " + s);
-		}
-		return nullptr;
-	}
-	Symtables& operator<<(const PSymbol& symbol) {
-		this->back() << symbol;
-		return *this;
-	}
+	PSymbol operator[](const std::string& s);
+	Symtables& operator<<(const PSymbol& symbol);
 };
 
 class Parser {
@@ -45,16 +28,18 @@ public:
 	PNode tree();
 
 private:
-	int output_subtree(PNode, int, int&, std::ostream&, bool silent = false);
+	int output_subtree(PNode,       int, int&, std::ostream&, bool silent = false);
 	int output_subtree(std::string, int, int&, std::ostream&, bool silent = false);
 	void require(const std::initializer_list<Token::Operator>&, Pos, const std::string&, const std::string&);
 	void require(const std::initializer_list<Token::Separator>&,Pos, const std::string&, const std::string&);
 	void require(const std::initializer_list<Token::Category>&, Pos, const std::string&, const std::string&);
 	void require(const std::initializer_list<Token::Reserved>&, Pos, const std::string&, const std::string&);
+	void require(const std::initializer_list<Token::Literal>&,  Pos, const std::string&, const std::string&);
 	void require(const std::initializer_list<Token::Operator>&, const std::string&);
 	void require(const std::initializer_list<Token::Separator>&,const std::string&);
 	void require(const std::initializer_list<Token::Category>&, const std::string&);
 	void require(const std::initializer_list<Token::Reserved>&, const std::string&);
+	void require(const std::initializer_list<Token::Literal>&, const std::string&);
 	PNodeExpression parse_factor();
 	PNodeExpression parse_expression(int);
 	PNodeExpression new_literal_factor(const Token&);
@@ -62,6 +47,7 @@ private:
 	PNodeStmtIf parse_if();
 	PNodeStmtWhile parse_while();
 	PNodeStmtRepeat parse_repeat();
+	PNodeStmtBlock parse_repeat_block();
 	PNodeStmtConst parse_const();
 	PNodeStmtVar parse_var();
 	PNodeStmtFor parse_for();
@@ -69,6 +55,7 @@ private:
 	PNodeStmtType parse_type_part();
 	PNodeStmtFunction parse_function();
 	PNodeTypeRecord parse_record();
+	PNodeTypeArray parse_array();
 	PNodeStmtBlock parse_block();
 	PNodeIdentifier parse_identifier();
 
@@ -85,16 +72,13 @@ private:
 	PNode m_syntax_tree = nullptr;
 	Symtables m_symtables;
 	std::vector<SymTable> m_current_scope;
+	std::stack<PNodeStmt> m_current_cycle;
 };
 
-class ParseError : public std::runtime_error {
+class ParseError {
 public:
 	ParseError(const Pos& pos, const std::string& msg) :
-		std::runtime_error("parse error at " + (std::string)pos + ": " + msg), m_msg("at " + (std::string)pos + ": " + msg), m_pos(pos) {
-	}
-	const char* what() const noexcept override {
-		std::string message = ("parse error at " + (std::string)pos() + ": " + m_msg).c_str();
-		return message.c_str();
+	    m_msg("at " + (std::string)pos + ": " + msg), m_pos(pos) {
 	}
 	std::string msg() const {
 		return m_msg;
@@ -102,9 +86,16 @@ public:
 	Pos pos() const {
 		return m_pos;
 	}
-private:
+protected:
 	std::string m_msg;
 	Pos m_pos;
+};
+
+class SymbolNotFound : public ParseError {
+public:
+	SymbolNotFound(const Pos& pos, const std::string& symname) :
+	    ParseError(pos, "symbol '" + symname + "' not found")
+	{}
 };
 
 template <class T>

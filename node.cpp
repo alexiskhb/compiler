@@ -1,5 +1,6 @@
 #include "node.h"
 #include "symboltable.h"
+#include <sstream>
 
 using namespace std;
 
@@ -10,6 +11,7 @@ PSymbolTypeString NodeString::str_type_sym_ptr = nullptr;
 
 uint NodeString::strcounter = 0;
 string NodeString::str_prefix = ".str";
+string fmt_newline = "._fmt_newline_";
 
 std::map<Token::Operator, std::string> operator_lst =
 {
@@ -116,6 +118,9 @@ NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PSym
 	if (func_id->name == "WRITE") {
 		m_predefined = Predefined::WRITE;
 	}
+	if (func_id->name == "WRITELN") {
+		m_predefined = Predefined::WRITELN;
+	}
 }
 
 NodeUnaryOperator::NodeUnaryOperator(Token::Operator operation, PNodeExpression node) :
@@ -129,6 +134,14 @@ NodeRecordAccess::NodeRecordAccess(PNodeExpression expr, PSymbolVariable var) :
 
 NodeStmtAssign::NodeStmtAssign(PNodeExpression left, PNodeExpression right) :
 	NodeBinaryOperator(Token::OP_ASSIGN, left, right) {
+}
+
+NodeStmtBreak::NodeStmtBreak(PNodeStmt a_cycle) :
+    cycle(a_cycle) {
+}
+
+NodeStmtContinue::NodeStmtContinue(PNodeStmt a_cycle) :
+    cycle(a_cycle) {
 }
 
 string Node::str() const {
@@ -223,6 +236,14 @@ string NodeStmtRepeat::str() const {
 	return "REPEAT";
 }
 
+string NodeStmtBreak::str() const {
+	return "BREAK";
+}
+
+string NodeStmtContinue::str() const {
+	return "CONTINUE";
+}
+
 string NodeStmtVar::str() const {
 	return "VAR";
 }
@@ -245,6 +266,10 @@ string NodeStmtFunction::str() const {
 
 string NodeTypeRecord::str() const {
 	return "RECORD";
+}
+
+string NodeTypeArray::str() const {
+	return "ARRAY";
 }
 
 string NodeType::str() const {
@@ -334,7 +359,7 @@ PSymbolType NodeBinaryOperator::exprtype() {
 }
 
 PSymbolType NodeUnaryOperator::exprtype() {
-	return nullptr;
+	return this->node->exprtype();
 }
 
 bool NodeExprStmtFunctionCall::check_parameters() {
@@ -355,36 +380,49 @@ bool NodeExprStmtFunctionCall::check_parameters() {
 	return true;
 }
 
-AsmCode& Node::generate(AsmCode& ac) {
-	return ac;
+void Node::generate(AsmCode& ac) {
 }
 
-AsmCode& NodeInteger::generate(AsmCode& ac) {
+void NodeInteger::generate(AsmCode& ac) {
 	ac << AsmCmd1{PUSHQ, value};
-	return ac;
 }
 
-AsmCode& NodeFloat::generate(AsmCode& ac) {
-	return ac;
+void NodeFloat::generate(AsmCode& ac) {
+	ac << AsmCmd2{MOVQ, value, RAX}
+	   << AsmCmd1{PUSHQ, RAX};
 }
 
-//std::string NodeString::label() const {
-//	return NodeString::str_prefix + to_string(this->strlabel_id);
-//}
-
-AsmCode& NodeString::generate(AsmCode& ac) {
+void NodeString::generate(AsmCode& ac) {
 	if (!m_label) {
 		m_label = ac.add_data(make_shared<AsmVarString>(str_prefix + to_string(strlabel_id), value));
 	}
-	return ac;
 }
 
-AsmCode& NodeVariable::generate(AsmCode& ac) {
+void NodeVariable::generate(AsmCode& ac) {
 	ac << AsmComment{"variable access"};
-	return ac;
 }
 
-AsmCode& NodeBinaryOperator::generate(AsmCode& ac) {
+void NodeVariable::generate_assign(AsmCode& ac) {
+
+}
+
+void NodeExprStmtFunctionCall::generate_assign(AsmCode& ac) {
+
+}
+
+void NodeRecordAccess::generate_assign(AsmCode& ac) {
+
+}
+
+void NodeArrayAccess::generate_assign(AsmCode& ac) {
+
+}
+
+void NodeVariable::declare(AsmCode& ac) {
+	this->exprtype()->declare(ac, this->identifier->name);
+}
+
+void NodeBinaryOperator::generate(AsmCode& ac) {
 	left->generate(ac);
 	right->generate(ac);
 	ac << AsmCmd1{POPQ, RBX}
@@ -402,41 +440,43 @@ AsmCode& NodeBinaryOperator::generate(AsmCode& ac) {
 	default:;
 	}
 	ac << AsmCmd1{PUSHQ, RAX};
-	return ac;
 }
 
-AsmCode& NodeUnaryOperator::generate(AsmCode& ac) {
+void NodeUnaryOperator::generate(AsmCode& ac) {
 	ac << AsmComment{"unary operator"};
-	return ac;
 }
 
-AsmCode& NodeArrayAccess::generate(AsmCode& ac) {
+void NodeArrayAccess::generate(AsmCode& ac) {
 	ac << AsmComment{"array access"};
-	return ac;
 }
 
-AsmCode& NodeRecordAccess::generate(AsmCode& ac) {
+void NodeRecordAccess::generate(AsmCode& ac) {
 	ac << AsmComment{"record access"};
-	return ac;
 }
 
-AsmCode& NodeStmtAssign::generate(AsmCode& ac) {
+void NodeStmtAssign::generate(AsmCode& ac) {
+
 	ac << AsmComment{"stmt assign"};
-	return ac;
 }
 
-AsmCode& NodeStmtVar::generate(AsmCode& ac) {
-	ac << AsmComment{"variables part"};
-	return ac;
+void NodeStmtVar::generate(AsmCode& ac) {
+	for (PNodeVarDeclarationUnit unit: this->units) {
+		for (PNodeVariable var: unit->vars) {
+			var->declare(ac);
+		}
+	}
 }
 
-AsmCode& NodeExprStmtFunctionCall::generate(AsmCode& ac) {
-	if (m_predefined == Predefined::WRITE) {
+void NodeExprStmtFunctionCall::generate(AsmCode& ac) {
+	if (m_predefined == Predefined::WRITE || m_predefined == Predefined::WRITELN) {
 		for (PNodeExpression expr: this->args->arglist) {
 			m_write(ac, expr);
 		}
+		if (m_predefined == Predefined::WRITELN) {
+			ac << AsmCmd2{LEAQ, AsmVar{fmt_newline}, RDI}
+			   << AsmCmd1{CALL, PRINTF};
+		}
 	}
-	return ac;
 }
 
 void NodeExprStmtFunctionCall::m_write(AsmCode& ac, PNodeExpression expr) {
@@ -444,19 +484,19 @@ void NodeExprStmtFunctionCall::m_write(AsmCode& ac, PNodeExpression expr) {
 	expr->write(ac);
 }
 
-AsmCode& NodeStmtBlock::generate(AsmCode& ac) {
+void NodeStmtBlock::generate(AsmCode& ac) {
 	ac << AsmComment{"start block"};
 	for (PNode stmt: this->stmts) {
 		stmt->generate(ac);
 	}
 	ac << AsmComment{"end block"};
-	return ac;
 }
 
-AsmCode& NodeProgram::generate(AsmCode& ac) {
-	ac << *ac.add_data(make_shared<AsmGlobl>("main"));
+void NodeProgram::generate(AsmCode& ac) {
 	ac.add_data(make_shared<AsmVarString>(SymbolTypeInt::fml_label, "%Ld"));
 	ac.add_data(make_shared<AsmVarString>(SymbolTypeFloat::fml_label, "%lf"));
+	ac.add_data(make_shared<AsmVarString>(fmt_newline, "\n"));
+	ac << *ac.add_data(make_shared<AsmGlobl>("main"));
 	ac << AsmCmd1{PUSHQ, RBP}
 	   << AsmCmd2{MOVQ, RSP, RBP};
 	for (PNode part: this->parts) {
@@ -465,11 +505,14 @@ AsmCode& NodeProgram::generate(AsmCode& ac) {
 	ac << AsmCmd1{POPQ, RBP}
 	   << AsmCmd2{XORQ, RAX, RAX}
 	   << AsmCmd0{RET};
-	return ac;
 }
 
 void NodeExpression::write(AsmCode& ac) {
 	this->exprtype()->write(ac);
+}
+
+void NodeExpression::generate_assign(AsmCode& ac) {
+	ac << AsmComment("TODO: define assign for this kind of expr (or compiler must throw here)");
 }
 
 void NodeInteger::write(AsmCode& ac) {
@@ -477,7 +520,7 @@ void NodeInteger::write(AsmCode& ac) {
 }
 
 void NodeFloat::write(AsmCode& ac) {
-//	this->exprtype()->write();
+	NodeFloat::type_sym_ptr->write(ac);
 }
 
 void NodeString::write(AsmCode& ac) {

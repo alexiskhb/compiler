@@ -10,6 +10,8 @@ Token::Category Scanner::state_to_cat[Scanner::SIZEOF_STATES];
 int Scanner::state_to_subcat[Scanner::SIZEOF_STATES];
 string stst[] = {"ST_START", "ST_ERROR", "ST_ERROR_INVALID_BININT", "ST_ERROR_INVALID_HEXINT", "ST_EOF", "ST_IDENTIFIER", "ST_STRLIT", "ST_STRLIT_RIGHTAPOST", "ST_STRLIT_ESCSTART", "ST_STRLIT_ESCNUM", "ST_INTEGER", "ST_FLOAT", "ST_EXPONFLOAT", "ST_EXPONCHAR", "ST_EXPONSIGN", "ST_EXPON", "ST_HEXINTEGER", "ST_BININTEGER", "ST_MLINECMT", "ST_COLON", "ST_PLUS", "ST_LBRACE", "ST_ASTER", "ST_MINUS", "ST_DOT", "ST_SLASH", "ST_LTHAN", "ST_DOLLAR", "ST_PERCENT", "ST_AT", "ST_CHARORD", "ST_GTHAN", "ST_LPAREN", "START_GREEDY", "ST_COMMENT", "ST_ASSIGN", "ST_PLUSAGN", "ST_MINUSAGN", "ST_FACAGN", "ST_MULAGN", "ST_LEQ", "ST_GEQ", "ST_NEQ", "ST_DOTDOT", "ST_COMMA", "ST_DIRECTIVE", "ST_RPAREN", "ST_LSQBRAC", "ST_RSQBRAC", "ST_RBRACE", "ST_CARET", "ST_EQUAL", "ST_SCOLON", "ST_SHL", "ST_SHR", "ST_LPARENDOT", "ST_RPARENDOT", "ST_LPARENAST", "ST_RPARENAST", "END_GREEDY", "SIZEOF_STATES"};
 
+Pos current_scanner_position = {0, 0};
+
 bool Scanner::init_states() {
 	fill(&st[0][0], &st[0][0] + SIZEOF_STATES*SIZEOF_CHARACTERS, ST_ERROR);
 	fill(st[ST_HEXINTEGER], st[ST_HEXINTEGER] + SIZEOF_CHARACTERS, ST_ERROR_INVALID_HEXINT);
@@ -516,6 +518,7 @@ Token Scanner::top() const {
 	if (m_tokens[m_current_to_return].is_broken()) {
 		throw BadToken(m_tokens[m_current_to_return], m_tokens[m_current_to_return].err_msg);
 	}
+	current_scanner_position = m_tokens[m_current_to_return].position;
 	return m_tokens[m_current_to_return];
 }
 
@@ -545,7 +548,7 @@ Token Scanner::require(const initializer_list<Token::Separator>& seps) {
 
 Token Scanner::require(const initializer_list<Token::Category>& cats) {
 	Token token = top();
-	for(Token::Category cat: cats) {
+	for (Token::Category cat: cats) {
 		if (token == cat) {
 			return token;
 		}
@@ -555,7 +558,7 @@ Token Scanner::require(const initializer_list<Token::Category>& cats) {
 
 Token Scanner::require(const initializer_list<Token::Reserved>& rs) {
 	Token token = top();
-	for(Token::Reserved r: rs) {
+	for (Token::Reserved r: rs) {
 		if (token == r) {
 			return token;
 		}
@@ -563,11 +566,25 @@ Token Scanner::require(const initializer_list<Token::Reserved>& rs) {
 	return Token();
 }
 
+Token Scanner::require(const initializer_list<Token::Literal>& ls) {
+	Token token = top();
+	for (Token::Literal l: ls) {
+		if (token == l) {
+			return token;
+		}
+	}
+	return Token();
+}
+
+Pos Scanner::current_position() {
+	return current_scanner_position;
+}
+
 string Scanner::get_line(int id) {
 	auto pos = m_file.tellg();
 	m_file.seekg(0);
 	string result;
-	while(id--) {
+	while (id--) {
 		getline(m_file, result);
 	}
 	m_file.seekg(pos);

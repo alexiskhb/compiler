@@ -9,6 +9,8 @@
 
 using namespace std;
 
+int compile_result = 0;
+
 void lexical_analysis(const string& filename) {
 	Scanner scanner;
 	try {
@@ -28,6 +30,7 @@ void lexical_analysis(const string& filename) {
 				e.position().line << ":" <<
 				e.position().column << "): " <<
 				e.msg() << endl;
+		compile_result = 1;
 	}
 }
 
@@ -66,13 +69,14 @@ void generate(const string& filename, string output_filename) {
 	} catch (ParseError pe) {
 		cerr << pe.msg() << ":\n";
 		cerr << generator.get_line(pe.pos().line) << endl;
+		compile_result = 1;
 	}
 }
 
 int main(int argc, char *argv[]) {
-	generate("./test-gen/write-int-expr.in", "");
-//	parse("./test-parse-simple/dot-01.in", false);
-	return 0;
+//	generate("./test-gen/var-record.in", "");
+//	parse("./test-parse/break.in", true);
+//	return 0;
 	cxxopts::Options options(argv[0]);
 	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false, mode_generate = false;
 	string asm_output_filename;
@@ -105,6 +109,7 @@ int main(int argc, char *argv[]) {
 	if (mode_generate) {
 		generate(files[0], asm_output_filename);
 	}
+	return compile_result;
 }
 
 

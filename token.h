@@ -55,6 +55,9 @@ public:
 	explicit operator Token::Reserved() const {
 		return category == C_RESERVED ? (Reserved)subcategory : NOT_RESERVED;
 	}
+	explicit operator Token::Literal() const {
+		return category == C_LITERAL ? (Literal)subcategory : NOT_LITERAL;
+	}
 	operator Pos() const {
 		return position;
 	}
@@ -185,13 +188,16 @@ public:
 		R_WHILE,
 		R_WITH,
 		R_XOR,
+		R_BREAK,
+		R_CONTINUE,
 		NOT_RESERVED,
 	};
 
 	enum Literal : int {
 		L_STRING,
 		L_INTEGER,
-		L_FLOAT
+		L_FLOAT,
+		NOT_LITERAL,
 	};
 
 	static const char ETX = (char)3;
@@ -207,10 +213,12 @@ bool operator==(const Token& t, Token::Category);
 bool operator==(const Token& t, Token::Operator);
 bool operator==(const Token& t, Token::Separator);
 bool operator==(const Token& t, Token::Reserved);
+bool operator==(const Token& t, Token::Literal);
 bool operator!=(const Token& t, Token::Category);
 bool operator!=(const Token& t, Token::Operator);
 bool operator!=(const Token& t, Token::Separator);
 bool operator!=(const Token& t, Token::Reserved);
+bool operator!=(const Token& t, Token::Literal);
 
 class BadToken : public std::exception {
 public:

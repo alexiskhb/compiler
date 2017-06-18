@@ -25,6 +25,7 @@ public:
 	Token require(const std::initializer_list<Token::Separator>&);
 	Token require(const std::initializer_list<Token::Category>&);
 	Token require(const std::initializer_list<Token::Reserved>&);
+	Token require(const std::initializer_list<Token::Literal>&);
 	void open(const std::string& filename);
 	bool eof() const;
 	bool last_token_success() const;
@@ -40,13 +41,16 @@ public:
 	explicit operator Token::Reserved() const {
 		return static_cast<Token::Reserved>(top());
 	}
+	explicit operator Token::Literal() const {
+		return static_cast<Token::Literal>(top());
+	}
 	operator Token() const {
 		return top();
 	}
 	Token operator++();
 	Token operator++(int);
 	std::string get_line(int);
-
+	static Pos current_position();
 private:
 	enum State : int {
 		ST_START = 0,

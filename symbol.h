@@ -47,6 +47,17 @@ public:
 		return ptr;
 	}
 	virtual void write(AsmCode&);
+	virtual void declare(AsmCode&, const std::string&);
+
+	virtual bool equals(PSymbolType) const;
+	virtual bool equals(const SymbolType&) const;
+	virtual bool equals(const SymbolTypeInt&) const;
+	virtual bool equals(const SymbolTypeFloat&) const;
+	virtual bool equals(const SymbolTypeChar&) const;
+	virtual bool equals(const SymbolTypeString&) const;
+	virtual bool equals(const SymbolTypePointer&) const;
+	virtual bool equals(const SymbolTypeArray&) const;
+	virtual bool equals(const SymbolTypeRecord&) const;
 };
 
 class SymbolTypeInt : public SymbolType {
@@ -54,26 +65,40 @@ public:
 	SymbolTypeInt(const std::string& name);
 	unsigned size() const override;
 	void write(AsmCode&) override;
+	void declare(AsmCode&, const std::string&) override;
 	static std::string fml_label;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypeInt&) const override;
 };
 
 class SymbolTypeFloat : public SymbolType {
 public:
 	SymbolTypeFloat(const std::string& name);
 	static std::string fml_label;
+	void write(AsmCode&) override;
 	unsigned size() const override;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypeFloat&) const override;
 };
 
 class SymbolTypeChar : public SymbolType {
 public:
 	SymbolTypeChar(const std::string& name);
 	unsigned size() const override;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypeChar&) const override;
 };
 
 class SymbolTypeString : public SymbolType {
 public:
 	SymbolTypeString(const std::string& name);
 	unsigned size() const override;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypeString&) const override;
 };
 
 class SymbolTypePointer : public SymbolType {
@@ -81,15 +106,23 @@ public:
 	SymbolTypePointer(const std::string& name, PSymbolType);
 	unsigned size() const override;
 	PSymbolType type;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypePointer&) const override;
 };
 
 class SymbolTypeArray : public SymbolType {
 public:
-	SymbolTypeArray(int low, int high, PSymbolType type);
+	SymbolTypeArray();
+	SymbolTypeArray(const std::string& name, const SymbolTypeArray&);
 	unsigned size() const override;
-	int low;
-	int high;
+	std::vector<std::pair<int, int>> bounds;
 	PSymbolType type;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypeArray&) const override;
+private:
+	static uint64_t counter;
 };
 
 class SymbolTypeRecord : public SymbolType {
@@ -99,6 +132,10 @@ public:
 	unsigned size() const override;
 	PSymTable symtable;
 	std::string output_str() const override;
+	void declare(AsmCode&, const std::string&) override;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypeRecord&) const override;
 private:
 	static uint64_t counter;
 };
@@ -121,6 +158,8 @@ public:
 	SymbolFunction(const std::string& name);
 	PSymbolType type;
 };
+
+bool operator==(PSymbolType, PSymbolType);
 
 
 #endif // SYMBOL_H

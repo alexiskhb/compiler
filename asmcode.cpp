@@ -43,9 +43,12 @@ AsmComment::AsmComment(const std::string& str) :
 {}
 
 AsmImmInt::AsmImmInt(int64_t a_value) :
-    m_value(a_value){
+    m_value(a_value)
+{}
 
-}
+AsmImmFloat::AsmImmFloat(double a_value) :
+    m_value(a_value)
+{}
 
 void AsmCode::push(PAsmCmd cmd) {
 	m_commands.push_back(cmd);
@@ -103,6 +106,10 @@ AsmCmd1::AsmCmd1(Opcode oc, int64_t a_value) :
     AsmCmd(oc), operand(make_shared<AsmImmInt>(a_value))
 {}
 
+AsmCmd1::AsmCmd1(Opcode oc, double a_value) :
+    AsmCmd(oc), operand(make_shared<AsmImmFloat>(a_value))
+{}
+
 AsmCmd2::AsmCmd2(Opcode oc, Register a_register_1, Register a_register_2) :
     AsmCmd(oc), operand1(make_shared<AsmOperandReg>(a_register_1)), operand2(make_shared<AsmOperandReg>(a_register_2))
 {}
@@ -113,6 +120,18 @@ AsmCmd2::AsmCmd2(Opcode oc, PAsmVar a_var, Register a_register) :
 
 AsmCmd2::AsmCmd2(Opcode oc, AsmVar a_var, Register a_register) :
     AsmCmd(oc), operand1(make_shared<AsmVar>(a_var)), operand2(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmCmd2::AsmCmd2(Opcode oc, double a_var, Register a_register) :
+    AsmCmd(oc), operand1(make_shared<AsmImmFloat>(a_var)), operand2(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmCmd2::AsmCmd2(Opcode oc, int64_t a_var, Register a_register) :
+    AsmCmd(oc), operand1(make_shared<AsmImmInt>(a_var)), operand2(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmDirective::AsmDirective(Directive a_directive) :
+    AsmCmd(NONE), m_directive(a_directive)
 {}
 
 std::ostream& AsmCmd0::output(std::ostream& os) {
@@ -155,8 +174,17 @@ AsmVarString::AsmVarString(const std::string& a_var, const std::string& a_value)
     AsmVar(a_var), value(a_value)
 {}
 
+AsmVarInt::AsmVarInt(const std::string& a_var, int64_t a_value) :
+    AsmVar(a_var), m_value(a_value)
+{}
+
 std::ostream& AsmVarString::output(std::ostream& os) {
 	os << name << ":\n\t.string \"" << value << "\"\n";
+	return os;
+}
+
+std::ostream& AsmVarInt::output(std::ostream& os) {
+	os << ".data\n\t" << name << ": .quad " << m_value << "\n";
 	return os;
 }
 
@@ -189,6 +217,10 @@ std::string AsmVar::str() const {
 
 std::string AsmImmInt::str() const {
     return imm_prefix + to_string(m_value);
+}
+
+std::string AsmImmFloat::str() const {
+	return imm_prefix + to_string(m_value);
 }
 
 

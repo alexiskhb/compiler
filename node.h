@@ -18,14 +18,14 @@ enum Initializer : bool {
 
 class Node {
 public:
-	virtual AsmCode& generate(AsmCode&);
+	virtual void generate(AsmCode&);
 	virtual std::string str() const;
 	virtual bool empty() const;
 };
 
 class NodeProgram : public Node {
 public:
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	std::vector<PNodeStmt> parts;
 };
 
@@ -35,6 +35,7 @@ public:
 	NodeExpression(PSymbolType);
 	virtual PSymbolType exprtype();
 	virtual void write(AsmCode&);
+	virtual void generate_assign(AsmCode&);
 protected:
 	PSymbolType m_exprtype;
 };
@@ -50,7 +51,7 @@ public:
 	NodeInteger(const Token& token);
 	std::string str() const override;
 	PSymbolType exprtype() override;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	void write(AsmCode&) override;
 	int64_t value;
 	static PSymbolTypeInt type_sym_ptr;
@@ -61,9 +62,9 @@ public:
 	NodeFloat(const Token& token);
 	std::string str() const override;
 	PSymbolType exprtype() override;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	void write(AsmCode&) override;
-	long double value;
+	double value;
 	static PSymbolTypeFloat type_sym_ptr;
 };
 
@@ -72,7 +73,7 @@ public:
 	NodeString(const Token& token);
 	PSymbolType exprtype() override;
 	std::string str() const override;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	std::string value;
 	void write(AsmCode&) override;
 	static PSymbolTypeChar char_type_sym_ptr;
@@ -98,7 +99,9 @@ public:
 	NodeVariable(PNodeIdentifier, PSymbolVariable);
 	std::string str() const override;
 	PNodeIdentifier identifier;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
+	void generate_assign(AsmCode&) override;
+	void declare(AsmCode&);
 	PSymbolVariable symbol;
 };
 
@@ -107,7 +110,7 @@ public:
 	NodeBinaryOperator(Token::Operator, PNodeExpression, PNodeExpression);
 	PSymbolType exprtype() override;
 	std::string str() const override;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	Token::Operator operation;
 	PNodeExpression left = nullptr;
 	PNodeExpression right = nullptr;
@@ -131,7 +134,7 @@ public:
 	NodeUnaryOperator(Token::Operator, PNodeExpression);
 	PSymbolType exprtype() override;
 	std::string str() const override;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	Token::Operator operation;
 	PNodeExpression node;
 };
@@ -141,7 +144,8 @@ public:
 	NodeArrayAccess(PNodeExpression, PNodeActualParameters);
 	std::string str() const override;
 	PNodeExpression array;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
+	void generate_assign(AsmCode&) override;
 	PNodeActualParameters index;
 };
 
@@ -150,7 +154,8 @@ public:
 	NodeRecordAccess(PNodeExpression, PSymbolVariable);
 	std::string str() const override;
 	PNodeExpression record;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
+	void generate_assign(AsmCode&) override;
 	PSymbolVariable field;
 };
 
@@ -176,7 +181,7 @@ public:
 class NodeStmtAssign : public NodeStmt, public NodeBinaryOperator {
 public:
 	NodeStmtAssign(PNodeExpression, PNodeExpression);
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	std::string str() const override;
 };
 
@@ -190,6 +195,20 @@ public:
 	std::string str() const override;
 	PNodeExpression cond;
 	PNodeStmt stmt;
+};
+
+class NodeStmtBreak : public NodeStmt {
+public:
+	NodeStmtBreak(PNodeStmt);
+	std::string str() const override;
+	PNodeStmt cycle;
+};
+
+class NodeStmtContinue : public NodeStmt {
+public:
+	NodeStmtContinue(PNodeStmt);
+	std::string str() const override;
+	PNodeStmt cycle;
 };
 
 class NodeType : public Node {
@@ -222,7 +241,7 @@ public:
 class NodeStmtVar : public NodeStmt {
 public:
 	std::string str() const override;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	std::vector<PNodeVarDeclarationUnit> units;
 };
 
@@ -265,6 +284,12 @@ public:
 	std::vector<PNodeVarDeclarationUnit> units;
 };
 
+class NodeTypeArray : public NodeType {
+public:
+	std::string str() const override;
+	PNodeType type;
+};
+
 class NodeStmtType : public NodeStmt {
 public:
 	std::string str() const override;
@@ -274,7 +299,7 @@ public:
 class NodeStmtBlock : public NodeStmt {
 public:
 	std::string str() const override;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
 	std::vector<PNodeStmt> stmts;
 };
 
@@ -283,14 +308,16 @@ public:
 	NodeExprStmtFunctionCall(PNodeIdentifier, PSymbolProcedure, PNodeActualParameters args = nullptr);
 	bool check_parameters();
 	std::string str() const override;
-	AsmCode& generate(AsmCode&) override;
+	void generate(AsmCode&) override;
+	void generate_assign(AsmCode&) override;
 	PNodeIdentifier function_identifier;
 	PSymbolProcedure symbol;
 	PNodeActualParameters args;
 private:
 	enum Predefined {
-		NONE = 0,
-		WRITE = 1
+		NONE,
+		WRITE,
+		WRITELN
 	};
 	Predefined m_predefined = NONE;
 	void m_write(AsmCode& ac, PNodeExpression);
