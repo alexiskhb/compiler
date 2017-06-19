@@ -176,6 +176,7 @@ public:
 		R_XOR,
 		R_BREAK,
 		R_CONTINUE,
+		R_FORWARD,
 		NOT_RESERVED,
 	};
 

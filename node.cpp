@@ -167,69 +167,38 @@ NodeStmtContinue::NodeStmtContinue(PNodeStmt a_cycle) :
     cycle(a_cycle) {
 }
 
-string Node::str() const {
-	return "";
-}
-
-string NodeEof::str() const {
-	return "END OF FILE";
-}
-
-string NodeInteger::str() const {
-	return to_string(value);
-}
-
-string NodeFloat::str() const {
-	return to_string(value);
-}
-
-string NodeVarDeclarationUnit::str() const {
-	return nodetype->symtype->str();
-}
-
-string NodeTypeDeclarationUnit::str() const {
-	return "ALIAS " + alias->name;
-}
-
-string NodeString::str() const {
-	return "\"" + value + "\"";
-}
-
-string NodeIdentifier::str() const {
-	return name;
-}
-
-string NodeBinaryOperator::str() const {
-	return operator_lst[operation];
-}
-
-string NodeArrayAccess::str() const {
-	return "[]";
-}
-
-string NodeActualParameters::str() const {
-	return ",";
-}
-
-//string NodeCommaSeparatedIdentifiers::str() const {
-//    return ",";
-//}
-
-string NodeRecordAccess::str() const {
-	return ".";
-}
-
-string NodeExprStmtFunctionCall::str() const {
-	return "FUNCTION CALL";
-}
-
-string NodeUnaryOperator::str() const {
-	return operator_lst[operation];
-}
-
-string NodeVariable::str() const {
-	return identifier->name;
-}
+string Node::str()                       const { return ""; }
+string NodeEof::str()                    const { return "END OF FILE"; }
+string NodeInteger::str()                const { return to_string(value); }
+string NodeFloat::str()                  const { return to_string(value); }
+string NodeVarDeclarationUnit::str()     const { return nodetype->symtype->str(); }
+string NodeTypeDeclarationUnit::str()    const { return "ALIAS " + alias->name; }
+string NodeString::str()                 const { return "\"" + value + "\""; }
+string NodeIdentifier::str()             const { return name; }
+string NodeBinaryOperator::str()         const { return operator_lst[operation]; }
+string NodeArrayAccess::str()            const { return "[]"; }
+string NodeActualParameters::str()       const { return ","; }
+string NodeRecordAccess::str()           const { return "."; }
+string NodeExprStmtFunctionCall::str()   const { return "FUNCTION CALL"; }
+string NodeUnaryOperator::str()          const { return operator_lst[operation]; }
+string NodeVariable::str()               const { return identifier->name; }
+string NodeStmtIf::str()                 const { return "IF"; }
+string NodeStmtWhile::str()              const { return "WHILE"; }
+string NodeStmtAssign::str()             const { return "ASSIGN"; }
+string NodeStmtConst::str()              const { return "CONST"; }
+string NodeStmtRepeat::str()             const { return "REPEAT"; }
+string NodeStmtBreak::str()              const { return "BREAK"; }
+string NodeStmtContinue::str()           const { return "CONTINUE"; }
+string NodeStmtVar::str()                const { return "VAR"; }
+string NodeStmtFor::str()                const { return "FOR"; }
+string NodeStmtProcedure::str()          const { return "PROCEDURE " + name->str(); }
+string NodeFormalParameterSection::str() const { return (is_var ? "VAR " : "") + type->str() + " FORMAL PARAMETERS:"; }
+string NodeStmtFunction::str()           const { return "FUNCTION " + name->str(); }
+string NodeTypeRecord::str()             const { return "RECORD"; }
+string NodeTypeArray::str()              const { return "ARRAY"; }
+string NodeType::str()                   const { return symtype->str(); }
+string NodeStmtType::str()               const { return "TYPE"; }
+string NodeStmtBlock::str()              const { return "BLOCK"; }
 
 bool Node::empty() const {
 	return false;
@@ -237,74 +206,6 @@ bool Node::empty() const {
 
 bool NodeIdentifier::empty() const {
 	return name.empty();
-}
-
-string NodeStmtIf::str() const {
-	return "IF";
-}
-
-string NodeStmtWhile::str() const {
-	return "WHILE";
-}
-
-string NodeStmtAssign::str() const {
-	return "ASSIGN";
-}
-
-string NodeStmtConst::str() const {
-	return "CONST";
-}
-
-string NodeStmtRepeat::str() const {
-	return "REPEAT";
-}
-
-string NodeStmtBreak::str() const {
-	return "BREAK";
-}
-
-string NodeStmtContinue::str() const {
-	return "CONTINUE";
-}
-
-string NodeStmtVar::str() const {
-	return "VAR";
-}
-
-string NodeStmtFor::str() const {
-	return "FOR";
-}
-
-string NodeStmtProcedure::str() const {
-	return "PROCEDURE " + name->str();
-}
-
-string NodeFormalParameterSection::str() const {
-	return (is_var ? "VAR " : "") + type->str() + " FORMAL PARAMETERS:";
-}
-
-string NodeStmtFunction::str() const {
-	return "FUNCTION " + name->str();
-}
-
-string NodeTypeRecord::str() const {
-	return "RECORD";
-}
-
-string NodeTypeArray::str() const {
-	return "ARRAY";
-}
-
-string NodeType::str() const {
-	return symtype->str();
-}
-
-string NodeStmtType::str() const {
-	return "TYPE";
-}
-
-string NodeStmtBlock::str() const {
-	return "BLOCK";
 }
 
 PSymbolType NodeExpression::exprtype() {
@@ -381,24 +282,28 @@ PSymbolType NodeBinaryOperator::exprtype() {
 		                 "both operands of \""+operator_lst[operation]+"\" must be integer: got \"" +
 		                 left->exprtype()->name + "\" and \"" + right->exprtype()->name + "\"");
 	}
-	case Token::OP_ASSIGN: {
-		PNodeUnaryOperator l = dynamic_pointer_cast<NodeUnaryOperator>(left);
-		m_exprtype = SymbolType::notype();
-		if (SymbolType::is_arithmetic({ltype, rtype}) || ltype == rtype) {
-//			m_exprtype = ltype;
-		} else if (l && l->operation == Token::OP_DEREFERENCE) {
-//			m_exprtype = l->exprtype();
-		} else {
-			throw ParseError(Scanner::current_position(),
-			                 "Incompatible types : got \"" + rtype->name + "\", expected \"" + ltype->name + "\"");
-		}
-		break;
-	}
+	case Token::OP_ASSIGN:
 	case Token::OP_DIV_ASSIGN:
 	case Token::OP_PLUS_ASSIGN:
 	case Token::OP_MINUS_ASSIGN:
 	case Token::OP_MULT_ASSIGN: {
+		PNodeUnaryOperator l = dynamic_pointer_cast<NodeUnaryOperator>(left);
 		m_exprtype = SymbolType::notype();
+		if ((l && l->operation == Token::OP_DEREFERENCE) ||
+		    dynamic_pointer_cast<NodeVariable>(left)     ||
+		    dynamic_pointer_cast<NodeArrayAccess>(left)  ||
+		    dynamic_pointer_cast<NodeRecordAccess>(left))
+		{
+			if (SymbolType::is_arithmetic({ltype, rtype}) ||
+			    ltype == rtype)
+			{} else {
+				throw ParseError(Scanner::current_position(),
+				                 "incompatible types : got \"" + rtype->name +
+				                 "\", expected \"" + ltype->name + "\"");
+			}
+		} else {
+			throw ParseError(Scanner::current_position(), "variable identifier expected");
+		}
 		break;
 	}
 	default: throw runtime_error("Internal error: unknown binary operator");
@@ -412,7 +317,7 @@ PSymbolType NodeUnaryOperator::exprtype() {
 		m_exprtype = this->node->exprtype();
 		if (!SymbolType::is_arithmetic({m_exprtype})) {
 			throw ParseError(Scanner::current_position(),
-			                 "Incompatible type for unary operator \"-\": got \"" +
+			                 "incompatible type for unary operator \"-\": got \"" +
 			                 m_exprtype->name + "\", expected float or integer");
 		}
 		break;
@@ -421,9 +326,10 @@ PSymbolType NodeUnaryOperator::exprtype() {
 		m_exprtype = this->node->exprtype();
 		if (!dynamic_pointer_cast<SymbolTypePointer>(m_exprtype)) {
 			throw ParseError(Scanner::current_position(),
-			                 "Incompatible type for dereference operator: got \"" +
+			                 "incompatible type for dereference operator: got \"" +
 			                 m_exprtype->name + "\", expected pointer");
 		}
+		m_exprtype = dynamic_pointer_cast<SymbolTypePointer>(m_exprtype)->type;
 		break;
 	}
 	case Token::OP_AT: {
@@ -435,7 +341,7 @@ PSymbolType NodeUnaryOperator::exprtype() {
 			m_exprtype = make_shared<SymbolTypePointer>(node->exprtype());
 		} else {
 			throw ParseError(Scanner::current_position(),
-			                 "Invalid operand for unary operator \"@\": must be lvalue");
+			                 "invalid operand for unary operator \"@\": must be lvalue");
 		}
 		break;
 	}
@@ -457,8 +363,8 @@ PSymbolType NodeArrayAccess::exprtype() {
 		PNodeExpression expr = this->index->arglist[i];
 		if (expr->exprtype() != NodeInteger::type_sym_ptr) {
 			throw ParseError(Scanner::current_position(),
-			                 "Incompatible type for arg no. " + to_string(i+1) +
-			                 ": Got \"" + expr->exprtype()->name + "\", expected \"INTEGER\"");
+			                 "incompatible type for arg no. " + to_string(i+1) +
+			                 ": got \"" + expr->exprtype()->name + "\", expected \"INTEGER\"");
 		}
 	}
 	return m_exprtype;
@@ -488,8 +394,8 @@ bool NodeExprStmtFunctionCall::check_parameters(Pos pos) {
 	}
 	if (proc->params->size() != args->size()) {
 		throw ParseError(pos,
-		                 "Wrong number of parameters specified for call to \"" + proc->name +
-		                 "\": Got " + to_string(args->size()) + ", expected " + to_string(proc->params->size()));
+		                 "wrong number of parameters specified for call to \"" + proc->name +
+		                 "\": got " + to_string(args->size()) + ", expected " + to_string(proc->params->size()));
 		return false;
 	}
 	SymTable& st = *proc->params;
@@ -500,8 +406,8 @@ bool NodeExprStmtFunctionCall::check_parameters(Pos pos) {
 		formal = formal_var->type;
 		if (formal != actual && !SymbolType::is_arithmetic({formal, actual})) {
 			throw ParseError(pos,
-			                 "Incompatible type for arg no. " + to_string(i+1) +
-			                 ": Got \"" + actual->name + "\", expected \"" + formal->name + "\"");
+			                 "incompatible type for arg no. " + to_string(i+1) +
+			                 ": got \"" + actual->name + "\", expected \"" + formal->name + "\"");
 			return false;
 		}
 	}

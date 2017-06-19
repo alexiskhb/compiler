@@ -6,6 +6,7 @@
 #include "scanner.h"
 #include <algorithm>
 #include <stack>
+#include <map>
 #include "node.h"
 #include "token.h"
 #include "symboltable.h"
@@ -59,6 +60,8 @@ private:
 	PNodeIdentifier parse_identifier();
 	PNodeTypeRecord parse_type_record();
 	PNodeTypeArray parse_type_array();
+	PNodeTypeProc parse_type_procedure();
+	PNodeTypeFunc parse_type_function();
 	PNodeType parse_type();
 	std::vector<PNodeFormalParameterSection> parse_formal_parameters();
 	std::vector<PNodeStmt> parse_procedure_body();
@@ -68,12 +71,15 @@ private:
 	PNodeVarDeclarationUnit parse_var_declaration_unit(PSymTable, bool with_initialization);
 	PNodeInitializer parse_initializer();
 	PNodeConstant evaluate(PNodeExpression);
+	void parse_procedure_header(PNodeIdentifier&, std::vector<PNodeFormalParameterSection>&, bool skip_identifier = false);
+	void parse_function_header(PNodeIdentifier&, std::vector<PNodeFormalParameterSection>&, PNodeType&, bool skip_identifier = false);
 
 	Scanner scanner;
 	PNode m_syntax_tree = nullptr;
 	Symtables m_symtables;
 	std::vector<SymTable> m_current_scope;
 	std::stack<PNodeStmt> m_current_cycle;
+	std::map<std::string, bool> m_forwarded_funcs;
 };
 
 template <class T>

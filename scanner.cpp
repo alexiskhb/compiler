@@ -497,7 +497,7 @@ void Scanner::next_token() {
 		}
 	}
 	if (m_current_to_return == m_tokens.size()) {
-		throw runtime_error("something wrong");
+		throw runtime_error("Internal error: something wrong");
 	}
 	if (top().category == Token::C_COMMENT) {
 		next_token();
@@ -513,7 +513,7 @@ Token Scanner::get_next_token() {
 
 Token Scanner::top() const {
 	if (m_current_to_return == m_tokens.size()) {
-		throw runtime_error("no tokens available");
+		throw runtime_error("Internal error: no tokens available");
 	}
 	if (m_tokens[m_current_to_return].is_broken()) {
 		throw BadToken(m_tokens[m_current_to_return], m_tokens[m_current_to_return].err_msg);

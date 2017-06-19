@@ -1,5 +1,6 @@
 #include "symboltable.h"
 #include "symbol.h"
+#include "scanner.h"
 
 using namespace std;
 
@@ -13,7 +14,7 @@ void SymTable::add(PSymbol symbol) {
 		m_symbol_map.insert({symbol->name, size()});
 		this->push_back(symbol);
 	} else {
-		throw runtime_error("redefenition of symbol <" + symbol->name + ">");
+		throw ParseError(Scanner::current_position(), "redefenition of symbol \"" + symbol->name + "\"");
 	}
 }
 

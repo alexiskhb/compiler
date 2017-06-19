@@ -45,6 +45,7 @@ void parse(const string& filename, const bool strict) {
 	} catch (ParseError pe) {
 		cerr << pe.msg() << ":\n";
 		cerr << parser.get_line(pe.pos().line) << endl;
+		compile_result = 1;
 	}
 	parser.output_symbols(cout);
 	parser.output_syntax_tree(cout);
@@ -75,7 +76,7 @@ void generate(const string& filename, string output_filename) {
 
 int main(int argc, char *argv[]) {
 //	generate("./test-gen/21.in", "");
-//	parse("./test-parse/65.errin", true);
+//	parse("./test-parse/forward.in", true);
 //	return 0;
 	cxxopts::Options options(argv[0]);
 	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false, mode_generate = false;

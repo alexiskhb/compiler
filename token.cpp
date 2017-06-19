@@ -61,6 +61,7 @@ std::map<std::string, Token::Reserved> Token::reserved_lst =
 {"XOR", R_XOR},
 {"BREAK", R_BREAK},
 {"CONTINUE", R_CONTINUE},
+{"FORWARD", R_FORWARD},
 };
 std::map<Token::Operator, std::string> Token::operator_lst =
 {

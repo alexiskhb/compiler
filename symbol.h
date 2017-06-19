@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include "asmcode.h"
+#include "exceptions.h"
 
 template <class T>
 std::shared_ptr<T>& operator>>(PSymbol symbol, std::shared_ptr<T>& symbol_derived) {
@@ -76,6 +77,10 @@ public:
 	virtual bool equals(const SymbolTypePointer&) const;
 	virtual bool equals(const SymbolTypeArray&) const;
 	virtual bool equals(const SymbolTypeRecord&) const;
+	virtual bool equals(const SymbolTypeProc&) const;
+	virtual bool equals(const SymbolTypeFunc&) const;
+protected:
+	static uint64_t counter;
 };
 
 class SymbolTypeInt : public SymbolType {
@@ -128,8 +133,6 @@ public:
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypePointer&) const override;
-private:
-	static uint64_t counter;
 };
 
 class SymbolTypeArray : public SymbolType {
@@ -142,8 +145,6 @@ public:
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypeArray&) const override;
-private:
-	static uint64_t counter;
 };
 
 class SymbolTypeRecord : public SymbolType {
@@ -157,8 +158,28 @@ public:
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypeRecord&) const override;
-private:
-	static uint64_t counter;
+};
+
+class SymbolTypeProc : public SymbolType {
+public:
+	SymbolTypeProc();
+	SymbolTypeProc(const std::string&, PSymbolProcedure);
+	SymbolTypeProc(PSymbolProcedure);
+	PSymbolProcedure proc;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypeProc&) const override;
+};
+
+class SymbolTypeFunc : public SymbolType {
+public:
+	SymbolTypeFunc();
+	SymbolTypeFunc(const std::string&, PSymbolFunction);
+	SymbolTypeFunc(PSymbolFunction);
+	PSymbolFunction func;
+
+	bool equals(PSymbolType) const override;
+	bool equals(const SymbolTypeFunc&) const override;
 };
 
 class SymbolProcedure : public Symbol {

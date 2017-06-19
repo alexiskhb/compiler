@@ -8,9 +8,7 @@ std::string SymbolTypeInt::fml_label = "._fmt_int_";
 std::string SymbolTypeFloat::fml_label = "._fmt_float_";
 std::string var_prefix = ".__";
 
-uint64_t SymbolTypeRecord::counter = 0;
-uint64_t SymbolTypeArray::counter = 0;
-uint64_t SymbolTypePointer::counter = 0;
+uint64_t SymbolType::counter = 0;
 
 PSymbolType SymbolType::max(PSymbolType a, PSymbolType b) {
 	/// float > integer
@@ -81,82 +79,110 @@ Symbol::Symbol() {
 
 }
 
-Symbol::Symbol(const string& name) :
-    name(name) {
+Symbol::Symbol(const string& a_name) :
+    name(a_name) {
 }
 
-SymbolType::SymbolType(const string& name) :
-	Symbol(name) {
+SymbolType::SymbolType(const string& a_name) :
+	Symbol(a_name) {
 }
 
-SymbolTypePointer::SymbolTypePointer(const string& name, PSymbolType type) :
-	SymbolType(name), type(type) {
+SymbolTypePointer::SymbolTypePointer(const string& a_name, PSymbolType type) :
+	SymbolType(a_name), type(type) {
 }
 
 SymbolTypePointer::SymbolTypePointer(PSymbolType type) :
-    SymbolType("$pointer_" + type->name + "_" + to_string(counter++)), type(type) {
+    SymbolType("$pointer_" + type->name + "_" + to_string(++counter)), type(type) {
 }
 
-SymbolVariable::SymbolVariable(const std::string& name, PSymbolType type) :
-    Symbol(name), type(type) {
+SymbolVariable::SymbolVariable(const std::string& a_name, PSymbolType type) :
+    Symbol(a_name), type(type) {
 }
 
-SymbolConst::SymbolConst(const std::string& name, PSymbolType type) :
-    SymbolVariable(name, type) {
+SymbolConst::SymbolConst(const std::string& a_name, PSymbolType type) :
+    SymbolVariable(a_name, type) {
 }
 
-SymbolConstInt::SymbolConstInt(const std::string& name, PSymbolType type, int64_t a_value) :
-    SymbolConst(name, type), value(a_value) {
+SymbolConstInt::SymbolConstInt(const std::string& a_name, PSymbolType type, int64_t a_value) :
+    SymbolConst(a_name, type), value(a_value) {
 }
 
-SymbolConstFloat::SymbolConstFloat(const std::string& name, PSymbolType type, double a_value) :
-    SymbolConst(name, type), value(a_value) {
+SymbolConstFloat::SymbolConstFloat(const std::string& a_name, PSymbolType type, double a_value) :
+    SymbolConst(a_name, type), value(a_value) {
 }
 
-SymbolTypeInt::SymbolTypeInt(const std::string& name) :
-	SymbolType(name) {
+SymbolTypeInt::SymbolTypeInt(const std::string& a_name) :
+	SymbolType(a_name) {
 }
 
-SymbolTypeFloat::SymbolTypeFloat(const std::string& name) :
-	SymbolType(name) {
+SymbolTypeFloat::SymbolTypeFloat(const std::string& a_name) :
+	SymbolType(a_name) {
 }
 
-SymbolTypeChar::SymbolTypeChar(const std::string& name) :
-	SymbolType(name) {
+SymbolTypeChar::SymbolTypeChar(const std::string& a_name) :
+	SymbolType(a_name) {
 }
 
-SymbolTypeString::SymbolTypeString(const std::string& name) :
-    SymbolType(name) {
+SymbolTypeString::SymbolTypeString(const std::string& a_name) :
+    SymbolType(a_name) {
 }
 
 SymbolTypeArray::SymbolTypeArray() :
-    SymbolType("$array_" + to_string(++SymbolTypeArray::counter)) {
+    SymbolType("$array_" + to_string(++SymbolType::counter)) {
 }
 
-SymbolTypeArray::SymbolTypeArray(const std::string& name, const SymbolTypeArray& sym) :
-    SymbolType(name) {
+SymbolTypeArray::SymbolTypeArray(const std::string& a_name, const SymbolTypeArray& sym) :
+    SymbolType(a_name) {
 	this->bounds = sym.bounds;
 	this->type = sym.type;
 }
 
 SymbolTypeRecord::SymbolTypeRecord() :
-    SymbolType("$record_" + to_string(++SymbolTypeRecord::counter)) {
+    SymbolType("$record_" + to_string(++SymbolType::counter)) {
 	symtable = make_shared<SymTable>();
 }
 
-SymbolTypeRecord::SymbolTypeRecord(const string& name) :
-    SymbolType(name) {
+SymbolTypeRecord::SymbolTypeRecord(const string& a_name) :
+    SymbolType(a_name) {
 	symtable = make_shared<SymTable>();
 }
 
-SymbolProcedure::SymbolProcedure(const std::string& name) :
-	Symbol(name) {
+SymbolTypeProc::SymbolTypeProc() :
+    SymbolType("$procedure_" + to_string(SymbolType::counter)) {
+	proc = make_shared<SymbolProcedure>("$procedure_" + to_string(SymbolType::counter));
+	++SymbolType::counter;
+}
+
+SymbolTypeProc::SymbolTypeProc(const string& a_name, PSymbolProcedure a_proc) :
+    SymbolType(a_name), proc(a_proc) {
+}
+
+SymbolTypeProc::SymbolTypeProc(PSymbolProcedure a_proc) :
+    SymbolType("$procedure_" + to_string(++SymbolType::counter)), proc(a_proc) {
+}
+
+SymbolTypeFunc::SymbolTypeFunc() :
+    SymbolType("$function_" + to_string(SymbolType::counter)) {
+	func = make_shared<SymbolFunction>("$function_" + to_string(SymbolType::counter));
+	++SymbolType::counter;
+}
+
+SymbolTypeFunc::SymbolTypeFunc(const string& a_name, PSymbolFunction a_func) :
+    SymbolType(a_name), func(a_func) {
+}
+
+SymbolTypeFunc::SymbolTypeFunc(PSymbolFunction a_func) :
+    SymbolType("$function_" + to_string(++SymbolType::counter)), func(a_func) {
+}
+
+SymbolProcedure::SymbolProcedure(const std::string& a_name) :
+    Symbol(a_name) {
 	params = make_shared<SymTable>();
 	locals = make_shared<SymTable>();
 }
 
-SymbolFunction::SymbolFunction(const std::string& name) :
-	SymbolProcedure(name) {
+SymbolFunction::SymbolFunction(const std::string& a_name) :
+    SymbolProcedure(a_name) {
 }
 
 unsigned Symbol::size() const {
@@ -172,8 +198,11 @@ unsigned SymbolTypePointer::size() const {
 }
 
 unsigned SymbolTypeArray::size() const {
-	return 0;
-//	return (high - low + 1)*type->size();
+	unsigned result = 0;
+	for (pair<int, int> p: this->bounds) {
+		result += (p.second - p.first + 1)*this->type->size();
+	}
+	return result;
 }
 
 unsigned SymbolTypeInt::size() const {
@@ -229,6 +258,8 @@ bool SymbolTypeString ::equals(PSymbolType symt) const {return symt->equals(*thi
 bool SymbolTypePointer::equals(PSymbolType symt) const {return symt->equals(*this);}
 bool SymbolTypeArray  ::equals(PSymbolType symt) const {return symt->equals(*this);}
 bool SymbolTypeRecord ::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypeProc   ::equals(PSymbolType symt) const {return symt->equals(*this);}
+bool SymbolTypeFunc   ::equals(PSymbolType symt) const {return symt->equals(*this);}
 
 bool SymbolType::equals(const SymbolType       &) const {return false;}
 bool SymbolType::equals(const SymbolTypeInt    &) const {return false;}
@@ -238,6 +269,8 @@ bool SymbolType::equals(const SymbolTypeString &) const {return false;}
 bool SymbolType::equals(const SymbolTypePointer&) const {return false;}
 bool SymbolType::equals(const SymbolTypeArray  &) const {return false;}
 bool SymbolType::equals(const SymbolTypeRecord &) const {return false;}
+bool SymbolType::equals(const SymbolTypeProc   &) const {return false;}
+bool SymbolType::equals(const SymbolTypeFunc   &) const {return false;}
 
 bool SymbolTypeInt   ::equals(const SymbolTypeInt   &) const {return true;}
 bool SymbolTypeFloat ::equals(const SymbolTypeFloat &) const {return true;}
@@ -254,6 +287,34 @@ bool SymbolTypeArray::equals(const SymbolTypeArray& sym) const {
 
 bool SymbolTypeRecord::equals(const SymbolTypeRecord& sym) const {
 	return this->symtable == sym.symtable;
+}
+
+bool SymbolTypeProc::equals(const SymbolTypeProc& sym) const {
+	if (this->proc->params->size() != sym.proc->params->size()) {
+		return false;
+	}
+	for (int i = 0; i < this->proc->params->size(); i++) {
+		PSymbolVariable v1 = dynamic_pointer_cast<SymbolVariable>(this->proc->params->at(i));
+		PSymbolVariable v2 = dynamic_pointer_cast<SymbolVariable>(sym.proc->params->at(i));
+		if (v1->type != v2->type) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool SymbolTypeFunc::equals(const SymbolTypeFunc& sym) const {
+	if (this->func->params->size() != sym.func->params->size()) {
+		return false;
+	}
+	for (int i = 0; i < this->func->params->size(); i++) {
+		PSymbolVariable v1 = dynamic_pointer_cast<SymbolVariable>(this->func->params->at(i));
+		PSymbolVariable v2 = dynamic_pointer_cast<SymbolVariable>(sym.func->params->at(i));
+		if (v1->type != v2->type) {
+			return false;
+		}
+	}
+	return this->func->type == sym.func->type;
 }
 
 bool operator==(PSymbolType a, PSymbolType b) {

@@ -312,6 +312,14 @@ public:
 	PNodeType type;
 };
 
+class NodeTypeProc : public NodeType {
+public:
+};
+
+class NodeTypeFunc : public NodeType {
+public:
+};
+
 class NodeStmtType : public NodeStmt {
 public:
 	std::string str() const override;

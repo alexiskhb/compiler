@@ -260,13 +260,21 @@ PNodeStmtConst Parser::parse_const() {
 		PNodeExpression expr;
 		if (scanner == Token::OP_EQUAL) {
 			++scanner;
-			expr = parse_expression(Token::OP_EQUAL);
+			expr = parse_expression(Token::OP_PLUS);
+			PSymbolConst sym;
+			if (dynamic_pointer_cast<NodeInteger>(expr)) {
+				sym = make_shared<SymbolConstInt>(name, NodeInteger::type_sym_ptr, dynamic_pointer_cast<NodeInteger>(expr)->value);
+			} else if (dynamic_pointer_cast<NodeFloat>(expr)) {
+				sym = make_shared<SymbolConstFloat>(name, NodeFloat::type_sym_ptr, dynamic_pointer_cast<NodeFloat>(expr)->value);
+			} else {
+				throw ParseError(scanner.top(), "only integer and float literals allowed");
+			}
+			st << sym;
 		} else if (scanner == Token::S_COLON) {
 			++scanner;
 			require({Token::C_IDENTIFIER}, "plain type identifier");
-			++scanner;
-
-			expr = parse_expression(Token::OP_EQUAL);
+			PNodeType type = parse_type();
+			expr = parse_expression(Token::OP_PLUS);
 		} else {// throw in other case
 			require({Token::OP_EQUAL}, "=");
 		}
@@ -373,6 +381,13 @@ std::vector<PNodeStmt> Parser::parse_procedure_body() {
 			body.push_back(parse_block());
 			return body;
 		}
+		case Token::R_FORWARD: {
+			++scanner;			if (body.size() == 0) {
+				return body;
+			} else {
+				throw ParseError(scanner.top(), "invalid definition of forwarded function");
+			}
+		}
 		default: throw ParseError(scanner.top(), "unexpected token \"" + scanner.top().raw_value + "\"");
 		}
 	}
@@ -407,6 +422,10 @@ PNodeStmtType Parser::parse_type_part() {
 			dynamic_pointer_cast<SymbolTypeRecord>(tdu->alias)->symtable = dynamic_pointer_cast<SymbolTypeRecord>(tdu->nodetype->symtype)->symtable;
 		} else if (dynamic_pointer_cast<SymbolTypeString>(tdu->nodetype->symtype)) {
 			tdu->alias = make_shared<SymbolTypeString>(identifier->name);	
+		} else if (dynamic_pointer_cast<SymbolTypeProc>(tdu->nodetype->symtype)) {
+			tdu->alias = make_shared<SymbolTypeProc>(identifier->name, dynamic_pointer_cast<SymbolTypeProc>(tdu->nodetype->symtype)->proc);
+		} else if (dynamic_pointer_cast<SymbolTypeFunc>(tdu->nodetype->symtype)) {
+			tdu->alias = make_shared<SymbolTypeFunc>(identifier->name, dynamic_pointer_cast<SymbolTypeFunc>(tdu->nodetype->symtype)->func);
 		}
 		m_symtables << tdu->alias;
 		node->units.push_back(PNodeTypeDeclarationUnit(tdu));
@@ -414,14 +433,27 @@ PNodeStmtType Parser::parse_type_part() {
 	return node;
 }
 
+void Parser::parse_procedure_header(PNodeIdentifier& name, std::vector<PNodeFormalParameterSection>& params, bool skip_identifier) {
+	if (!skip_identifier) {
+		require({Token::C_IDENTIFIER}, "procedure/function identifier");
+		name = make_shared<NodeIdentifier>(scanner++);
+	}
+	if (scanner == Token::OP_LEFT_PAREN) {
+		params = parse_formal_parameters();
+	}
+}
+
+void Parser::parse_function_header(PNodeIdentifier& name, std::vector<PNodeFormalParameterSection>& params, PNodeType& result_type, bool skip_identifier) {
+	parse_procedure_header(name, params, skip_identifier);
+	require({Token::S_COLON}, ":");
+	++scanner;
+	result_type = parse_type();
+}
+
 PNodeStmtProcedure Parser::parse_procedure() {
 	PNodeStmtProcedure procedure = make_shared<NodeStmtProcedure>();
 	++scanner;
-	require({Token::C_IDENTIFIER}, "procedure identifier");
-	procedure->name = make_shared<NodeIdentifier>(scanner++);
-	if (scanner == Token::OP_LEFT_PAREN) {
-		procedure->params = parse_formal_parameters();
-	}
+	parse_procedure_header(procedure->name, procedure->params);
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
 	procedure->symbol = make_shared<SymbolProcedure>(procedure->name->name);
@@ -431,26 +463,35 @@ PNodeStmtProcedure Parser::parse_procedure() {
 			procedure->symbol->locals << var->symbol;
 		}
 	}
-	m_symtables << procedure->symbol;
+	if (m_forwarded_funcs[procedure->name->name]) {
+		PSymbolProcedure p;
+		m_symtables[procedure->name->name] >> p;
+		if (p && make_shared<SymbolTypeProc>(p) == make_shared<SymbolTypeProc>(procedure->symbol)) {
+
+		} else {
+			throw ParseError(scanner.top(), "invalid definition of forwarded procedure \"" + procedure->name->name + "\"");
+		}
+	} else {
+		m_symtables << procedure->symbol;
+	}
+	m_forwarded_funcs.erase(m_forwarded_funcs.find(procedure->name->name));
+
 	m_symtables.push_back(procedure->symbol->locals);
 	procedure->parts = parse_procedure_body();
 	m_symtables.pop_back();
+
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
+	if (procedure->parts.size() == 0) {//forward case
+		m_forwarded_funcs[procedure->name->name] = true;
+	}
 	return procedure;
 }
 
 PNodeStmtFunction Parser::parse_function() {
 	PNodeStmtFunction function = make_shared<NodeStmtFunction>();
 	++scanner;
-	require({Token::C_IDENTIFIER}, "function identifier");
-	function->name = make_shared<NodeIdentifier>(scanner++);
-	if (scanner == Token::OP_LEFT_PAREN) {
-		function->params = parse_formal_parameters();
-	}
-	require({Token::S_COLON}, ":");
-	++scanner;
-	function->result_type = parse_type();
+	parse_function_header(function->name, function->params, function->result_type);
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
 	PSymbolFunction sf = make_shared<SymbolFunction>(function->name->name);
@@ -462,12 +503,29 @@ PNodeStmtFunction Parser::parse_function() {
 			function->symbol->locals << var->symbol;
 		}
 	}
-	m_symtables << function->symbol;
+	if (m_forwarded_funcs[function->name->name]) {
+		PSymbolFunction ff = dynamic_pointer_cast<SymbolFunction>(function->symbol);
+		PSymbolFunction f;
+		m_symtables[function->name->name] >> f;
+		if (f && ff && PSymbolType(make_shared<SymbolTypeFunc>(f)) == PSymbolType(make_shared<SymbolTypeFunc>(ff))) {
+
+		} else {
+			throw ParseError(scanner.top(), "invalid definition of forwarded function \"" + function->name->name + "\"");
+		}
+	} else {
+		m_symtables << function->symbol;
+	}
+	m_forwarded_funcs.erase(m_forwarded_funcs.find(function->name->name));
+
 	m_symtables.push_back(function->symbol->locals);
 	function->parts = parse_procedure_body();
 	m_symtables.pop_back();
+
 	require({Token::S_SEMICOLON}, ";");
 	++scanner;
+	if (function->parts.size() == 0) {//forward case
+		m_forwarded_funcs[function->name->name] = true;
+	}
 	return function;
 }
 
@@ -573,12 +631,50 @@ PNodeTypeArray Parser::parse_type_array() {
 	return node;
 }
 
+PNodeTypeProc Parser::parse_type_procedure() {
+	PNodeTypeProc proc = make_shared<NodeTypeProc>();
+	++scanner;
+	PNodeIdentifier name;
+	std::vector<PNodeFormalParameterSection> params;
+	parse_procedure_header(name, params, true);
+	proc->symtype = make_shared<SymbolTypeProc>();
+	for (PNodeFormalParameterSection psection: params) {
+		for (PNodeVariable var: psection->identifiers) {
+			dynamic_pointer_cast<SymbolTypeProc>(proc->symtype)->proc->params << var->symbol;
+			dynamic_pointer_cast<SymbolTypeProc>(proc->symtype)->proc->locals << var->symbol;
+		}
+	}
+	return proc;
+}
+
+PNodeTypeFunc Parser::parse_type_function() {
+	PNodeTypeFunc func = make_shared<NodeTypeFunc>();
+	++scanner;
+	PNodeIdentifier name;
+	std::vector<PNodeFormalParameterSection> params;
+	PNodeType nt;
+	parse_function_header(name, params, nt, true);
+	func->symtype = make_shared<SymbolTypeFunc>();
+	dynamic_pointer_cast<SymbolTypeFunc>(func->symtype)->func->type = nt->symtype;
+	for (PNodeFormalParameterSection psection: params) {
+		for (PNodeVariable var: psection->identifiers) {
+			dynamic_pointer_cast<SymbolTypeFunc>(func->symtype)->func->params << var->symbol;
+			dynamic_pointer_cast<SymbolTypeFunc>(func->symtype)->func->locals << var->symbol;
+		}
+	}
+	return func;
+}
+
 PNodeType Parser::parse_type() {
 	PNodeType node = make_shared<NodeType>();
 	if (scanner == Token::R_ARRAY) {
 		return parse_type_array();
 	} else if (scanner == Token::R_RECORD) {
 		return parse_type_record();
+	} else if (scanner == Token::R_PROCEDURE) {
+		return parse_type_procedure();
+	} else if (scanner == Token::R_FUNCTION) {
+		return parse_type_function();
 	} else if (scanner == Token::OP_DEREFERENCE) {
 		++scanner;
 		require({Token::C_IDENTIFIER}, "identifier");
@@ -688,8 +784,12 @@ PNodeExpression Parser::parse_expression(int prec) {
 		} break;
 		case Token::OP_LEFT_PAREN: {
 			PNodeExprStmtFunctionCall f;
-			f = dynamic_pointer_cast<NodeExprStmtFunctionCall>(left);
-			if (Symbol::use_strict && !f) {
+			if (dynamic_pointer_cast<SymbolTypeProc>(left->exprtype()) || dynamic_pointer_cast<SymbolTypeFunc>(left->exprtype())) {
+				PSymbolTypeProc stp = dynamic_pointer_cast<SymbolTypeProc>(left->exprtype());
+				f = make_shared<NodeExprStmtFunctionCall>(stp->proc);
+			} else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(left)) {
+				f = dynamic_pointer_cast<NodeExprStmtFunctionCall>(left);
+			} else {
 				throw ParseError(token, "need procedure or function identifier");
 			}
 			f->args = parse_actual_parameters();
