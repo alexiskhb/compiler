@@ -12,6 +12,7 @@
 #include <exception>
 #include <deque>
 #include <iterator>
+#include "exceptions.h"
 
 class Scanner {
 public:

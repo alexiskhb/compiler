@@ -9,6 +9,7 @@
 #include "node.h"
 #include "token.h"
 #include "symboltable.h"
+#include "exceptions.h"
 
 struct Symtables : public std::vector<PSymTable> {
 	PSymbol operator[](const std::string& s);
@@ -54,11 +55,11 @@ private:
 	PNodeStmtProcedure parse_procedure();
 	PNodeStmtType parse_type_part();
 	PNodeStmtFunction parse_function();
-	PNodeTypeRecord parse_record();
-	PNodeTypeArray parse_array();
 	PNodeStmtBlock parse_block();
 	PNodeIdentifier parse_identifier();
-
+	PNodeTypeRecord parse_type_record();
+	PNodeTypeArray parse_type_array();
+	PNodeType parse_type();
 	std::vector<PNodeFormalParameterSection> parse_formal_parameters();
 	std::vector<PNodeStmt> parse_procedure_body();
 	PNodeFormalParameterSection parse_formal_parameter_section();
@@ -66,36 +67,13 @@ private:
 	std::vector<PNodeIdentifier> parse_comma_separated_identifiers();
 	PNodeVarDeclarationUnit parse_var_declaration_unit(PSymTable, bool with_initialization);
 	PNodeInitializer parse_initializer();
-	PNodeType parse_type();
+	PNodeConstant evaluate(PNodeExpression);
 
 	Scanner scanner;
 	PNode m_syntax_tree = nullptr;
 	Symtables m_symtables;
 	std::vector<SymTable> m_current_scope;
 	std::stack<PNodeStmt> m_current_cycle;
-};
-
-class ParseError {
-public:
-	ParseError(const Pos& pos, const std::string& msg) :
-	    m_msg("at " + (std::string)pos + ": " + msg), m_pos(pos) {
-	}
-	std::string msg() const {
-		return m_msg;
-	}
-	Pos pos() const {
-		return m_pos;
-	}
-protected:
-	std::string m_msg;
-	Pos m_pos;
-};
-
-class SymbolNotFound : public ParseError {
-public:
-	SymbolNotFound(const Pos& pos, const std::string& symname) :
-	    ParseError(pos, "symbol '" + symname + "' not found")
-	{}
 };
 
 template <class T>

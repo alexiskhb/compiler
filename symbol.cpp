@@ -8,10 +8,12 @@ std::string SymbolTypeInt::fml_label = "._fmt_int_";
 std::string SymbolTypeFloat::fml_label = "._fmt_float_";
 std::string var_prefix = ".__";
 
+uint64_t SymbolTypeRecord::counter = 0;
+uint64_t SymbolTypeArray::counter = 0;
+uint64_t SymbolTypePointer::counter = 0;
+
 PSymbolType SymbolType::max(PSymbolType a, PSymbolType b) {
-	if (!SymbolType::is_arithmetic({a, b})) {
-		throw runtime_error("arihmetic operation between non-arithmetic variables");
-	}
+	/// float > integer
 	if (dynamic_pointer_cast<SymbolTypeFloat>(a)) {
 		return a;
 	}
@@ -19,6 +21,11 @@ PSymbolType SymbolType::max(PSymbolType a, PSymbolType b) {
 		return b;
 	}
 	return a;
+}
+
+PSymbolType SymbolType::notype() {
+	static PSymbolType _notype = make_shared<SymbolType>("VOID");
+	return _notype;
 }
 
 std::string Symbol::str() const {
@@ -86,8 +93,24 @@ SymbolTypePointer::SymbolTypePointer(const string& name, PSymbolType type) :
 	SymbolType(name), type(type) {
 }
 
+SymbolTypePointer::SymbolTypePointer(PSymbolType type) :
+    SymbolType("$pointer_" + type->name + "_" + to_string(counter++)), type(type) {
+}
+
 SymbolVariable::SymbolVariable(const std::string& name, PSymbolType type) :
     Symbol(name), type(type) {
+}
+
+SymbolConst::SymbolConst(const std::string& name, PSymbolType type) :
+    SymbolVariable(name, type) {
+}
+
+SymbolConstInt::SymbolConstInt(const std::string& name, PSymbolType type, int64_t a_value) :
+    SymbolConst(name, type), value(a_value) {
+}
+
+SymbolConstFloat::SymbolConstFloat(const std::string& name, PSymbolType type, double a_value) :
+    SymbolConst(name, type), value(a_value) {
 }
 
 SymbolTypeInt::SymbolTypeInt(const std::string& name) :
@@ -106,8 +129,6 @@ SymbolTypeString::SymbolTypeString(const std::string& name) :
     SymbolType(name) {
 }
 
-uint64_t SymbolTypeArray::counter = 0;
-
 SymbolTypeArray::SymbolTypeArray() :
     SymbolType("$array_" + to_string(++SymbolTypeArray::counter)) {
 }
@@ -118,8 +139,6 @@ SymbolTypeArray::SymbolTypeArray(const std::string& name, const SymbolTypeArray&
 	this->type = sym.type;
 }
 
-uint64_t SymbolTypeRecord::counter = 0;
-
 SymbolTypeRecord::SymbolTypeRecord() :
     SymbolType("$record_" + to_string(++SymbolTypeRecord::counter)) {
 	symtable = make_shared<SymTable>();
@@ -128,10 +147,6 @@ SymbolTypeRecord::SymbolTypeRecord() :
 SymbolTypeRecord::SymbolTypeRecord(const string& name) :
     SymbolType(name) {
 	symtable = make_shared<SymTable>();
-}
-
-SymbolConst::SymbolConst(const std::string& name) :
-	Symbol(name) {
 }
 
 SymbolProcedure::SymbolProcedure(const std::string& name) :
@@ -241,9 +256,14 @@ bool SymbolTypeRecord::equals(const SymbolTypeRecord& sym) const {
 	return this->symtable == sym.symtable;
 }
 
-
 bool operator==(PSymbolType a, PSymbolType b) {
 	return a->equals(b);
 }
+
+bool operator!=(PSymbolType a, PSymbolType b) {
+	return !(a == b);
+}
+
+
 
 

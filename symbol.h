@@ -32,10 +32,28 @@ public:
 	unsigned size() const override;
 };
 
+class SymbolConst : public SymbolVariable {
+public:
+	SymbolConst(const std::string& name, PSymbolType);
+};
+
+class SymbolConstInt : public SymbolConst {
+public:
+	SymbolConstInt(const std::string& name, PSymbolType, int64_t);
+	int64_t value;
+};
+
+class SymbolConstFloat : public SymbolConst {
+public:
+	SymbolConstFloat(const std::string& name, PSymbolType, double);
+	double value;
+};
+
 class SymbolType : public Symbol {
 public:
 	SymbolType(const std::string& name);
 	static PSymbolType max(PSymbolType, PSymbolType);
+	static PSymbolType notype();
 	static bool is_arithmetic(std::initializer_list<PSymbolType>);
 	template <class T>
 	static std::shared_ptr<T> equals(const std::initializer_list<PSymbolType>& lst,  std::shared_ptr<T> ptr) {
@@ -104,11 +122,14 @@ public:
 class SymbolTypePointer : public SymbolType {
 public:
 	SymbolTypePointer(const std::string& name, PSymbolType);
+	SymbolTypePointer(PSymbolType);
 	unsigned size() const override;
 	PSymbolType type;
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypePointer&) const override;
+private:
+	static uint64_t counter;
 };
 
 class SymbolTypeArray : public SymbolType {
@@ -140,11 +161,6 @@ private:
 	static uint64_t counter;
 };
 
-class SymbolConst : public Symbol {
-public:
-	SymbolConst(const std::string& name);
-};
-
 class SymbolProcedure : public Symbol {
 public:
 	std::string output_str() const override;
@@ -160,6 +176,7 @@ public:
 };
 
 bool operator==(PSymbolType, PSymbolType);
+bool operator!=(PSymbolType, PSymbolType);
 
 
 #endif // SYMBOL_H

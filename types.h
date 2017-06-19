@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <memory>
+#include <string>
 
 class Symbol;
 class SymbolVariable;
@@ -14,6 +15,8 @@ class SymbolTypePointer;
 class SymbolTypeArray;
 class SymbolTypeRecord;
 class SymbolConst;
+class SymbolConstInt;
+class SymbolConstFloat;
 class SymbolProcedure;
 class SymbolFunction;
 
@@ -31,6 +34,8 @@ typedef std::shared_ptr<SymbolTypePointer> PSymbolTypePointer;
 typedef std::shared_ptr<SymbolTypeArray> PSymbolTypeArray;
 typedef std::shared_ptr<SymbolTypeRecord> PSymbolTypeRecord;
 typedef std::shared_ptr<SymbolConst> PSymbolConst;
+typedef std::shared_ptr<SymbolConstInt> PSymbolConstInt;
+typedef std::shared_ptr<SymbolConstFloat> PSymbolConstFloat;
 typedef std::shared_ptr<SymbolProcedure> PSymbolProcedure;
 typedef std::shared_ptr<SymbolFunction> PSymbolFunction;
 
@@ -88,6 +93,9 @@ class NodeStmtContinue;
 class NodeVarDeclarationUnit;
 class NodeTypeDeclarationUnit;
 class NodeVariable;
+class NodeConstant;
+class NodeConstantInt;
+class NodeConstantFloat;
 
 class NodeExprStmtFunctionCall;
 
@@ -111,6 +119,9 @@ typedef std::shared_ptr<NodeStmtContinue> PNodeStmtContinue;
 typedef std::shared_ptr<NodeVarDeclarationUnit> PNodeVarDeclarationUnit;
 typedef std::shared_ptr<NodeTypeDeclarationUnit> PNodeTypeDeclarationUnit;
 typedef std::shared_ptr<NodeVariable> PNodeVariable;
+typedef std::shared_ptr<NodeConstant> PNodeConstant;
+typedef std::shared_ptr<NodeConstantInt> PNodeConstantInteger;
+typedef std::shared_ptr<NodeConstantFloat> PNodeConstantFloat;
 
 typedef std::shared_ptr<NodeExprStmtFunctionCall> PNodeExprStmtFunctionCall;
 
@@ -127,7 +138,6 @@ class AsmCmd2;
 class AsmComment;
 class AsmVar;
 class AsmVarString;
-
 class AsmLabel;
 
 typedef std::shared_ptr<AsmOperand> PAsmOperand; 
@@ -143,8 +153,21 @@ typedef std::shared_ptr<AsmCmd2> PAsmCmd2;
 typedef std::shared_ptr<AsmComment> PAsmComment; 
 typedef std::shared_ptr<AsmVar> PAsmVar;
 typedef std::shared_ptr<AsmVarString> PAsmVarString;
-
 typedef std::shared_ptr<AsmLabel> PAsmLabel;
 
+struct Pos {
+	bool operator==(const Pos& other) const {
+		return fstream_pos == other.fstream_pos;
+	}
+	explicit operator bool() const {
+		return fstream_pos;
+	}
+	operator std::string() const {
+		return "(" + std::to_string(line) + ":" + std::to_string(column) + ")";
+	}
+
+	size_t line, column;
+	unsigned long long fstream_pos;
+};
 
 #endif // TYPES_H

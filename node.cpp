@@ -1,5 +1,6 @@
 #include "node.h"
 #include "symboltable.h"
+#include "scanner.h"
 #include <sstream>
 
 using namespace std;
@@ -67,10 +68,12 @@ NodeExpression::NodeExpression(PSymbolType type) :
 
 NodeInteger::NodeInteger(const Token& token) {
 	value = Token::int_values[token.value_id];
+	m_exprtype = NodeInteger::type_sym_ptr;
 }
 
 NodeFloat::NodeFloat(const Token& token) {
 	value = Token::float_values[token.value_id];
+	m_exprtype = NodeFloat::type_sym_ptr;
 }
 
 NodeString::NodeString(const Token& token) :
@@ -87,15 +90,17 @@ NodeIdentifier::NodeIdentifier(const Token& token) {
 
 NodeArrayAccess::NodeArrayAccess(PNodeExpression array, PNodeActualParameters index) :
 	array(array), index(index) {
+	m_exprtype = this->exprtype();
 }
 
 NodeBinaryOperator::NodeBinaryOperator(Token::Operator operation, PNodeExpression left, PNodeExpression right) :
 	operation(operation), left(left), right(right) {
-	m_exprtype = nullptr;
+	m_exprtype = this->exprtype();
 }
 
 NodeVariable::NodeVariable(PNodeIdentifier identifier, PSymbolVariable s_var) :
     NodeExpression(s_var->type), identifier(identifier), symbol(s_var) {
+	m_exprtype = this->exprtype();
 }
 
 NodeActualParameters::NodeActualParameters(PNodeExpression expr) {
@@ -107,33 +112,51 @@ NodeActualParameters::NodeActualParameters(PNodeExpression expr) {
 //	//!
 //}
 
-NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PNodeIdentifier func_id, PSymbolProcedure sym, PNodeActualParameters args) :
-    function_identifier(func_id), symbol(sym), args(args) {
-	if (!dynamic_pointer_cast<SymbolFunction>(sym)) {
-		m_exprtype = nullptr;
-	} else {
-		SymbolFunction& f = *dynamic_pointer_cast<SymbolFunction>(sym);
-		m_exprtype = f.type;
-	}
-	if (func_id->name == "WRITE") {
+NodeExprStmtFunctionCall::NodeExprStmtFunctionCall(PSymbolProcedure sym, PNodeActualParameters args) :
+    proc(sym), args(args) {
+	if (sym->name == "WRITE") {
 		m_predefined = Predefined::WRITE;
 	}
-	if (func_id->name == "WRITELN") {
+	if (sym->name == "WRITELN") {
 		m_predefined = Predefined::WRITELN;
 	}
+	if (sym->name == "ORD") {
+		m_predefined = Predefined::ORD;
+	}
+	if (sym->name == "CHR") {
+		m_predefined = Predefined::CHR;
+	}
+	if (sym->name == "EXIT") {
+		m_predefined = Predefined::EXIT;
+	}
+	m_exprtype = this->exprtype();
 }
 
 NodeUnaryOperator::NodeUnaryOperator(Token::Operator operation, PNodeExpression node) :
 	operation(operation), node(node) {
+	m_exprtype = this->exprtype();
 }
 
 NodeRecordAccess::NodeRecordAccess(PNodeExpression expr, PSymbolVariable var) :
     record(expr), field(var) {
-	m_exprtype = field->type;
+	m_exprtype = this->exprtype();
 }
 
 NodeStmtAssign::NodeStmtAssign(PNodeExpression left, PNodeExpression right) :
 	NodeBinaryOperator(Token::OP_ASSIGN, left, right) {
+	m_exprtype = this->exprtype();
+}
+
+NodeConstant::NodeConstant(PSymbolConst sym) :
+    symbol(sym) {
+}
+
+NodeConstantInt::NodeConstantInt(PSymbolConstInt sym) :
+    NodeConstant(sym) {
+}
+
+NodeConstantFloat::NodeConstantFloat(PSymbolConstFloat sym) :
+    NodeConstant(sym) {
 }
 
 NodeStmtBreak::NodeStmtBreak(PNodeStmt a_cycle) :
@@ -303,19 +326,31 @@ PSymbolType NodeString::exprtype() {
 }
 
 PSymbolType NodeBinaryOperator::exprtype() {
+	PSymbolType ltype = left->exprtype(), rtype = right->exprtype();
+	PSymbolType int_type = NodeInteger::type_sym_ptr, float_type = NodeFloat::type_sym_ptr;
 	if (m_exprtype) {
 		return m_exprtype;
 	}
-	if (Symbol::use_strict)
 	switch (operation) {
 	case Token::OP_PLUS:
 	case Token::OP_MINUS:
-	case Token::OP_MULT:
+	case Token::OP_MULT:{
+		if (SymbolType::is_arithmetic({ltype, rtype})) {
+			m_exprtype = SymbolType::max(ltype, rtype);
+			break;
+		}
+		throw ParseError(Scanner::current_position(),
+		                 "both operands of \""+operator_lst[operation]+"\" must be arithmetic: got \"" +
+		                 left->exprtype()->name + "\" and \"" + right->exprtype()->name + "\"");
+	}
 	case Token::OP_DIV_SLASH: {
-		/// float > integer
-		/// throws if types are incompatible
-		m_exprtype = SymbolType::max(left->exprtype(), right->exprtype());
-		break;
+		if (SymbolType::is_arithmetic({ltype, rtype})) {
+			m_exprtype = int_type;
+			break;
+		}
+		throw ParseError(Scanner::current_position(),
+		                 "both operands of \"\\\" must be arithmetic: got \"" +
+		                 left->exprtype()->name + "\" and \"" + right->exprtype()->name + "\"");
 	}
 	case Token::OP_EQUAL:
 	case Token::OP_GREATER:
@@ -323,13 +358,13 @@ PSymbolType NodeBinaryOperator::exprtype() {
 	case Token::OP_LEQ:
 	case Token::OP_GEQ:
 	case Token::OP_NEQ: {
-		if (SymbolType::is_arithmetic({left->exprtype(), right->exprtype()})) {
-			m_exprtype = NodeInteger::type_sym_ptr;
+		if (SymbolType::is_arithmetic({ltype, rtype})) {
+			m_exprtype = int_type;
 			break;
 		}
-		if (Symbol::use_strict) {
-			throw runtime_error("compare non-arithmetic expressions");
-		}
+		throw ParseError(Scanner::current_position(),
+		                 "both operands of \""+operator_lst[operation]+"\" must be arithmetic: got \"" +
+		                 left->exprtype()->name + "\" and \"" + right->exprtype()->name + "\"");
 	}
 	case Token::OP_AND:
 	case Token::OP_OR:
@@ -338,44 +373,137 @@ PSymbolType NodeBinaryOperator::exprtype() {
 	case Token::OP_SHR:
 	case Token::OP_DIV:
 	case Token::OP_MOD: {
-		if (SymbolType::equals({left->exprtype(), right->exprtype()}, NodeInteger::type_sym_ptr)) {
-			m_exprtype = NodeInteger::type_sym_ptr;
+		if (ltype == int_type && rtype == int_type) {
+			m_exprtype = int_type;
 			break;
 		}
-		if (Symbol::use_strict) {
-			throw runtime_error("illegal expression");
-		}
+		throw ParseError(Scanner::current_position(),
+		                 "both operands of \""+operator_lst[operation]+"\" must be integer: got \"" +
+		                 left->exprtype()->name + "\" and \"" + right->exprtype()->name + "\"");
 	}
 	case Token::OP_ASSIGN: {
+		PNodeUnaryOperator l = dynamic_pointer_cast<NodeUnaryOperator>(left);
+		m_exprtype = SymbolType::notype();
+		if (SymbolType::is_arithmetic({ltype, rtype}) || ltype == rtype) {
+//			m_exprtype = ltype;
+		} else if (l && l->operation == Token::OP_DEREFERENCE) {
+//			m_exprtype = l->exprtype();
+		} else {
+			throw ParseError(Scanner::current_position(),
+			                 "Incompatible types : got \"" + rtype->name + "\", expected \"" + ltype->name + "\"");
+		}
 		break;
 	}
-	default: {
-		if (Symbol::use_strict) {
-			throw runtime_error("something wrong with binary operation");
-		}
+	case Token::OP_DIV_ASSIGN:
+	case Token::OP_PLUS_ASSIGN:
+	case Token::OP_MINUS_ASSIGN:
+	case Token::OP_MULT_ASSIGN: {
+		m_exprtype = SymbolType::notype();
+		break;
 	}
+	default: throw runtime_error("Internal error: unknown binary operator");
 	}
 	return m_exprtype;
 }
 
 PSymbolType NodeUnaryOperator::exprtype() {
-	return this->node->exprtype();
+	switch (this->operation) {
+	case Token::OP_MINUS: {
+		m_exprtype = this->node->exprtype();
+		if (!SymbolType::is_arithmetic({m_exprtype})) {
+			throw ParseError(Scanner::current_position(),
+			                 "Incompatible type for unary operator \"-\": got \"" +
+			                 m_exprtype->name + "\", expected float or integer");
+		}
+		break;
+	}
+	case Token::OP_DEREFERENCE: {
+		m_exprtype = this->node->exprtype();
+		if (!dynamic_pointer_cast<SymbolTypePointer>(m_exprtype)) {
+			throw ParseError(Scanner::current_position(),
+			                 "Incompatible type for dereference operator: got \"" +
+			                 m_exprtype->name + "\", expected pointer");
+		}
+		break;
+	}
+	case Token::OP_AT: {
+		if ((dynamic_pointer_cast<NodeArrayAccess>(node) ||
+		    dynamic_pointer_cast<NodeVariable>(node) ||
+		    (dynamic_pointer_cast<NodeUnaryOperator>(node) && dynamic_pointer_cast<NodeUnaryOperator>(node)->operation == Token::OP_DEREFERENCE)
+		    ))
+		{
+			m_exprtype = make_shared<SymbolTypePointer>(node->exprtype());
+		} else {
+			throw ParseError(Scanner::current_position(),
+			                 "Invalid operand for unary operator \"@\": must be lvalue");
+		}
+		break;
+	}
+	default: throw runtime_error("Internal error: unknown unary operator");
+	}
+	return m_exprtype;
 }
 
-bool NodeExprStmtFunctionCall::check_parameters() {
-	if (symbol->params->size() == 0 && !args) {
+PSymbolType NodeArrayAccess::exprtype() {
+	if (m_exprtype) return m_exprtype;
+	PSymbolTypeArray s = dynamic_pointer_cast<SymbolTypeArray>(this->array->exprtype());
+	if (s) {
+		m_exprtype = s->type;
+	} else {
+		throw ParseError(Scanner::current_position(),
+		                 "left operand of [] must be an array");
+	}
+	for (int i = 0; i < this->index->arglist.size(); i++) {
+		PNodeExpression expr = this->index->arglist[i];
+		if (expr->exprtype() != NodeInteger::type_sym_ptr) {
+			throw ParseError(Scanner::current_position(),
+			                 "Incompatible type for arg no. " + to_string(i+1) +
+			                 ": Got \"" + expr->exprtype()->name + "\", expected \"INTEGER\"");
+		}
+	}
+	return m_exprtype;
+}
+
+PSymbolType NodeRecordAccess::exprtype() {
+	return m_exprtype = this->field->type;
+}
+
+PSymbolType NodeExprStmtFunctionCall::exprtype() {
+	if (m_exprtype) return m_exprtype;
+	PSymbolFunction f = dynamic_pointer_cast<SymbolFunction>(this->proc);
+	m_exprtype = f ? f->type : SymbolType::notype();
+	return m_exprtype;
+}
+
+PSymbolType NodeVariable::exprtype() {
+	return m_exprtype = symbol->type;
+}
+
+bool NodeExprStmtFunctionCall::check_parameters(Pos pos) {
+	if (proc->params->size() == 0 && !args) {
 		return true;
 	}
 	if (m_predefined) {
 		return true;
 	}
-	if (symbol->params->size() != args->size()) {
-		throw runtime_error("bad actual parameters");
+	if (proc->params->size() != args->size()) {
+		throw ParseError(pos,
+		                 "Wrong number of parameters specified for call to \"" + proc->name +
+		                 "\": Got " + to_string(args->size()) + ", expected " + to_string(proc->params->size()));
+		return false;
 	}
-	SymTable& st = *symbol->params;
+	SymTable& st = *proc->params;
 	for (size_t i = 0; i < args->size(); i++) {
 		PSymbolType formal, actual = args->at(i)->exprtype();
-		st[i] >> formal;
+		PSymbolVariable formal_var;
+		st[i] >> formal_var;
+		formal = formal_var->type;
+		if (formal != actual && !SymbolType::is_arithmetic({formal, actual})) {
+			throw ParseError(pos,
+			                 "Incompatible type for arg no. " + to_string(i+1) +
+			                 ": Got \"" + actual->name + "\", expected \"" + formal->name + "\"");
+			return false;
+		}
 	}
 	return true;
 }

@@ -6,21 +6,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-
-struct Pos {
-	bool operator==(const Pos& other) const {
-		return fstream_pos == other.fstream_pos;
-	}
-	explicit operator bool() const {
-		return fstream_pos;
-	}
-	operator std::string() const {
-		return "(" + std::to_string(line) + ":" + std::to_string(column) + ")";
-	}
-
-	size_t line, column;
-	unsigned long long fstream_pos;
-};
+#include "types.h"
 
 class Token {
 public:
@@ -223,7 +209,7 @@ bool operator!=(const Token& t, Token::Literal);
 class BadToken : public std::exception {
 public:
 	BadToken(Token t, const std::string& msg) :
-		m_bad_token(t), m_msg(msg) {
+	    m_bad_token(t), m_msg(msg) {
 	}
 	const char* what() const noexcept override {
 		return ("\"" + m_bad_token.raw_value + "\"").c_str();

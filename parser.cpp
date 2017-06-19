@@ -4,6 +4,7 @@ using namespace std;
 
 int precedence_lst[Token::SIZEOF_OPERATORS];
 int precedence_sep_lst[Token::SIZEOF_SEPARATORS];
+map<string, bool> for_checker;
 
 PSymbol Symtables::operator[](const std::string& s) {
 	if (!Symbol::use_strict) {
@@ -156,7 +157,9 @@ PNodeStmt Parser::parse_stmt() {
 	case Token::R_IF: return parse_if ();
 	case Token::R_WHILE: return parse_while ();
 	case Token::R_REPEAT: return parse_repeat();
-	case Token::R_FOR: return parse_for ();
+	case Token::R_FOR: {
+		return parse_for();
+	}
 	case Token::R_BEGIN: return parse_block();
 	case Token::R_BREAK: {
 		++scanner;
@@ -164,7 +167,7 @@ PNodeStmt Parser::parse_stmt() {
 			PNodeStmtBreak node = make_shared<NodeStmtBreak>(m_current_cycle.top());
 			return node;
 		} else {
-
+			throw ParseError(scanner.top(), "BREAK not allowed");
 		}
 	} break;
 	case Token::R_CONTINUE: {
@@ -173,7 +176,7 @@ PNodeStmt Parser::parse_stmt() {
 			PNodeStmtContinue node = make_shared<NodeStmtContinue>(m_current_cycle.top());
 			return node;
 		} else {
-
+			throw ParseError(scanner.top(), "CONTINUE not allowed");
 		}
 	} break;
 	default: {
@@ -250,7 +253,29 @@ PNodeStmtRepeat Parser::parse_repeat() {
 
 PNodeStmtConst Parser::parse_const() {
 	PNodeStmtConst node = make_shared<NodeStmtConst>();
+	PSymTable st = m_symtables.back();
 	++scanner;
+	while (scanner == Token::C_IDENTIFIER) {
+		string name = parse_identifier()->name;
+		PNodeExpression expr;
+		if (scanner == Token::OP_EQUAL) {
+			++scanner;
+			expr = parse_expression(Token::OP_EQUAL);
+		} else if (scanner == Token::S_COLON) {
+			++scanner;
+			require({Token::C_IDENTIFIER}, "plain type identifier");
+			++scanner;
+
+			expr = parse_expression(Token::OP_EQUAL);
+		} else {// throw in other case
+			require({Token::OP_EQUAL}, "=");
+		}
+		if (scanner == Token::C_RESERVED) {
+			break;
+		}
+		require({Token::S_SEMICOLON}, ";");
+		++scanner;
+	}
 	return node;
 }
 
@@ -273,6 +298,11 @@ PNodeStmtFor Parser::parse_for () {
 	++scanner;
 	require({Token::C_IDENTIFIER}, "identifier");
 	node->iter_var = make_shared<NodeIdentifier>(scanner++);
+	if (for_checker[node->iter_var->name]) {
+		throw ParseError(scanner.top(),
+		                 "Illegal assignment to for-loop variable \"" + node->iter_var->name + "\"");
+	}
+	for_checker[node->iter_var->name] = true;
 	require({Token::OP_ASSIGN}, ":=");
 	++scanner;
 	node->low = parse_expression(precedence(Token::OP_EQUAL));
@@ -284,6 +314,7 @@ PNodeStmtFor Parser::parse_for () {
 	m_current_cycle.push(node);
 	node->stmt = parse_stmt();
 	m_current_cycle.pop();
+	for_checker.erase(for_checker.find(node->iter_var->name));
 	return node;
 }
 
@@ -456,6 +487,23 @@ PNodeInitializer Parser::parse_initializer() {
 	return node;
 }
 
+PNodeConstant Parser::evaluate(PNodeExpression expr) {
+	if (dynamic_pointer_cast<NodeInteger>(expr)) {
+		return make_shared<NodeConstantInt>(
+		            make_shared<SymbolConstInt>("",
+		                                        NodeInteger::type_sym_ptr,
+		                                        dynamic_pointer_cast<NodeInteger>(expr)->value));
+	}
+	if (dynamic_pointer_cast<NodeFloat>(expr)) {
+		return make_shared<NodeConstantFloat>(
+		            make_shared<SymbolConstFloat>("",
+		                                        NodeFloat::type_sym_ptr,
+		                                        dynamic_pointer_cast<NodeFloat>(expr)->value));
+	}
+	require({Token::L_INTEGER}, "float or integer literal");
+	return nullptr;
+}
+
 PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(PSymTable st, bool with_initialization) {
 	PNodeVarDeclarationUnit node = make_shared<NodeVarDeclarationUnit>();
 	vector<PNodeIdentifier> vars = parse_comma_separated_identifiers();
@@ -481,7 +529,7 @@ PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(PSymTable st, bool wi
 	return node;
 }
 
-PNodeTypeRecord Parser::parse_record() {
+PNodeTypeRecord Parser::parse_type_record() {
 	PNodeTypeRecord node = make_shared<NodeTypeRecord>();
 	++scanner;
 	SymbolTypeRecord* stype = new SymbolTypeRecord;
@@ -499,7 +547,7 @@ PNodeTypeRecord Parser::parse_record() {
 	return node;
 }
 
-PNodeTypeArray Parser::parse_array() {
+PNodeTypeArray Parser::parse_type_array() {
 	PNodeTypeArray node = make_shared<NodeTypeArray>();
 	++scanner;
 	SymbolTypeArray* stype = new SymbolTypeArray;
@@ -528,9 +576,9 @@ PNodeTypeArray Parser::parse_array() {
 PNodeType Parser::parse_type() {
 	PNodeType node = make_shared<NodeType>();
 	if (scanner == Token::R_ARRAY) {
-		return parse_array();
+		return parse_type_array();
 	} else if (scanner == Token::R_RECORD) {
-		return parse_record();
+		return parse_type_record();
 	} else if (scanner == Token::OP_DEREFERENCE) {
 		++scanner;
 		require({Token::C_IDENTIFIER}, "identifier");
@@ -645,13 +693,24 @@ PNodeExpression Parser::parse_expression(int prec) {
 				throw ParseError(token, "need procedure or function identifier");
 			}
 			f->args = parse_actual_parameters();
-			f->check_parameters();
 			require({Token::OP_RIGHT_PAREN}, ")");
 			++scanner;
+			f->check_parameters(scanner.current_position());
 			return f;
 		} break;
 		default: {
 			right = parse_expression(prec + 1);
+			if (token == Token::OP_ASSIGN || token == Token::OP_MULT_ASSIGN || token == Token::OP_PLUS_ASSIGN || token == Token::OP_MINUS_ASSIGN|| token == Token::OP_DIV_ASSIGN) {
+				PNodeVariable var = dynamic_pointer_cast<NodeVariable>(left);
+				if (var) {
+					if (for_checker[var->identifier->name]) {
+						throw ParseError(scanner.top(),
+						                 "Illegal assignment to for-loop variable \"" + var->identifier->name + "\"");
+					} else {
+						for_checker.erase(for_checker.find(var->identifier->name));
+					}
+				}
+			}
 			left = make_shared<NodeBinaryOperator>((Token::Operator)token, left, right);
 		}
 		}
@@ -677,7 +736,7 @@ PNodeExpression Parser::parse_factor() {
 		PSymbolProcedure s_f;
 		m_symtables[node->name] >> s_f;
 		if (s_f) {
-			return make_shared<NodeExprStmtFunctionCall>(PNodeIdentifier(node), s_f);
+			return make_shared<NodeExprStmtFunctionCall>(s_f);
 		}
 		return make_shared<NodeIdentifier>(token);
 	}
@@ -773,9 +832,9 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os, bool si
 		output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->array, this_node, id, os);
 		output_subtree(dynamic_pointer_cast<NodeArrayAccess>(node)->index, this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)) {
-		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->symbol.get() << '\n';
-		int fid = output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->function_identifier, this_node, id, os);
-		os << "> " << fid << ' ' << (uint64_t)dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->symbol.get() << '\n';
+		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->proc.get() << '\n';
+		int fid = output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->proc->name, this_node, id, os);
+		os << "> " << fid << ' ' << (uint64_t)dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->proc.get() << '\n';
 		output_subtree(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->args,this_node, id, os);
 	} else if (dynamic_pointer_cast<NodeRecordAccess>(node)) {
 		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeRecordAccess>(node)->field->type.get() << '\n';
@@ -863,13 +922,13 @@ PNodeExpression Parser::new_literal_factor(const Token& token) {
 	case Token::L_STRING:
 		return make_shared<NodeString>(token);
 	default:
-		throw runtime_error("illegal literal type");
+		throw runtime_error("Internal error: unknown literal type");
 	}
 }
 
 void Parser::require(const initializer_list<Token::Operator>& ops, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(ops)) {
-		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+		throw ParseError(pos, "\"" + expected + "\" expected, but \"" + found + "\" found");
 	}
 }
 
@@ -879,7 +938,7 @@ void Parser::require(const initializer_list<Token::Operator>& ops, const string&
 
 void Parser::require(const initializer_list<Token::Category>& cats, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(cats)) {
-		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+		throw ParseError(pos, "\"" + expected + "\" expected, but \"" + found + "\" found");
 	}
 }
 
@@ -889,7 +948,7 @@ void Parser::require(const initializer_list<Token::Category>& cats, const string
 
 void Parser::require(const initializer_list<Token::Reserved>& rs, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(rs)) {
-		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+		throw ParseError(pos, "\"" + expected + "\" expected, but \"" + found + "\" found");
 	}
 }
 
@@ -899,7 +958,7 @@ void Parser::require(const initializer_list<Token::Reserved>& rs, const string& 
 
 void Parser::require(const initializer_list<Token::Separator>& seps, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(seps)) {
-		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+		throw ParseError(pos, "\"" + expected + "\" expected, but \"" + found + "\" found");
 	}
 }
 
@@ -909,7 +968,7 @@ void Parser::require(const initializer_list<Token::Separator>& seps, const strin
 
 void Parser::require(const initializer_list<Token::Literal>& lits, Pos pos, const string& expected, const string& found) {
 	if (!scanner.require(lits)) {
-		throw ParseError(pos, expected + " expected, but \"" + found + "\" found");
+		throw ParseError(pos, "\"" + expected + "\" expected, but \"" + found + "\" found");
 	}
 }
 

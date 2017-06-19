@@ -10,6 +10,7 @@
 #include "symbol.h"
 #include "types.h"
 #include "asmcode.h"
+#include "exceptions.h"
 
 enum Initializer : bool {
 	on = true,
@@ -37,7 +38,7 @@ public:
 	virtual void write(AsmCode&);
 	virtual void generate_assign(AsmCode&);
 protected:
-	PSymbolType m_exprtype;
+	PSymbolType m_exprtype = nullptr;
 };
 
 class NodeEof : public NodeExpression {
@@ -98,6 +99,7 @@ class NodeVariable : public NodeExpression {
 public:
 	NodeVariable(PNodeIdentifier, PSymbolVariable);
 	std::string str() const override;
+	PSymbolType exprtype() override;
 	PNodeIdentifier identifier;
 	void generate(AsmCode&) override;
 	void generate_assign(AsmCode&) override;
@@ -143,9 +145,10 @@ class NodeArrayAccess : public NodeExpression {
 public:
 	NodeArrayAccess(PNodeExpression, PNodeActualParameters);
 	std::string str() const override;
-	PNodeExpression array;
+	PSymbolType exprtype() override;
 	void generate(AsmCode&) override;
 	void generate_assign(AsmCode&) override;
+	PNodeExpression array;
 	PNodeActualParameters index;
 };
 
@@ -153,9 +156,10 @@ class NodeRecordAccess : public NodeExpression {
 public:
 	NodeRecordAccess(PNodeExpression, PSymbolVariable);
 	std::string str() const override;
-	PNodeExpression record;
+	PSymbolType exprtype() override;
 	void generate(AsmCode&) override;
 	void generate_assign(AsmCode&) override;
+	PNodeExpression record;
 	PSymbolVariable field;
 };
 
@@ -185,9 +189,27 @@ public:
 	std::string str() const override;
 };
 
+class NodeConstant : public Node {
+public:
+	NodeConstant(PSymbolConst);
+	PSymbolConst symbol;
+};
+
+class NodeConstantInt : public NodeConstant {
+public:
+	NodeConstantInt(PSymbolConstInt);
+};
+
+class NodeConstantFloat : public NodeConstant {
+public:
+	NodeConstantFloat(PSymbolConstFloat);
+};
+
+
 class NodeStmtConst : public NodeStmt {
 public:
 	std::string str() const override;
+	std::vector<PNodeConstant> vars;
 };
 
 class NodeStmtRepeat : public NodeStmt {
@@ -305,19 +327,22 @@ public:
 
 class NodeExprStmtFunctionCall : public NodeStmt, public NodeExpression {
 public:
-	NodeExprStmtFunctionCall(PNodeIdentifier, PSymbolProcedure, PNodeActualParameters args = nullptr);
-	bool check_parameters();
+	NodeExprStmtFunctionCall(PSymbolProcedure, PNodeActualParameters args = nullptr);
+	bool check_parameters(Pos);
+	PSymbolType exprtype() override;
 	std::string str() const override;
 	void generate(AsmCode&) override;
 	void generate_assign(AsmCode&) override;
-	PNodeIdentifier function_identifier;
-	PSymbolProcedure symbol;
+	PSymbolProcedure proc;
 	PNodeActualParameters args;
 private:
 	enum Predefined {
 		NONE,
 		WRITE,
-		WRITELN
+		WRITELN,
+		ORD,
+		CHR,
+		EXIT
 	};
 	Predefined m_predefined = NONE;
 	void m_write(AsmCode& ac, PNodeExpression);

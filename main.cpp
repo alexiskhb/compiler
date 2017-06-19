@@ -74,8 +74,8 @@ void generate(const string& filename, string output_filename) {
 }
 
 int main(int argc, char *argv[]) {
-//	generate("./test-gen/var-record.in", "");
-//	parse("./test-parse/break.in", true);
+//	generate("./test-gen/21.in", "");
+//	parse("./test-parse/65.errin", true);
 //	return 0;
 	cxxopts::Options options(argv[0]);
 	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false, mode_generate = false;
