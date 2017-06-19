@@ -241,7 +241,7 @@ public:
 
 class NodeInitializer : public Node {
 public:
-
+	PNodeExpression expr;
 };
 
 class NodeVarDeclarationUnit : public Node {

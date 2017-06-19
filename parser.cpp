@@ -541,7 +541,7 @@ std::vector<PNodeIdentifier> Parser::parse_comma_separated_identifiers() {
 
 PNodeInitializer Parser::parse_initializer() {
 	PNodeInitializer node = make_shared<NodeInitializer>();
-	//!TODO
+	node->expr = parse_expression(Token::OP_PLUS);
 	return node;
 }
 
@@ -571,8 +571,14 @@ PNodeVarDeclarationUnit Parser::parse_var_declaration_unit(PSymTable st, bool wi
 	node->initializer = nullptr;
 	if (with_initialization) {
 		if (scanner == Token::OP_EQUAL) {
+			if (vars.size() > 1) {
+				throw ParseError(scanner.current_position(), "only one variable can be initialized");
+			}
 			++scanner;
 			node->initializer = parse_initializer();
+			if (!SymbolType::is_arithmetic({node->initializer->expr->exprtype(), node->nodetype->symtype})) {
+				throw ParseError(scanner.current_position(), "only arithmetic variables can be initialized");
+			}
 		}
 	} else {
 		if (scanner == Token::OP_EQUAL) {
@@ -994,7 +1000,10 @@ int Parser::output_subtree(PNode node, int parent, int& id, ostream& os, bool si
 		os << "> " << this_node << ' ' << (uint64_t)dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->nodetype->symtype.get() << '\n';
 		output_subtree(dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->nodetype, this_node, id, os, true);
 		for (PNodeVariable v: dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->vars) {
-			output_subtree(v, this_node, id, os);
+			int par = output_subtree(v, this_node, id, os);
+			if (dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->initializer) {
+				output_subtree(dynamic_pointer_cast<NodeVarDeclarationUnit>(node)->initializer->expr, par, id, os);
+			}
 		}
 	} else if (dynamic_pointer_cast<NodeStmtType>(node)) {
 		for (PNodeTypeDeclarationUnit tdu: dynamic_pointer_cast<NodeStmtType>(node)->units) {
