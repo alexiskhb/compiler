@@ -1,0 +1,2 @@
+at (6:10): wrong number of parameters specified for call to "FOO": got 2, expected 1:
+	foo(10, 2);

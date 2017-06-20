@@ -1,0 +1,2 @@
+at (3:13): symbol 'RESULT' not found:
+      result := 43;

@@ -1,0 +1,2 @@
+at (5:15): "operator" expected, but "doo" found:
+   while n < 0 doo

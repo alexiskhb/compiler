@@ -1,0 +1,2 @@
+at (6:26): symbol 'N' not found:
+	k: integer = a*5 + 20 + n;

@@ -1,0 +1,19 @@
+type p = procedure(p:integer);
+var a: array [1..5] of p;
+
+procedure bar;
+begin
+	a[1](10);
+end;
+
+procedure foo(k:integer);
+begin
+	writeln(k)
+end;
+
+begin
+	a[1] := @foo;
+	a[2] := a[1];
+	bar;
+end.
+

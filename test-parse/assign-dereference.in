@@ -1,0 +1,14 @@
+type
+	PInt = ^integer;
+
+var
+	a: integer;
+
+function foo(): PInt;
+begin
+	exit(@a);
+end;
+
+begin
+	foo()^ := 10;
+end.

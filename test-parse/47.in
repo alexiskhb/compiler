@@ -1,0 +1,20 @@
+var
+   a, b, i, n: integer;
+   function foo(var a, b: integer): integer;
+   var
+      i, result: integer;
+   begin
+      for i := 0 to n do
+      begin
+         result := result*20;
+      end;
+	  exit(result);
+   end;
+
+begin
+   repeat
+      n := 30;
+      n := n + foo(a, b);
+      a := n - 20;
+   until a > 0;
+end.

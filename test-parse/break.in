@@ -1,0 +1,23 @@
+var
+	i: integer;
+begin
+	while 1 do
+		break;
+	repeat
+		break;
+		break
+	until 1;
+	for i := 0 to 1 do
+		break;
+	while 1 do begin
+		while 2 do begin
+			break
+		end;
+		repeat
+			repeat
+				break;
+			until 3;
+			break;
+		until 4;
+	end;
+end.

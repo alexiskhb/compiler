@@ -1,0 +1,9 @@
+type
+	pointer = ^integer;
+var 
+    a : integer;
+    b : pointer;
+begin
+    b := @a;
+    write(b^);
+end.

@@ -1,0 +1,6 @@
+var
+   a: integer;
+begin
+   if then
+      a:=30;
+end.

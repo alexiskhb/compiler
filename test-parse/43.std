@@ -1,0 +1,2 @@
+at (4:15): "operator" expected, but "downnto" found:
+   for i := 10 downnto n do

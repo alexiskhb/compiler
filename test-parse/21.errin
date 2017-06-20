@@ -1,0 +1,24 @@
+type
+   TPoint = record
+      x, y: integer;
+   end;
+var
+   a, n: tpoint;
+
+   function foo(): integer;
+   begin
+
+   end;
+begin
+   a.x := 20;
+   if (n <= 30) and (n <> 0) then
+      if a = -1 then
+      begin
+         n := a;
+         a.x := n.y + foo();
+      end
+      else
+         a.y := 50
+   else
+      a.y := a.x * 13;
+end.

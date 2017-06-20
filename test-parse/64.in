@@ -1,0 +1,7 @@
+var
+   i: integer;
+   j: record i: integer; end;
+begin
+   for i := 0 to 10 do
+      j.i := 20;
+end.

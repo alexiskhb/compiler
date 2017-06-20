@@ -1,0 +1,10 @@
+procedure foo(a: integer);
+begin
+   a := 4;
+   exit;
+end;
+
+begin
+   foo(3);
+   exit;
+end.

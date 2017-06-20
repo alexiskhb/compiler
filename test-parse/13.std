@@ -1,0 +1,2 @@
+at (9:14): wrong number of parameters specified for call to "FOO": got 1, expected 0:
+	foo(foo(foo()));

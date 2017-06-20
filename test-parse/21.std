@@ -1,0 +1,2 @@
+at (14:14): both operands of "<=" must be arithmetic: got "TPOINT" and "INTEGER":
+   if (n <= 30) and (n <> 0) then

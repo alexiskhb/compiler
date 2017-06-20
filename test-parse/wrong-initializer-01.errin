@@ -1,0 +1,14 @@
+var
+	a: integer;
+
+procedure foo;
+var
+	k: integer = a*5 + 20 + n;
+begin
+	writeln(k)
+end;
+
+begin
+	a := 10;
+	foo();
+end.

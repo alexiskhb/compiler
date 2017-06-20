@@ -1,0 +1,8 @@
+procedure foo();
+begin
+   
+end;
+
+begin
+   foo();
+end.

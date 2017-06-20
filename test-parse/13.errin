@@ -1,0 +1,11 @@
+var
+   a: integer;
+   function foo():integer;
+   begin
+   
+   end;
+
+begin
+	foo(foo(foo()));
+	a := 30
+end.

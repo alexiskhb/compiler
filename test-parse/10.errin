@@ -1,0 +1,5 @@
+var
+   a: integer;
+
+   a := 3;
+end.

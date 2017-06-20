@@ -1,0 +1,15 @@
+type
+	PInteger = ^integer;
+
+function foo(var a: integer):PInteger;
+begin
+	exit(@a);
+end;
+
+var
+	k: integer;
+	p: PInteger;
+
+begin
+	p := foo(k);
+end.

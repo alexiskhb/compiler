@@ -1,0 +1,14 @@
+var
+   n: integer;
+   i: integer;
+   a, b: array[0..100] of integer;
+begin
+   for i := 0 to n do
+   begin
+      a[i] := 2*i;
+      if i mod 2 = 0 then
+         b[i] := 2*i
+      else
+         b[i] := i;
+   end;
+end.

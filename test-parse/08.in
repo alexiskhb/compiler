@@ -1,0 +1,8 @@
+var
+   a: integer;
+const
+   b = 30;
+begin
+   a := 3;
+   a := (a*b div 20) mod 20
+end.

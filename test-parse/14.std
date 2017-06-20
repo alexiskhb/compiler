@@ -1,0 +1,2 @@
+at (8:13): incompatible types : got "VOID", expected "CHAR":
+   a := foo();

@@ -1,0 +1,8 @@
+procedure foo();
+begin
+   
+end;
+
+begin
+   foo() := 20;
+end.

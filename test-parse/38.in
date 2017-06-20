@@ -1,0 +1,18 @@
+const
+   aaa = 30;
+   bbb = 10;
+var
+   n: integer = 10 + 4*10;
+   i,j: integer;
+   a: array[0..100] of integer;
+begin
+   for i := 0 to 2*n do
+   begin
+      a[i] := i;
+      for j := bbb - 10 to aaa + 70 do
+         if j mod 2 = 0 then
+            a[j] := a[j] + 1
+         else
+            a[j] := a[j] + 2;
+   end;
+end.

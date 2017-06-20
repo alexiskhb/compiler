@@ -1,0 +1,2 @@
+at (5:8): Illegal assignment to for-loop variable "I":
+		i := 0;

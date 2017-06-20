@@ -1,0 +1,6 @@
+type
+	TArray = array [0..10001] of integer;
+var
+	a: TArray;
+begin
+end.

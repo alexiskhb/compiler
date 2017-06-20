@@ -1,0 +1,6 @@
+function a(a : integer; b : float) : char;
+begin 
+end;
+begin
+	a(10, 20);
+end.

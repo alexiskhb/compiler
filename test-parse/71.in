@@ -1,0 +1,8 @@
+const
+   h = 20;
+var
+   a: integer;
+   b: array[1..2] of integer;
+begin
+   write(a + 2, h mod 3, b[2]);
+end.

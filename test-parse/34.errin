@@ -1,0 +1,6 @@
+var
+   n: integer;
+
+begin
+   while n < 0 doo
+end.

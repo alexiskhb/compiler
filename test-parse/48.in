@@ -1,0 +1,13 @@
+var
+   a, b, i, n: integer;
+
+begin
+   repeat
+   begin
+      n := 30;
+      begin
+         a := n - 20
+      end
+   end
+   until a > 0;
+end.

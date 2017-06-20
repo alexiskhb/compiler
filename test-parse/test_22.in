@@ -1,0 +1,6 @@
+procedure a(a : integer; b : float);
+begin 
+end;
+begin
+	a(10, 20);
+end.

@@ -1,0 +1,2 @@
+at (6:12): Illegal assignment to for-loop variable "I":
+      for i := 3 downto 0 do

@@ -1,0 +1,9 @@
+   procedure foo();
+   begin
+      
+   end;
+var
+   a: char;
+begin
+   a := foo();
+end.

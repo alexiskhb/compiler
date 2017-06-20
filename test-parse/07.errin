@@ -1,0 +1,8 @@
+var
+   a: integer;
+const
+   b = 30;
+begin
+   a := 3;
+   a + b := a + b;
+end.

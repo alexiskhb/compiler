@@ -1,0 +1,2 @@
+at (7:14): variable identifier expected:
+   foo() := 20;

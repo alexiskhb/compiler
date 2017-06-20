@@ -1,0 +1,9 @@
+var
+   a: integer;
+   procedure foo();
+   begin
+
+   end;
+begin
+   write(a, foo());
+end.

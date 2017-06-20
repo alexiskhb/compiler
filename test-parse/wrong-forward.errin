@@ -1,0 +1,10 @@
+procedure foo(a: integer);
+forward;
+
+procedure foo;
+begin
+end;
+
+begin
+	foo();
+end.

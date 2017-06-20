@@ -1,0 +1,2 @@
+at (7:12): invalid arg no. 3: variable identifier expected :
+	f(1, 2, 'c')

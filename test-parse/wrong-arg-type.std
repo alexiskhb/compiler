@@ -1,0 +1,2 @@
+at (6:7): incompatible type for arg no. 1: got "INTEGER", expected "CHAR":
+	foo(10);

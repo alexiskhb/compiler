@@ -1,0 +1,7 @@
+   function foo(): integer;
+   begin
+      exit(132);
+   end;
+begin
+
+end.

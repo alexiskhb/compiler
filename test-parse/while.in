@@ -1,6 +1,6 @@
 var
 	a, i, k: integer;
-	b: integer = 4;
+	b: integer;
 
 begin
 	while 1 = 2 do

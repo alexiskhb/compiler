@@ -1,0 +1,10 @@
+var
+   c: integer;
+   function foo(): integer;
+   begin
+
+   end;
+
+begin
+   c := foo() div 50;
+end.

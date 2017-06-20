@@ -1,0 +1,7 @@
+procedure foo(c: char);
+begin
+end;
+
+begin
+	foo(10);
+end.

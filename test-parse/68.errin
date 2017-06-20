@@ -1,0 +1,7 @@
+   function foo(): char;
+   begin
+      result := 43;
+   end;
+begin
+
+end.

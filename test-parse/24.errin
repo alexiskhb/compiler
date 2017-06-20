@@ -1,0 +1,5 @@
+var
+   a: integer;
+begin
+   if a < 0 then
+end.

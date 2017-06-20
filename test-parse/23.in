@@ -1,0 +1,12 @@
+var
+   a: integer;
+begin
+   if a = 30 then
+   begin
+      a := -5
+   end
+   else
+   begin
+      a := 5
+   end
+end.

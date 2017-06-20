@@ -1,0 +1,2 @@
+at (4:24): symbol 'N' not found:
+   for i := 10 downto n + 5 do

@@ -1,0 +1,8 @@
+type
+	rec_t = record
+		i:integer
+	end;
+var
+	a: array [1..1000] of rec_t;
+begin
+end.

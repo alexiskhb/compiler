@@ -1,0 +1,2 @@
+at (7:3): ";" expected, but "REPEAT" found:
+   repeat a > 0;

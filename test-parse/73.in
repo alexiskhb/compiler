@@ -1,0 +1,9 @@
+var
+   a: integer;
+   function foo(): integer;
+   begin
+      exit(4);
+   end;
+begin
+   write(a, foo());
+end.

@@ -1,0 +1,7 @@
+var
+   n: integer;
+
+begin
+   n := 3;
+   while n < 0 do
+end.

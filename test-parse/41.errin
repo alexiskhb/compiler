@@ -1,0 +1,7 @@
+var
+   a, i, j: integer;
+begin
+   for i := 10 downto -n do
+      for j := 10 to n do
+         a := i*j;
+end.

@@ -1,0 +1,7 @@
+var
+   n: integer;
+
+begin
+   while  do
+      n := 30;
+end.

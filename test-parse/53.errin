@@ -1,0 +1,18 @@
+type
+   arry = array[0..200] of integer;
+var
+   a, b, i, n: integer;
+   arr: arry;
+
+begin
+   repeat
+      n := n - 1;;
+      while n <> 1 do
+         b := n shl 1;
+      for i := 0 to n do
+      begin
+         arry[i] := arry[i] * b;
+         arry[n - i] := 0;
+      end;
+   until a > 0;
+end.
