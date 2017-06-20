@@ -338,12 +338,14 @@ public:
 	NodeExprStmtFunctionCall(PSymbolProcedure, PNodeActualParameters args = nullptr);
 	bool check_parameters(Pos);
 	PSymbolType exprtype() override;
+	PSymbolType proctype();
 	std::string str() const override;
 	void generate(AsmCode&) override;
 	void generate_assign(AsmCode&) override;
 	PSymbolProcedure proc;
 	PNodeActualParameters args;
 private:
+	PSymbolType m_proctype = nullptr;
 	enum Predefined {
 		NONE,
 		WRITE,

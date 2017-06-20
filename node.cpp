@@ -59,6 +59,14 @@ std::map<Token::Separator, std::string> separator_lst =
 {Token::S_COMMA, ","},
 };
 
+bool is_lvalue(PNodeExpression expr) {
+	PNodeUnaryOperator l = dynamic_pointer_cast<NodeUnaryOperator>(expr);
+	return (l && l->operation == Token::OP_DEREFERENCE) ||
+	       dynamic_pointer_cast<NodeVariable>(expr)     ||
+	       dynamic_pointer_cast<NodeArrayAccess>(expr)  ||
+	       dynamic_pointer_cast<NodeRecordAccess>(expr);
+}
+
 NodeEof::NodeEof(const Token&) {
 }
 
@@ -287,15 +295,14 @@ PSymbolType NodeBinaryOperator::exprtype() {
 	case Token::OP_PLUS_ASSIGN:
 	case Token::OP_MINUS_ASSIGN:
 	case Token::OP_MULT_ASSIGN: {
-		PNodeUnaryOperator l = dynamic_pointer_cast<NodeUnaryOperator>(left);
 		m_exprtype = SymbolType::notype();
-		if ((l && l->operation == Token::OP_DEREFERENCE) ||
-		    dynamic_pointer_cast<NodeVariable>(left)     ||
-		    dynamic_pointer_cast<NodeArrayAccess>(left)  ||
-		    dynamic_pointer_cast<NodeRecordAccess>(left))
+		if (is_lvalue(left))
 		{
 			if (SymbolType::is_arithmetic({ltype, rtype}) ||
-			    ltype == rtype)
+			    ltype == rtype ||
+			    (dynamic_pointer_cast<SymbolTypeProc>(ltype) && dynamic_pointer_cast<SymbolTypePointer>(rtype) && dynamic_pointer_cast<SymbolTypePointer>(rtype)->type == ltype) ||
+			    (dynamic_pointer_cast<SymbolTypeFunc>(ltype) && dynamic_pointer_cast<SymbolTypePointer>(rtype) && dynamic_pointer_cast<SymbolTypePointer>(rtype)->type == ltype)
+			    )
 			{} else {
 				throw ParseError(Scanner::current_position(),
 				                 "incompatible types : got \"" + rtype->name +
@@ -339,6 +346,8 @@ PSymbolType NodeUnaryOperator::exprtype() {
 		    ))
 		{
 			m_exprtype = make_shared<SymbolTypePointer>(node->exprtype());
+		} else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)) {
+			m_exprtype = make_shared<SymbolTypePointer>(dynamic_pointer_cast<NodeExprStmtFunctionCall>(node)->proctype());
 		} else {
 			throw ParseError(Scanner::current_position(),
 			                 "invalid operand for unary operator \"@\": must be lvalue");
@@ -381,6 +390,20 @@ PSymbolType NodeExprStmtFunctionCall::exprtype() {
 	return m_exprtype;
 }
 
+PSymbolType NodeExprStmtFunctionCall::proctype() {
+	if (m_proctype) return m_proctype;
+	PSymbolFunction f = dynamic_pointer_cast<SymbolFunction>(this->proc);
+	PSymbolProcedure p = dynamic_pointer_cast<SymbolProcedure>(this->proc);
+	if (f) {
+		m_proctype = make_shared<SymbolTypeFunc>(f);
+	} else if (p) {
+		m_proctype = make_shared<SymbolTypeProc>(p);
+	} else {
+		throw runtime_error("Internal error: unrecognized procedure symbol");
+	}
+	return m_proctype;
+}
+
 PSymbolType NodeVariable::exprtype() {
 	return m_exprtype = symbol->type;
 }
@@ -404,6 +427,9 @@ bool NodeExprStmtFunctionCall::check_parameters(Pos pos) {
 		PSymbolVariable formal_var;
 		st[i] >> formal_var;
 		formal = formal_var->type;
+		if (proc->is_nth_var.at(i) && !is_lvalue(args->at(i))) {
+			throw ParseError(Scanner::current_position(), "invalid arg no. " + to_string(i+1) + ": variable identifier expected ");
+		}
 		if (formal != actual && !SymbolType::is_arithmetic({formal, actual})) {
 			throw ParseError(pos,
 			                 "incompatible type for arg no. " + to_string(i+1) +

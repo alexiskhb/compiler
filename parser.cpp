@@ -459,6 +459,7 @@ PNodeStmtProcedure Parser::parse_procedure() {
 	procedure->symbol = make_shared<SymbolProcedure>(procedure->name->name);
 	for (PNodeFormalParameterSection psection: procedure->params) {
 		for (PNodeVariable var: psection->identifiers) {
+			procedure->symbol->is_nth_var.push_back(psection->is_var);
 			procedure->symbol->params << var->symbol;
 			procedure->symbol->locals << var->symbol;
 		}
@@ -499,6 +500,7 @@ PNodeStmtFunction Parser::parse_function() {
 	function->symbol = sf;
 	for (PNodeFormalParameterSection psection: function->params) {
 		for (PNodeVariable var: psection->identifiers) {
+			function->symbol->is_nth_var.push_back(psection->is_var);
 			function->symbol->params << var->symbol;
 			function->symbol->locals << var->symbol;
 		}
@@ -646,6 +648,7 @@ PNodeTypeProc Parser::parse_type_procedure() {
 	proc->symtype = make_shared<SymbolTypeProc>();
 	for (PNodeFormalParameterSection psection: params) {
 		for (PNodeVariable var: psection->identifiers) {
+			dynamic_pointer_cast<SymbolTypeProc>(proc->symtype)->proc->is_nth_var.push_back(psection->is_var);
 			dynamic_pointer_cast<SymbolTypeProc>(proc->symtype)->proc->params << var->symbol;
 			dynamic_pointer_cast<SymbolTypeProc>(proc->symtype)->proc->locals << var->symbol;
 		}
@@ -664,6 +667,7 @@ PNodeTypeFunc Parser::parse_type_function() {
 	dynamic_pointer_cast<SymbolTypeFunc>(func->symtype)->func->type = nt->symtype;
 	for (PNodeFormalParameterSection psection: params) {
 		for (PNodeVariable var: psection->identifiers) {
+			dynamic_pointer_cast<SymbolTypeFunc>(func->symtype)->func->is_nth_var.push_back(psection->is_var);
 			dynamic_pointer_cast<SymbolTypeFunc>(func->symtype)->func->params << var->symbol;
 			dynamic_pointer_cast<SymbolTypeFunc>(func->symtype)->func->locals << var->symbol;
 		}
@@ -790,18 +794,21 @@ PNodeExpression Parser::parse_expression(int prec) {
 		} break;
 		case Token::OP_LEFT_PAREN: {
 			PNodeExprStmtFunctionCall f;
-			if (dynamic_pointer_cast<SymbolTypeProc>(left->exprtype()) || dynamic_pointer_cast<SymbolTypeFunc>(left->exprtype())) {
+			if (dynamic_pointer_cast<SymbolTypeProc>(left->exprtype())) {
 				PSymbolTypeProc stp = dynamic_pointer_cast<SymbolTypeProc>(left->exprtype());
 				f = make_shared<NodeExprStmtFunctionCall>(stp->proc);
-			} else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(left)) {
+			} else if (dynamic_pointer_cast<SymbolTypeFunc>(left->exprtype())) {
+				PSymbolTypeFunc stp = dynamic_pointer_cast<SymbolTypeFunc>(left->exprtype());
+				f = make_shared<NodeExprStmtFunctionCall>(stp->func);
+			}else if (dynamic_pointer_cast<NodeExprStmtFunctionCall>(left)) {
 				f = dynamic_pointer_cast<NodeExprStmtFunctionCall>(left);
 			} else {
 				throw ParseError(token, "need procedure or function identifier");
 			}
 			f->args = parse_actual_parameters();
 			require({Token::OP_RIGHT_PAREN}, ")");
-			++scanner;
 			f->check_parameters(scanner.current_position());
+			++scanner;
 			return f;
 		} break;
 		default: {

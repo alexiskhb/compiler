@@ -188,6 +188,7 @@ public:
 	SymbolProcedure(const std::string& name);
 	PSymTable params;
 	PSymTable locals;
+	std::vector<bool> is_nth_var;
 };
 
 class SymbolFunction : public SymbolProcedure {
