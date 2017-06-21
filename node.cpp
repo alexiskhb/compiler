@@ -538,45 +538,57 @@ void NodeBinaryOperator::m_gen_arithm(AsmCode& ac) {
 
 void NodeBinaryOperator::m_gen_cmp(AsmCode& ac) {
 	/// RAX <op> RBX
-	if (left->exprtype() == NodeFloat::type_sym_ptr || right->exprtype() == NodeFloat::type_sym_ptr) {
+	bool is_float = left->exprtype() == NodeFloat::type_sym_ptr || right->exprtype() == NodeFloat::type_sym_ptr;
+	if (is_float) {
 		left->generate(ac);
 		left->exprtype()->gen_typecast(ac, NodeFloat::type_sym_ptr);
 		right->generate(ac);
 		right->exprtype()->gen_typecast(ac, NodeFloat::type_sym_ptr);
-///TODO compare floats
+		ac << AsmCmd1{POPQ, RBX}
+		   << AsmCmd1{POPQ, RAX}
+		   << AsmCmd2{MOVQ, RAX, XMM0}
+		   << AsmCmd2{MOVQ, RBX, XMM1}
+		   << AsmCmd2{COMISD, XMM1, XMM0}
+		   << AsmCmd2{MOVQ, (int64_t)0, RAX};
+		switch (this->operation) {
+		case Token::OP_EQUAL:
+			ac << AsmCmd1{SETE, AL}; break;
+		case Token::OP_GREATER:
+			ac << AsmCmd1{SETA, AL}; break;
+		case Token::OP_LESS:
+			ac << AsmCmd1{SETB, AL}; break;
+		case Token::OP_LEQ:
+			ac << AsmCmd1{SETBE, AL}; break;
+		case Token::OP_GEQ:
+			ac << AsmCmd1{SETAE, AL}; break;
+		case Token::OP_NEQ:
+			ac << AsmCmd1{SETNE, AL}; break;
+		default:;
+		}
 	} else {
 		left->generate(ac);
 		right->generate(ac);
 		ac << AsmCmd1{POPQ, RBX}
-		   << AsmCmd1{POPQ, RAX};
+		   << AsmCmd1{POPQ, RAX}
+		   << AsmCmd2{CMPQ, RBX, RAX}
+		   << AsmCmd2{MOVQ, (int64_t)0, RAX};
 		switch (this->operation) {
 		case Token::OP_EQUAL:
-			ac << AsmCmd2{CMPQ, RBX, RAX}
-			   << AsmCmd2{MOVQ, (int64_t)0, RAX}
-			   << AsmCmd1{SETE, AL}; break;
+			ac << AsmCmd1{SETE, AL}; break;
 		case Token::OP_GREATER:
-			ac << AsmCmd2{CMPQ, RBX, RAX}
-			   << AsmCmd2{MOVQ, (int64_t)0, RAX}
-			   << AsmCmd1{SETG, AL}; break;
+			ac << AsmCmd1{SETG, AL}; break;
 		case Token::OP_LESS:
-			ac << AsmCmd2{CMPQ, RBX, RAX}
-			   << AsmCmd2{MOVQ, (int64_t)0, RAX}
-			   << AsmCmd1{SETL, AL}; break;
+			ac << AsmCmd1{SETL, AL}; break;
 		case Token::OP_LEQ:
-			ac << AsmCmd2{CMPQ, RBX, RAX}
-			   << AsmCmd2{MOVQ, (int64_t)0, RAX}
-			   << AsmCmd1{SETLE, AL}; break;
+			ac << AsmCmd1{SETLE, AL}; break;
 		case Token::OP_GEQ:
-			ac << AsmCmd2{CMPQ, RBX, RAX}
-			   << AsmCmd2{MOVQ, (int64_t)0, RAX}
-			   << AsmCmd1{SETGE, AL}; break;
+			ac << AsmCmd1{SETGE, AL}; break;
 		case Token::OP_NEQ:
-			ac << AsmCmd2{CMPQ, RBX, RAX}
-			   << AsmCmd2{MOVQ, (int64_t)0, RAX}
-			   << AsmCmd1{SETNE, AL}; break;
+			ac << AsmCmd1{SETNE, AL}; break;
 		default:;
 		}
 	}
+	ac << AsmCmd1{PUSHQ, RAX};
 }
 
 void NodeBinaryOperator::m_gen_bin(AsmCode& ac) {
@@ -623,7 +635,31 @@ void NodeBinaryOperator::generate(AsmCode& ac) {
 }
 
 void NodeUnaryOperator::generate(AsmCode& ac) {
-	ac << AsmComment{"unary operator"};
+	this->node->generate(ac);
+	switch (this->operation) {
+	case Token::OP_MINUS:
+		ac << AsmCmd1{POPQ, RAX};
+		if (this->exprtype() == NodeInteger::type_sym_ptr) {
+			ac << AsmCmd1{NEGQ, RAX};
+		} else {
+			ac << AsmCmd2{MOVQ, RAX, XMM1}
+			   << AsmCmd2{XORPD, XMM0, XMM0}
+			   << AsmCmd2{SUBSD, XMM1, XMM0}
+			   << AsmCmd2{MOVQ, XMM0, RAX};
+		}
+		ac << AsmCmd1{PUSHQ, RAX};
+		break;
+	case Token::OP_DEREFERENCE:
+		break;
+	case Token::OP_AT:
+		break;
+	case Token::OP_NOT:
+		ac << AsmCmd1{POPQ, RAX}
+		   << AsmCmd2{XORQ, (int64_t)1, RAX}
+		   << AsmCmd1{PUSHQ, RAX};
+		break;
+	default:;
+	}
 }
 
 void NodeArrayAccess::generate(AsmCode& ac) {

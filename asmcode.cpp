@@ -41,13 +41,19 @@ const std::map<Opcode, string> opcodes =
 	{SETG,	"setg"},
 	{SETGE,	"setge"},
 	{SETLE,	"setle"},
-	{CMPQ,	"cmpq"},
+	{SETA,	"seta"},
+	{SETB,	"setb"},
+	{SETAE,	"setae"},
+	{SETBE,	"setbe"},
+    {CMPQ,	"cmpq"},
     {ADDSD,	"addsd"},
-    {SUBSD,	"sumsd"},
+    {SUBSD,	"subsd"},
     {DIVSD,	"divsd"},
     {MULSD,	"mulsd"},
     {MOVSD,	"movsd"},
-    {COMISD, "comisd"},
+    {COMISD,	"comisd"},
+    {NEGQ,	"negq"},
+    {XORPD, "xorpd"},
 	{NONE,	""}
 };
 

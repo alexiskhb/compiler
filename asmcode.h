@@ -48,6 +48,10 @@ enum Opcode {
 	SETG,
 	SETGE,
 	SETLE,
+	SETA,
+	SETB,
+	SETAE,
+	SETBE,
 	CMPQ,
 	ADDSD,
 	SUBSD,
@@ -55,6 +59,8 @@ enum Opcode {
 	MULSD,
 	MOVSD,
 	COMISD,
+	NEGQ,
+	XORPD,
 	NONE,
 };
 
