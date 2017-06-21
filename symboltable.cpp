@@ -18,8 +18,8 @@ void SymTable::add(PSymbol symbol) {
 	}
 }
 
-unsigned SymTable::bsize() const {
-	unsigned result = 0;
+uint SymTable::bsize() const {
+	uint result = 0;
 	for (PSymbol t: *this) {
 		result += t->size();
 	}

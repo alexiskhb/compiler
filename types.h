@@ -136,7 +136,7 @@ typedef std::shared_ptr<NodeExprStmtFunctionCall> PNodeExprStmtFunctionCall;
 class AsmOperand;
 class AsmOperandReg;
 class AsmOperandImm;
-class AsmOperandOfffset;
+class AsmOperandOffset;
 class AsmOperandIndirect;
 class AsmCode;
 class AsmCmd;
@@ -147,11 +147,12 @@ class AsmComment;
 class AsmVar;
 class AsmVarString;
 class AsmLabel;
+class AsmRawInt;
 
 typedef std::shared_ptr<AsmOperand> PAsmOperand; 
 typedef std::shared_ptr<AsmOperandReg> PAsmOperandReg; 
 typedef std::shared_ptr<AsmOperandImm> PAsmOperandImm; 
-typedef std::shared_ptr<AsmOperandOfffset> PAsmOperandOfffset; 
+typedef std::shared_ptr<AsmOperandOffset> PAsmOperandOfffset;
 typedef std::shared_ptr<AsmOperandIndirect> PAsmOperandIndirect; 
 typedef std::shared_ptr<AsmCode> PAsmCode; 
 typedef std::shared_ptr<AsmCmd> PAsmCmd; 
@@ -162,6 +163,7 @@ typedef std::shared_ptr<AsmComment> PAsmComment;
 typedef std::shared_ptr<AsmVar> PAsmVar;
 typedef std::shared_ptr<AsmVarString> PAsmVarString;
 typedef std::shared_ptr<AsmLabel> PAsmLabel;
+typedef std::shared_ptr<AsmRawInt> PAsmRawInt;
 
 struct Pos {
 	bool operator==(const Pos& other) const {

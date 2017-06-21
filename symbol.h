@@ -22,7 +22,7 @@ public:
 	virtual std::string str() const;
 	virtual std::string output_str() const;
 	/// Size in bytes
-	virtual unsigned size() const;
+	virtual uint size() const;
 };
 
 class SymbolVariable : public Symbol {
@@ -30,7 +30,7 @@ public:
 	SymbolVariable(const std::string& name, PSymbolType);
 	std::string output_str() const override;
 	PSymbolType type;
-	unsigned size() const override;
+	uint size() const override;
 };
 
 class SymbolConst : public SymbolVariable {
@@ -65,8 +65,12 @@ public:
 		}
 		return ptr;
 	}
-	virtual void write(AsmCode&);
-	virtual void declare(AsmCode&, const std::string&);
+	virtual void gen_write(AsmCode&);
+	virtual void gen_declare(AsmCode&, const std::string&);
+
+	virtual void gen_typecast(AsmCode&, PSymbolType) const;
+	virtual void gen_typecast(AsmCode&, const SymbolTypeFloat&) const;
+	virtual void gen_typecast(AsmCode&, const SymbolTypeInt&) const;
 
 	virtual bool equals(PSymbolType) const;
 	virtual bool equals(const SymbolType&) const;
@@ -86,10 +90,13 @@ protected:
 class SymbolTypeInt : public SymbolType {
 public:
 	SymbolTypeInt(const std::string& name);
-	unsigned size() const override;
-	void write(AsmCode&) override;
-	void declare(AsmCode&, const std::string&) override;
+	uint size() const override;
+	void gen_write(AsmCode&) override;
+	void gen_declare(AsmCode&, const std::string&) override;
 	static std::string fml_label;
+
+	void gen_typecast(AsmCode&, PSymbolType) const override;
+	void gen_typecast(AsmCode&, const SymbolTypeFloat&) const override; /// float to int
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypeInt&) const override;
@@ -99,8 +106,12 @@ class SymbolTypeFloat : public SymbolType {
 public:
 	SymbolTypeFloat(const std::string& name);
 	static std::string fml_label;
-	void write(AsmCode&) override;
-	unsigned size() const override;
+	void gen_write(AsmCode&) override;
+	void gen_declare(AsmCode&, const std::string&) override;
+	uint size() const override;
+
+	void gen_typecast(AsmCode&, PSymbolType) const override;
+	void gen_typecast(AsmCode&, const SymbolTypeInt&) const override; /// int to float
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypeFloat&) const override;
@@ -109,7 +120,7 @@ public:
 class SymbolTypeChar : public SymbolType {
 public:
 	SymbolTypeChar(const std::string& name);
-	unsigned size() const override;
+	uint size() const override;
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypeChar&) const override;
@@ -118,7 +129,7 @@ public:
 class SymbolTypeString : public SymbolType {
 public:
 	SymbolTypeString(const std::string& name);
-	unsigned size() const override;
+	uint size() const override;
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypeString&) const override;
@@ -128,7 +139,8 @@ class SymbolTypePointer : public SymbolType {
 public:
 	SymbolTypePointer(const std::string& name, PSymbolType);
 	SymbolTypePointer(PSymbolType);
-	unsigned size() const override;
+	uint size() const override;
+	void gen_declare(AsmCode&, const std::string&) override;
 	PSymbolType type;
 
 	bool equals(PSymbolType) const override;
@@ -139,7 +151,8 @@ class SymbolTypeArray : public SymbolType {
 public:
 	SymbolTypeArray();
 	SymbolTypeArray(const std::string& name, const SymbolTypeArray&);
-	unsigned size() const override;
+	uint size() const override;
+	void gen_declare(AsmCode&, const std::string&) override;
 	std::vector<std::pair<int, int>> bounds;
 	PSymbolType type;
 
@@ -151,10 +164,10 @@ class SymbolTypeRecord : public SymbolType {
 public:
 	SymbolTypeRecord();
 	SymbolTypeRecord(const std::string& name);
-	unsigned size() const override;
+	uint size() const override;
+	void gen_declare(AsmCode&, const std::string&) override;
 	PSymTable symtable;
 	std::string output_str() const override;
-	void declare(AsmCode&, const std::string&) override;
 
 	bool equals(PSymbolType) const override;
 	bool equals(const SymbolTypeRecord&) const override;

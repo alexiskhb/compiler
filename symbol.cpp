@@ -6,7 +6,6 @@ using namespace std;
 bool Symbol::use_strict;
 std::string SymbolTypeInt::fml_label = "._fmt_int_";
 std::string SymbolTypeFloat::fml_label = "._fmt_float_";
-std::string var_prefix = ".__";
 
 uint64_t SymbolType::counter = 0;
 
@@ -185,56 +184,56 @@ SymbolFunction::SymbolFunction(const std::string& a_name) :
     SymbolProcedure(a_name) {
 }
 
-unsigned Symbol::size() const {
+uint Symbol::size() const {
 	return 0;
 }
 
-unsigned SymbolVariable::size() const {
+uint SymbolVariable::size() const {
 	return type->size();
 }
 
-unsigned SymbolTypePointer::size() const {
+uint SymbolTypePointer::size() const {
 	return 8;
 }
 
-unsigned SymbolTypeArray::size() const {
-	unsigned result = 0;
+uint SymbolTypeArray::size() const {
+	uint result = 0;
 	for (pair<int, int> p: this->bounds) {
 		result += (p.second - p.first + 1)*this->type->size();
 	}
 	return result;
 }
 
-unsigned SymbolTypeInt::size() const {
+uint SymbolTypeInt::size() const {
 	return 8;
 }
 
-unsigned SymbolTypeFloat::size() const {
+uint SymbolTypeFloat::size() const {
 	return 8;
 }
 
-unsigned SymbolTypeChar::size() const {
+uint SymbolTypeChar::size() const {
 	return 1;
 }
 
-unsigned SymbolTypeString::size() const {
+uint SymbolTypeString::size() const {
 	return 255;
 }
 
-unsigned SymbolTypeRecord::size() const {
+uint SymbolTypeRecord::size() const {
 	return symtable->bsize();
 }
 
-void SymbolType::write(AsmCode&) {}
-void SymbolType::declare(AsmCode&, const string&) {}
+void SymbolType::gen_write(AsmCode&) {}
+void SymbolType::gen_declare(AsmCode&, const string&) {}
 
-void SymbolTypeInt::write(AsmCode& ac) {
+void SymbolTypeInt::gen_write(AsmCode& ac) {
 	ac << AsmCmd2{LEAQ, AsmVar{SymbolTypeInt::fml_label}, RDI}
 	   << AsmCmd1{POPQ, RSI}
 	   << AsmCmd1{CALL, PRINTF};
 }
 
-void SymbolTypeFloat::write(AsmCode& ac) {
+void SymbolTypeFloat::gen_write(AsmCode& ac) {
 	ac << AsmCmd2{LEAQ, AsmVar{SymbolTypeFloat::fml_label}, RDI}
 	   << AsmCmd1{POPQ, RAX}
 	   << AsmCmd2{MOVQ, RAX, XMM0}
@@ -242,13 +241,49 @@ void SymbolTypeFloat::write(AsmCode& ac) {
 	   << AsmCmd1{CALL, PRINTF};
 }
 
-void SymbolTypeRecord::declare(AsmCode& ac, const std::string& a_name) {
+void SymbolTypeRecord::gen_declare(AsmCode& ac, const std::string& a_name) {
 	ac << AsmComment{"record " + a_name};
 }
 
-void SymbolTypeInt::declare(AsmCode& ac, const string& a_name) {
-	ac.add_data(make_shared<AsmVarInt>(var_prefix + a_name));
+void SymbolTypeArray::gen_declare(AsmCode& ac, const std::string& a_name) {
+	ac.add_data(make_shared<AsmVarArray>(a_name, this->type->size(), this->bounds));
 }
+
+void SymbolTypeFloat::gen_declare(AsmCode& ac, const std::string& a_name) {
+	ac.add_data(make_shared<AsmVarFloat>(a_name));
+}
+
+void SymbolTypePointer::gen_declare(AsmCode& ac, const std::string& a_name) {
+	ac << AsmComment{"pointer " + a_name};
+}
+
+void SymbolTypeInt::gen_declare(AsmCode& ac, const string& a_name) {
+	ac.add_data(make_shared<AsmVarInt>(a_name));
+}
+
+void SymbolTypeInt::  gen_typecast(AsmCode& ac, PSymbolType symt) const {symt->gen_typecast(ac, *this);}
+void SymbolTypeFloat::gen_typecast(AsmCode& ac, PSymbolType symt) const {symt->gen_typecast(ac, *this);}
+void SymbolType::gen_typecast(AsmCode&, PSymbolType) const {}
+
+void SymbolType::gen_typecast(AsmCode&, const SymbolTypeFloat&) const {}
+void SymbolType::gen_typecast(AsmCode&, const SymbolTypeInt&)   const {}
+
+/// float to int
+void SymbolTypeInt::gen_typecast(AsmCode& ac, const SymbolTypeFloat& symt) const {
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{MOVQ, RAX, XMM0}
+	   << AsmCmd2{CVTSD2SI, XMM0, RAX}
+	   << AsmCmd1{PUSHQ, RAX};
+}
+
+/// int to float
+void SymbolTypeFloat::gen_typecast(AsmCode& ac, const SymbolTypeInt& symt) const {
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{CVTSI2SD, RAX, XMM0}
+	   << AsmCmd2{MOVQ, XMM0, RAX}
+	   << AsmCmd1{PUSHQ, RAX};
+}
+
 
 bool SymbolType       ::equals(PSymbolType symt) const {return symt->equals(*this);}
 bool SymbolTypeInt    ::equals(PSymbolType symt) const {return symt->equals(*this);}

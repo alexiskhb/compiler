@@ -13,7 +13,8 @@ const std::map<Register, string> registers =
     {RSI,	"rsi"},
     {RSP,	"rsp"},
     {RBP,	"rbp"},
-    {XMM0,	"xmm0"}
+    {XMM0,	"xmm0"},
+    {AL,	"al"},
 };
 const string reg_prefix = "%";
 const string imm_prefix = "$";
@@ -31,6 +32,15 @@ const std::map<Opcode, string> opcodes =
 	{IMULQ,	"imulq"},
 	{IDIVQ,	"idivq"},
     {CQO,	"cqo"},
+    {CVTSI2SD,	"cvtsi2sd"},
+    {CVTSD2SI,	"cvtsd2si"},
+    {SETE,	"sete"},
+	{SETNE,	"setne"},
+	{SETL,	"setl"},
+	{SETG,	"setg"},
+	{SETGE,	"setge"},
+	{SETLE,	"setle"},
+	{CMPQ,	"cmpq"},
 	{NONE,	""}
 };
 
@@ -50,8 +60,37 @@ AsmImmFloat::AsmImmFloat(double a_value) :
     m_value(a_value)
 {}
 
-void AsmCode::push(PAsmCmd cmd) {
+AsmOperandOffset::AsmOperandOffset(Register reg) :
+    base(make_shared<AsmOperandReg>(reg))
+{}
+
+AsmRawInt::AsmRawInt(int64_t a_value) :
+    value(a_value)
+{}
+
+void AsmCode::push_buf(PAsmCmd cmd) {
 	m_commands.push_back(cmd);
+}
+
+void AsmCode::append(const AsmCode& other) {
+	for (PAsmCmd cmd: other.m_commands) {
+		m_commands.push_back(cmd);
+	}
+//	m_commands.insert(m_commands.end(), other.m_commands.begin(), other.m_commands.end());
+}
+
+AsmCode& AsmCode::push_buf() {
+	this->buffers.push(make_shared<AsmCode>());
+	return buf();
+}
+
+void AsmCode::pop_buf() {
+	this->append(buf());
+	buffers.pop();
+}
+
+AsmCode& AsmCode::buf() {
+	return *this->buffers.top();
 }
 
 bool AsmCode::add_label(PAsmLabel a_label) {
@@ -94,12 +133,20 @@ AsmCmd1::AsmCmd1(Opcode oc, PAsmVar a_label) :
     AsmCmd(oc), operand(a_label)
 {}
 
+AsmCmd1::AsmCmd1(Opcode oc, AsmVar a_label) :
+    AsmCmd(oc), operand(make_shared<AsmVar>(a_label))
+{}
+
 AsmCmd1::AsmCmd1(Opcode oc, Syscall sc) :
-    AsmCmd(oc), operand(make_shared<AsmVar>(syscalls.at(sc)))
+    AsmCmd(oc), operand(make_shared<AsmSyscall>(syscalls.at(sc)))
 {}
 
 AsmCmd1::AsmCmd1(Opcode oc, Register a_register) :
     AsmCmd(oc), operand(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmCmd1::AsmCmd1(Opcode oc, AsmOperandOffset a_offs) :
+    AsmCmd(oc), operand(make_shared<AsmOperandOffset>(a_offs))
 {}
 
 AsmCmd1::AsmCmd1(Opcode oc, int64_t a_value) :
@@ -120,6 +167,10 @@ AsmCmd2::AsmCmd2(Opcode oc, PAsmVar a_var, Register a_register) :
 
 AsmCmd2::AsmCmd2(Opcode oc, AsmVar a_var, Register a_register) :
     AsmCmd(oc), operand1(make_shared<AsmVar>(a_var)), operand2(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmCmd2::AsmCmd2(Opcode oc, Register a_register, AsmVar a_var) :
+    AsmCmd(oc), operand1(make_shared<AsmOperandReg>(a_register)), operand2(make_shared<AsmVar>(a_var))
 {}
 
 AsmCmd2::AsmCmd2(Opcode oc, double a_var, Register a_register) :
@@ -163,6 +214,10 @@ AsmLabel::AsmLabel(const std::string& a_label) :
 {}
 
 AsmVar::AsmVar(const std::string& a_name) :
+    AsmLabel(var_prefix + a_name)
+{}
+
+AsmSyscall::AsmSyscall(const std::string& a_name) :
     AsmLabel(a_name)
 {}
 
@@ -178,6 +233,22 @@ AsmVarInt::AsmVarInt(const std::string& a_var, int64_t a_value) :
     AsmVar(a_var), m_value(a_value)
 {}
 
+AsmVarFloat::AsmVarFloat(const std::string& a_var, double a_value) :
+    AsmVar(a_var), m_value(a_value)
+{}
+
+AsmVarArray::AsmVarArray(const std::string& a_var, uint a_esize, const std::vector<std::pair<int, int>>& bounds) :
+    AsmVar(a_var), m_element_size(a_esize), m_bounds(bounds), m_size(_m_size())
+{}
+
+uint AsmVarArray::_m_size() const {
+	uint result = 0;
+	for (const pair<int, int>& p: this->m_bounds) {
+		result += p.second - p.first + 1;
+	}
+	return result;
+}
+
 std::ostream& AsmVarString::output(std::ostream& os) {
 	os << name << ":\n\t.string \"" << value << "\"\n";
 	return os;
@@ -188,8 +259,28 @@ std::ostream& AsmVarInt::output(std::ostream& os) {
 	return os;
 }
 
+std::ostream& AsmVarFloat::output(std::ostream& os) {
+	os << ".data\n\t" << name << ": .double " << m_value << "\n";
+	return os;
+}
+
+std::ostream& AsmVarArray::output(std::ostream& os) {
+	os << ".data\n\t" << name << ": .fill " << this->m_size*m_element_size << ",1,0\n";
+	return os;
+}
+
 std::ostream& AsmLabel::output(std::ostream& os) {
 	os << name + ":\n";
+	return os;
+}
+
+std::ostream& AsmVar::output(std::ostream& os) {
+	os << name + ":\n";
+	return os;
+}
+
+std::ostream& AsmSyscall::output(std::ostream& os) {
+	os << name + " output syscall :\n";
 	return os;
 }
 
@@ -199,7 +290,7 @@ std::ostream& AsmGlobl::output(std::ostream& os) {
 }
 
 AsmCode& operator<<(AsmCode& ac, PAsmCmd cmd) {
-	ac.push(cmd);
+	ac.push_buf(cmd);
 	return ac;
 }
 
@@ -215,6 +306,10 @@ std::string AsmVar::str() const {
 	return name;
 }
 
+std::string AsmSyscall::str() const {
+	return name;
+}
+
 std::string AsmImmInt::str() const {
     return imm_prefix + to_string(m_value);
 }
@@ -223,6 +318,18 @@ std::string AsmImmFloat::str() const {
 	return imm_prefix + to_string(m_value);
 }
 
+std::string AsmRawInt::str() const {
+	return to_string(value);
+}
+
+std::string AsmOperandOffset::str() const {
+	return (offset ? offset->str() : "") +
+	        "(" + base->str() +
+	        (index ? ("," + index->str() +
+	                 (scale ? ("," + scale->str()) : "")
+	                 )
+	        : ")");
+}
 
 
 

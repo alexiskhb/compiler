@@ -6,9 +6,12 @@
 #include <vector>
 #include <deque>
 #include <fstream>
+#include <stack>
 #include <memory>
 #include <algorithm>
 #include <map>
+
+const std::string var_prefix = ".__";
 
 enum Register {
 	RAX,
@@ -20,6 +23,7 @@ enum Register {
 	RSP,
 	RBP,
 	XMM0,
+	AL,
 };
 
 enum Opcode {
@@ -35,6 +39,15 @@ enum Opcode {
 	IMULQ,
 	IDIVQ,
 	CQO,
+	CVTSI2SD,
+	CVTSD2SI,
+	SETE,
+	SETNE,
+	SETL,
+	SETG,
+	SETGE,
+	SETLE,
+	CMPQ,
 	NONE,
 };
 
@@ -80,9 +93,22 @@ private:
 	double m_value;
 };
 
-class AsmOperandOfffset : public AsmOperand {
+class AsmOperandOffset : public AsmOperand {
 public:
+	AsmOperandOffset(Register);
 	std::string str() const override;
+	PAsmOperand offset = nullptr;
+	PAsmOperandReg base = nullptr;
+	PAsmOperandReg index = nullptr;
+	PAsmRawInt scale = nullptr;
+};
+typedef AsmOperandOffset AsmOffs;
+
+class AsmRawInt : public AsmOperand {
+public:
+	AsmRawInt(int64_t);
+	std::string str() const override;
+	int64_t value;
 };
 
 class AsmOperandIndirect : public AsmOperand {
@@ -108,6 +134,14 @@ public:
 class AsmVar : public AsmOperand, public AsmLabel {
 public:
 	AsmVar(const std::string&);
+	std::ostream& output(std::ostream&) override;
+	std::string str() const override;
+};
+
+class AsmSyscall : public AsmOperand, public AsmLabel {
+public:
+	AsmSyscall(const std::string&);
+	std::ostream& output(std::ostream&) override;
 	std::string str() const override;
 };
 
@@ -132,13 +166,38 @@ private:
 	int64_t m_value;
 };
 
+class AsmVarFloat : public AsmVar {
+public:
+	AsmVarFloat(const std::string&, double value = 0);
+	std::ostream& output(std::ostream&);
+private:
+	double m_value;
+};
+
+class AsmVarArray : public AsmVar {
+public:
+	AsmVarArray(const std::string&, uint, const std::vector<std::pair<int, int>>&);
+	std::ostream& output(std::ostream&);
+private:
+	uint _m_size() const;
+	double m_value;
+	const uint m_element_size;                       // Do not
+	const std::vector<std::pair<int, int>> m_bounds; // change
+	const uint m_size;                               // order.
+};
+
 class AsmCode {
 public:
 	std::ostream& output(std::ostream&);
-	void push(PAsmCmd);
+	void push_buf(PAsmCmd);
+	void append(const AsmCode&);
+	AsmCode& push_buf();
+	void pop_buf();
+	AsmCode& buf();
 	// true if the label was added before
 	bool add_label(PAsmLabel);
 	PAsmLabel add_data(PAsmLabel);
+	std::stack<PAsmCode> buffers;
 private:
 	std::vector<PAsmLabel> m_header_labels;
 	std::map<std::string, PAsmLabel> m_labels;
@@ -155,8 +214,10 @@ class AsmCmd1 : public AsmCmd {
 public:
 	AsmCmd1(Opcode, PAsmOperand);
 	AsmCmd1(Opcode, PAsmVar);
+	AsmCmd1(Opcode, AsmVar);
 	AsmCmd1(Opcode, Syscall);
 	AsmCmd1(Opcode, Register);
+	AsmCmd1(Opcode, AsmOperandOffset);
 	explicit AsmCmd1(Opcode, int64_t);
 	explicit AsmCmd1(Opcode, double);
 	std::ostream& output(std::ostream&) override;
@@ -170,6 +231,7 @@ public:
 	AsmCmd2(Opcode, AsmVar, Register);
 	AsmCmd2(Opcode, double, Register);
 	AsmCmd2(Opcode, int64_t, Register);
+	AsmCmd2(Opcode, Register, AsmVar);
 	std::ostream& output(std::ostream&) override;
 	PAsmOperand operand1;
 	PAsmOperand operand2;
@@ -194,7 +256,7 @@ AsmCode& operator<<(AsmCode& ac, PAsmCmd cmd);
 
 template <class TAsmCmd>
 AsmCode& operator<<(AsmCode& ac, TAsmCmd cmd) {
-	ac.push(std::make_shared<TAsmCmd>(cmd));
+	ac.push_buf(std::make_shared<TAsmCmd>(cmd));
 	return ac;
 }
 

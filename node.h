@@ -36,7 +36,7 @@ public:
 	NodeExpression(PSymbolType);
 	virtual PSymbolType exprtype();
 	virtual void write(AsmCode&);
-	virtual void generate_assign(AsmCode&);
+	virtual void generate_lvalue(AsmCode&);
 protected:
 	PSymbolType m_exprtype = nullptr;
 };
@@ -102,7 +102,7 @@ public:
 	PSymbolType exprtype() override;
 	PNodeIdentifier identifier;
 	void generate(AsmCode&) override;
-	void generate_assign(AsmCode&) override;
+	void generate_lvalue(AsmCode&) override;
 	void declare(AsmCode&);
 	PSymbolVariable symbol;
 };
@@ -116,6 +116,9 @@ public:
 	Token::Operator operation;
 	PNodeExpression left = nullptr;
 	PNodeExpression right = nullptr;
+private:
+	void m_gen_arithm(AsmCode& ac);
+	void m_gen_cmp(AsmCode& ac);
 };
 
 class NodeActualParameters : public Node {
@@ -137,6 +140,7 @@ public:
 	PSymbolType exprtype() override;
 	std::string str() const override;
 	void generate(AsmCode&) override;
+	void generate_lvalue(AsmCode&) override;
 	Token::Operator operation;
 	PNodeExpression node;
 };
@@ -147,7 +151,7 @@ public:
 	std::string str() const override;
 	PSymbolType exprtype() override;
 	void generate(AsmCode&) override;
-	void generate_assign(AsmCode&) override;
+	void generate_lvalue(AsmCode&) override;
 	PNodeExpression array;
 	PNodeActualParameters index;
 };
@@ -158,7 +162,7 @@ public:
 	std::string str() const override;
 	PSymbolType exprtype() override;
 	void generate(AsmCode&) override;
-	void generate_assign(AsmCode&) override;
+	void generate_lvalue(AsmCode&) override;
 	PNodeExpression record;
 	PSymbolVariable field;
 };
@@ -341,7 +345,7 @@ public:
 	PSymbolType proctype();
 	std::string str() const override;
 	void generate(AsmCode&) override;
-	void generate_assign(AsmCode&) override;
+	void generate_lvalue(AsmCode&) override;
 	PSymbolProcedure proc;
 	PNodeActualParameters args;
 private:

@@ -19,7 +19,7 @@ public:
 		return r == m_symbol_map.end() ? nullptr : this->at(r->second);
 	}
 	/// Size of variables in bytes, if any
-	unsigned bsize() const;
+	uint bsize() const;
 private:
 	std::map<std::string, size_t> m_symbol_map;
 };
