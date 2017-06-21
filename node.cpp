@@ -28,7 +28,7 @@ std::map<Token::Operator, std::string> operator_lst =
 {Token::OP_ASSIGN, ":="},
 {Token::OP_PLUS_ASSIGN, "+="},
 {Token::OP_MINUS_ASSIGN, "-="},
-{Token::OP_DIV_ASSIGN, "/="},
+{Token::OP_DIV_SLASH_ASSIGN, "/="},
 {Token::OP_MULT_ASSIGN, "*="},
 {Token::OP_LEQ, "<="},
 {Token::OP_GEQ, ">="},
@@ -254,7 +254,7 @@ PSymbolType NodeBinaryOperator::exprtype() {
 	}
 	case Token::OP_DIV_SLASH: {
 		if (SymbolType::is_arithmetic({ltype, rtype})) {
-			m_exprtype = int_type;
+			m_exprtype = float_type;
 			break;
 		}
 		throw ParseError(Scanner::current_position(),
@@ -272,7 +272,7 @@ PSymbolType NodeBinaryOperator::exprtype() {
 			break;
 		}
 		throw ParseError(Scanner::current_position(),
-		                 "both operands of \""+operator_lst[operation]+"\" must be arithmetic: got \"" +
+		                 "both operands of \"" + operator_lst[operation] + "\" must be arithmetic: got \"" +
 		                 left->exprtype()->name + "\" and \"" + right->exprtype()->name + "\"");
 	}
 	case Token::OP_AND:
@@ -287,13 +287,13 @@ PSymbolType NodeBinaryOperator::exprtype() {
 			break;
 		}
 		throw ParseError(Scanner::current_position(),
-		                 "both operands of \""+operator_lst[operation]+"\" must be integer: got \"" +
+		                 "both operands of \"" + operator_lst[operation] + "\" must be integer: got \"" +
 		                 left->exprtype()->name + "\" and \"" + right->exprtype()->name + "\"");
 	}
 	case Token::OP_ASSIGN:
-	case Token::OP_DIV_ASSIGN:
 	case Token::OP_PLUS_ASSIGN:
 	case Token::OP_MINUS_ASSIGN:
+	case Token::OP_DIV_SLASH_ASSIGN:
 	case Token::OP_MULT_ASSIGN: {
 		m_exprtype = SymbolType::notype();
 		if (is_lvalue(left))
@@ -501,10 +501,10 @@ void NodeBinaryOperator::m_gen_arithm(AsmCode& ac) {
 	left->exprtype()->gen_typecast(ac, this->exprtype());
 	right->generate(ac);
 	right->exprtype()->gen_typecast(ac, this->exprtype());
+	ac << AsmCmd1{POPQ, RBX}
+	   << AsmCmd1{POPQ, RAX};
 	if (this->exprtype() == NodeInteger::type_sym_ptr) {
 	/// RAX <op> RBX
-		ac << AsmCmd1{POPQ, RBX}
-		   << AsmCmd1{POPQ, RAX};
 		switch (this->operation) {
 		case Token::OP_PLUS:
 			ac << AsmCmd2{ADDQ, RBX, RAX}; break;
@@ -515,39 +515,41 @@ void NodeBinaryOperator::m_gen_arithm(AsmCode& ac) {
 		case Token::OP_DIV:
 			ac << AsmCmd0{CQO}
 			   << AsmCmd1{IDIVQ, RBX}; break;
+		default:;
 		}
-		ac << AsmCmd1{PUSHQ, RAX};
 	} else if (this->exprtype() == NodeFloat::type_sym_ptr) {
-	} else {
-		throw runtime_error("Internal error: generate binary operation");
+		ac << AsmCmd2{MOVQ, RAX, XMM0}
+		   << AsmCmd2{MOVQ, RBX, XMM1};
+		switch (this->operation){
+		case Token::OP_PLUS:
+			ac << AsmCmd2{ADDSD, XMM1, XMM0}; break;
+		case Token::OP_MINUS:
+			ac << AsmCmd2{SUBSD, XMM1, XMM0}; break;
+		case Token::OP_MULT:
+			ac << AsmCmd2{MULSD, XMM1, XMM0}; break;
+		case Token::OP_DIV_SLASH:
+			ac << AsmCmd2{DIVSD, XMM1, XMM0}; break;
+		default:;
+		}
+		ac << AsmCmd2{MOVQ, XMM0, RAX};
 	}
+	ac << AsmCmd1{PUSHQ, RAX};
 }
 
 void NodeBinaryOperator::m_gen_cmp(AsmCode& ac) {
-
-}
-
-void NodeBinaryOperator::generate(AsmCode& ac) {
-	left->generate(ac);
-	left->exprtype()->gen_typecast(ac, this->exprtype());
-	right->generate(ac);
-	right->exprtype()->gen_typecast(ac, this->exprtype());
-	if (this->exprtype() == NodeInteger::type_sym_ptr) {
 	/// RAX <op> RBX
+	if (left->exprtype() == NodeFloat::type_sym_ptr || right->exprtype() == NodeFloat::type_sym_ptr) {
+		left->generate(ac);
+		left->exprtype()->gen_typecast(ac, NodeFloat::type_sym_ptr);
+		right->generate(ac);
+		right->exprtype()->gen_typecast(ac, NodeFloat::type_sym_ptr);
+///TODO compare floats
+	} else {
+		left->generate(ac);
+		right->generate(ac);
 		ac << AsmCmd1{POPQ, RBX}
 		   << AsmCmd1{POPQ, RAX};
 		switch (this->operation) {
-		case Token::OP_PLUS:
-			ac << AsmCmd2{ADDQ, RBX, RAX}; break;
-		case Token::OP_MINUS:
-			ac << AsmCmd2{SUBQ, RBX, RAX}; break;
-		case Token::OP_MULT:
-			ac << AsmCmd2{IMULQ, RBX, RAX}; break;
-
-		case Token::OP_DIV:
-			ac << AsmCmd0{CQO}
-			   << AsmCmd1{IDIVQ, RBX}; break;
-
 		case Token::OP_EQUAL:
 			ac << AsmCmd2{CMPQ, RBX, RAX}
 			   << AsmCmd2{MOVQ, (int64_t)0, RAX}
@@ -572,22 +574,51 @@ void NodeBinaryOperator::generate(AsmCode& ac) {
 			ac << AsmCmd2{CMPQ, RBX, RAX}
 			   << AsmCmd2{MOVQ, (int64_t)0, RAX}
 			   << AsmCmd1{SETNE, AL}; break;
-		case Token::OP_AND: {
-
-		}
-		case Token::OP_OR:
-		case Token::OP_XOR:
-		case Token::OP_SHL:
-		case Token::OP_SHR:
-		case Token::OP_MOD:;
 		default:;
 		}
-		ac << AsmCmd1{PUSHQ, RAX};
+	}
+}
 
-	} else if (this->exprtype() == NodeFloat::type_sym_ptr) {
+void NodeBinaryOperator::m_gen_bin(AsmCode& ac) {
+	left->generate(ac);
+	ac << AsmCmd1{POPQ, RAX};
+	switch (this->operation) {
+	case Token::OP_AND:
+	case Token::OP_OR:
+	case Token::OP_XOR:
+	case Token::OP_SHL:
+	case Token::OP_SHR:
+	case Token::OP_MOD:;
+	default:;
+	}
+}
 
-	} else {
-		throw runtime_error("Internal error: generate binary operation");
+void NodeBinaryOperator::generate(AsmCode& ac) {
+	switch (this->operation) {
+	case Token::OP_PLUS:
+	case Token::OP_MINUS:
+	case Token::OP_MULT:
+	case Token::OP_DIV:
+	case Token::OP_DIV_SLASH:
+		m_gen_arithm(ac);
+		break;
+	case Token::OP_EQUAL:
+	case Token::OP_GREATER:
+	case Token::OP_LESS:
+	case Token::OP_LEQ:
+	case Token::OP_GEQ:
+	case Token::OP_NEQ:
+		m_gen_cmp(ac);
+		break;
+	case Token::OP_AND:
+	case Token::OP_OR:
+	case Token::OP_XOR:
+	case Token::OP_SHL:
+	case Token::OP_SHR:
+	case Token::OP_MOD:;
+		m_gen_bin(ac);
+		break;
+	default:;
 	}
 }
 
@@ -604,8 +635,9 @@ void NodeRecordAccess::generate(AsmCode& ac) {
 }
 
 void NodeStmtAssign::generate(AsmCode& ac) {
-	this->right->generate(ac);
-	this->left->generate_lvalue(ac);
+	right->generate(ac);
+	right->exprtype()->gen_typecast(ac, left->exprtype());
+	left->generate_lvalue(ac);
 	ac << AsmCmd1{POPQ, RAX}
 	   << AsmCmd1{POPQ, AsmOffs(RAX)};
 }
@@ -616,6 +648,7 @@ void NodeStmtVar::generate(AsmCode& ac) {
 			var->declare(ac);
 			if (unit->initializer) {
 				unit->initializer->expr->generate(ac.buf());
+				unit->initializer->expr->exprtype()->gen_typecast(ac.buf(), var->exprtype());
 				var->generate_lvalue(ac.buf());
 				ac.buf() << AsmCmd1{POPQ, RAX}
 				         << AsmCmd1{POPQ, AsmOffs(RAX)};

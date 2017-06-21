@@ -23,6 +23,7 @@ enum Register {
 	RSP,
 	RBP,
 	XMM0,
+	XMM1,
 	AL,
 };
 
@@ -48,6 +49,12 @@ enum Opcode {
 	SETGE,
 	SETLE,
 	CMPQ,
+	ADDSD,
+	SUBSD,
+	DIVSD,
+	MULSD,
+	MOVSD,
+	COMISD,
 	NONE,
 };
 

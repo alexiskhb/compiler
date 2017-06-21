@@ -119,6 +119,7 @@ public:
 private:
 	void m_gen_arithm(AsmCode& ac);
 	void m_gen_cmp(AsmCode& ac);
+	void m_gen_bin(AsmCode& ac);
 };
 
 class NodeActualParameters : public Node {

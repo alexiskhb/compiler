@@ -54,7 +54,7 @@ bool Scanner::init_states() {
 	state_to_subcat[ST_ASSIGN] = Token::OP_ASSIGN;
 	state_to_subcat[ST_PLUSAGN] = Token::OP_PLUS_ASSIGN;
 	state_to_subcat[ST_MINUSAGN] = Token::OP_MINUS_ASSIGN;
-	state_to_subcat[ST_FACAGN] = Token::OP_DIV_ASSIGN;
+	state_to_subcat[ST_FACAGN] = Token::OP_DIV_SLASH_ASSIGN;
 	state_to_subcat[ST_MULAGN] = Token::OP_MULT_ASSIGN;
 	state_to_subcat[ST_LEQ] = Token::OP_LEQ;
 	state_to_subcat[ST_GEQ] = Token::OP_GEQ;

@@ -89,7 +89,7 @@ public:
 		OP_ASSIGN,        // :=
 		OP_PLUS_ASSIGN,   // +=
 		OP_MINUS_ASSIGN,  // -=
-		OP_DIV_ASSIGN,    // /=
+		OP_DIV_SLASH_ASSIGN,    // /=
 		OP_MULT_ASSIGN,   // *=
 		OP_LEQ,           // <=
 		OP_GEQ,           // >=

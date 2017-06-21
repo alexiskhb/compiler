@@ -14,6 +14,7 @@ const std::map<Register, string> registers =
     {RSP,	"rsp"},
     {RBP,	"rbp"},
     {XMM0,	"xmm0"},
+    {XMM1,	"xmm1"},
     {AL,	"al"},
 };
 const string reg_prefix = "%";
@@ -41,6 +42,12 @@ const std::map<Opcode, string> opcodes =
 	{SETGE,	"setge"},
 	{SETLE,	"setle"},
 	{CMPQ,	"cmpq"},
+    {ADDSD,	"addsd"},
+    {SUBSD,	"sumsd"},
+    {DIVSD,	"divsd"},
+    {MULSD,	"mulsd"},
+    {MOVSD,	"movsd"},
+    {COMISD, "comisd"},
 	{NONE,	""}
 };
 

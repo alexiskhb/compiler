@@ -59,7 +59,7 @@ bool init_precedence() {
 	precedence_lst[Token::OP_ASSIGN]       = 4;
 	precedence_lst[Token::OP_PLUS_ASSIGN]  = 4;
 	precedence_lst[Token::OP_MINUS_ASSIGN] = 4;
-	precedence_lst[Token::OP_DIV_ASSIGN]   = 4;
+	precedence_lst[Token::OP_DIV_SLASH_ASSIGN]   = 4;
 	precedence_lst[Token::OP_MULT_ASSIGN]  = 4;///
 	precedence_sep_lst[Token::S_COMMA] = 3;
 	precedence_sep_lst[Token::S_COLON] = 2;///
@@ -196,7 +196,7 @@ PNodeStmt Parser::parse_stmt() {
 				PNodeBinaryOperator plus_res = make_shared<NodeBinaryOperator>(Token::OP_PLUS, op->left, op->right);
 				return make_shared<NodeStmtAssign>(op->left, plus_res);
 			}
-			case Token::OP_DIV_ASSIGN: {
+			case Token::OP_DIV_SLASH_ASSIGN: {
 				PNodeBinaryOperator div_res = make_shared<NodeBinaryOperator>(Token::OP_DIV_SLASH, op->left, op->right);
 				return make_shared<NodeStmtAssign>(op->left, div_res);
 			}
@@ -813,7 +813,7 @@ PNodeExpression Parser::parse_expression(int prec) {
 		} break;
 		default: {
 			right = parse_expression(prec + 1);
-			if (token == Token::OP_ASSIGN || token == Token::OP_MULT_ASSIGN || token == Token::OP_PLUS_ASSIGN || token == Token::OP_MINUS_ASSIGN|| token == Token::OP_DIV_ASSIGN) {
+			if (token == Token::OP_ASSIGN || token == Token::OP_MULT_ASSIGN || token == Token::OP_PLUS_ASSIGN || token == Token::OP_MINUS_ASSIGN|| token == Token::OP_DIV_SLASH_ASSIGN) {
 				PNodeVariable var = dynamic_pointer_cast<NodeVariable>(left);
 				if (var) {
 					if (for_checker[var->identifier->name]) {
