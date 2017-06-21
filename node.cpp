@@ -67,6 +67,10 @@ bool is_lvalue(PNodeExpression expr) {
 	       dynamic_pointer_cast<NodeRecordAccess>(expr);
 }
 
+bool is_integer_type(PSymbolType symt) {
+	return symt == NodeInteger::type_sym_ptr || dynamic_pointer_cast<SymbolTypePointer>(symt);
+}
+
 NodeEof::NodeEof(const Token&) {
 }
 
@@ -245,8 +249,13 @@ PSymbolType NodeBinaryOperator::exprtype() {
 	case Token::OP_MINUS:
 	case Token::OP_MULT:{
 		if (SymbolType::is_arithmetic({ltype, rtype})) {
-			m_exprtype = SymbolType::max(ltype, rtype);
-			break;
+			if (m_exprtype = SymbolType::max(ltype, rtype)) {
+				break;
+			} else {
+				throw ParseError(Scanner::current_position(),
+				                 "operations with pointers and floats forbidden : got \"" + rtype->name +
+				                 "\" and \"" + ltype->name + "\"");
+			}
 		}
 		throw ParseError(Scanner::current_position(),
 		                 "both operands of \""+operator_lst[operation]+"\" must be arithmetic: got \"" +
@@ -319,6 +328,9 @@ PSymbolType NodeBinaryOperator::exprtype() {
 }
 
 PSymbolType NodeUnaryOperator::exprtype() {
+	if (m_exprtype) {
+		return m_exprtype;
+	}
 	switch (this->operation) {
 	case Token::OP_MINUS: {
 		m_exprtype = this->node->exprtype();
@@ -489,7 +501,7 @@ void NodeArrayAccess::generate_lvalue(AsmCode& ac) {
 }
 
 void NodeUnaryOperator::generate_lvalue(AsmCode& ac) {
-
+	ac << AsmComment{":("};
 }
 
 void NodeVariable::declare(AsmCode& ac) {
@@ -503,7 +515,7 @@ void NodeBinaryOperator::m_gen_arithm(AsmCode& ac) {
 	right->exprtype()->gen_typecast(ac, this->exprtype());
 	ac << AsmCmd1{POPQ, RBX}
 	   << AsmCmd1{POPQ, RAX};
-	if (this->exprtype() == NodeInteger::type_sym_ptr) {
+	if (is_integer_type(this->exprtype())) {
 	/// RAX <op> RBX
 		switch (this->operation) {
 		case Token::OP_PLUS:
@@ -598,11 +610,24 @@ void NodeBinaryOperator::m_gen_bin(AsmCode& ac) {
 	case Token::OP_AND:
 	case Token::OP_OR:
 	case Token::OP_XOR:
+		right->generate(ac);
+		ac << AsmCmd1{POPQ, RBX}
+		   << AsmCmd2{XORQ, RBX, RAX};
+		break;
 	case Token::OP_SHL:
+		right->generate(ac);
+		ac << AsmCmd1{POPQ, RCX}
+		   << AsmCmd2{SHLQ, CL, RAX};
+		break;
 	case Token::OP_SHR:
+		right->generate(ac);
+		ac << AsmCmd1{POPQ, RCX}
+		   << AsmCmd2{SHRQ, CL, RAX};
+		break;
 	case Token::OP_MOD:;
 	default:;
 	}
+	ac << AsmCmd1{PUSHQ, RAX};
 }
 
 void NodeBinaryOperator::generate(AsmCode& ac) {
@@ -613,7 +638,7 @@ void NodeBinaryOperator::generate(AsmCode& ac) {
 	case Token::OP_DIV:
 	case Token::OP_DIV_SLASH:
 		m_gen_arithm(ac);
-		break;
+		return;
 	case Token::OP_EQUAL:
 	case Token::OP_GREATER:
 	case Token::OP_LESS:
@@ -621,23 +646,23 @@ void NodeBinaryOperator::generate(AsmCode& ac) {
 	case Token::OP_GEQ:
 	case Token::OP_NEQ:
 		m_gen_cmp(ac);
-		break;
+		return;
 	case Token::OP_AND:
 	case Token::OP_OR:
 	case Token::OP_XOR:
 	case Token::OP_SHL:
 	case Token::OP_SHR:
-	case Token::OP_MOD:;
+	case Token::OP_MOD:
 		m_gen_bin(ac);
-		break;
+		return;
 	default:;
 	}
 }
 
 void NodeUnaryOperator::generate(AsmCode& ac) {
-	this->node->generate(ac);
 	switch (this->operation) {
 	case Token::OP_MINUS:
+		this->node->generate(ac);
 		ac << AsmCmd1{POPQ, RAX};
 		if (this->exprtype() == NodeInteger::type_sym_ptr) {
 			ac << AsmCmd1{NEGQ, RAX};
@@ -650,10 +675,15 @@ void NodeUnaryOperator::generate(AsmCode& ac) {
 		ac << AsmCmd1{PUSHQ, RAX};
 		break;
 	case Token::OP_DEREFERENCE:
+		this->node->generate(ac);
+		ac << AsmCmd1{POPQ, RAX}
+		   << AsmCmd1{PUSHQ, AsmOffs{RAX}};
 		break;
 	case Token::OP_AT:
+		this->node->generate_lvalue(ac);
 		break;
 	case Token::OP_NOT:
+		this->node->generate(ac);
 		ac << AsmCmd1{POPQ, RAX}
 		   << AsmCmd2{XORQ, (int64_t)1, RAX}
 		   << AsmCmd1{PUSHQ, RAX};

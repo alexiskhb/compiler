@@ -25,6 +25,7 @@ enum Register {
 	XMM0,
 	XMM1,
 	AL,
+	CL,
 };
 
 enum Opcode {
@@ -61,6 +62,9 @@ enum Opcode {
 	COMISD,
 	NEGQ,
 	XORPD,
+	SHLQ,
+	SHRQ,
+	MOV,
 	NONE,
 };
 

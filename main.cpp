@@ -75,7 +75,7 @@ void generate(const string& filename, string output_filename) {
 }
 
 int main(int argc, char *argv[]) {
-//	generate("./test-gen/write-real.in", "");
+//	generate("./test-gen/at-deref.in", "");
 //	parse("./test-parse/not.in", true);
 //	return 0;
 	cxxopts::Options options(argv[0]);

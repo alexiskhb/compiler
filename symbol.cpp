@@ -12,9 +12,21 @@ uint64_t SymbolType::counter = 0;
 PSymbolType SymbolType::max(PSymbolType a, PSymbolType b) {
 	/// float > integer
 	if (dynamic_pointer_cast<SymbolTypeFloat>(a)) {
+		if (dynamic_pointer_cast<SymbolTypePointer>(b)) {
+			return nullptr;
+		}
 		return a;
 	}
 	if (dynamic_pointer_cast<SymbolTypeFloat>(b)) {
+		if (dynamic_pointer_cast<SymbolTypePointer>(b)) {
+			return nullptr;
+		}
+		return b;
+	}
+	if (dynamic_pointer_cast<SymbolTypePointer>(a)) {
+		return a;
+	}
+	if (dynamic_pointer_cast<SymbolTypePointer>(b)) {
 		return b;
 	}
 	return a;
@@ -67,7 +79,7 @@ std::string SymbolProcedure::output_str() const {
 
 bool SymbolType::is_arithmetic(std::initializer_list<PSymbolType> ptrs) {
 	for (PSymbolType p: ptrs) {
-		if (!dynamic_pointer_cast<SymbolTypeInt>(p) && !dynamic_pointer_cast<SymbolTypeFloat>(p)) {
+		if (!dynamic_pointer_cast<SymbolTypeInt>(p) && !dynamic_pointer_cast<SymbolTypeFloat>(p) && !dynamic_pointer_cast<SymbolTypePointer>(p)) {
 			return false;
 		}
 	}
@@ -254,7 +266,7 @@ void SymbolTypeFloat::gen_declare(AsmCode& ac, const std::string& a_name) {
 }
 
 void SymbolTypePointer::gen_declare(AsmCode& ac, const std::string& a_name) {
-	ac << AsmComment{"pointer " + a_name};
+	ac.add_data(make_shared<AsmVarInt>(a_name));
 }
 
 void SymbolTypeInt::gen_declare(AsmCode& ac, const string& a_name) {

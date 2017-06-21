@@ -16,6 +16,7 @@ const std::map<Register, string> registers =
     {XMM0,	"xmm0"},
     {XMM1,	"xmm1"},
     {AL,	"al"},
+    {CL,	"cl"},
 };
 const string reg_prefix = "%";
 const string imm_prefix = "$";
@@ -54,6 +55,9 @@ const std::map<Opcode, string> opcodes =
     {COMISD,	"comisd"},
     {NEGQ,	"negq"},
     {XORPD, "xorpd"},
+    {SHLQ, "shlq"},
+    {SHRQ, "shrq"},
+    {MOV, "mov"},
 	{NONE,	""}
 };
 
