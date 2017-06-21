@@ -65,6 +65,10 @@ enum Opcode {
 	SHLQ,
 	SHRQ,
 	MOV,
+	JZ,
+	JNZ,
+	JMP,
+	TESTQ,
 	NONE,
 };
 
@@ -135,27 +139,32 @@ public:
 
 class AsmCmd {
 public:
+	AsmCmd();
 	AsmCmd(Opcode);
 	virtual std::ostream& output(std::ostream&);
 protected:
 	Opcode m_opcode;
 };
 
-class AsmLabel : public AsmCmd {
+class AsmLabel : public AsmCmd, public AsmOperand {
 public:
+	AsmLabel();
 	AsmLabel(const std::string&);
 	std::ostream& output(std::ostream&) override;
+	std::string str() const override;
 	std::string name;
+protected:
+	static uint64_t counter;
 };
 
-class AsmVar : public AsmOperand, public AsmLabel {
+class AsmVar : public AsmLabel {
 public:
 	AsmVar(const std::string&);
 	std::ostream& output(std::ostream&) override;
 	std::string str() const override;
 };
 
-class AsmSyscall : public AsmOperand, public AsmLabel {
+class AsmSyscall : public AsmLabel {
 public:
 	AsmSyscall(const std::string&);
 	std::ostream& output(std::ostream&) override;
@@ -234,9 +243,10 @@ public:
 	AsmCmd1(Opcode, AsmVar);
 	AsmCmd1(Opcode, Syscall);
 	AsmCmd1(Opcode, Register);
+	AsmCmd1(Opcode, AsmLabel);
 	AsmCmd1(Opcode, AsmOperandOffset);
-	explicit AsmCmd1(Opcode, int64_t);
-	explicit AsmCmd1(Opcode, double);
+	AsmCmd1(Opcode, int64_t);
+	AsmCmd1(Opcode, double);
 	std::ostream& output(std::ostream&) override;
 	PAsmOperand operand;
 };

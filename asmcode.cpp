@@ -20,6 +20,7 @@ const std::map<Register, string> registers =
 };
 const string reg_prefix = "%";
 const string imm_prefix = "$";
+const string label_prefix = "..L";
 const std::map<Opcode, string> opcodes =
 {
 	{MOVQ,	"movq"},
@@ -54,12 +55,26 @@ const std::map<Opcode, string> opcodes =
     {MOVSD,	"movsd"},
     {COMISD,	"comisd"},
     {NEGQ,	"negq"},
-    {XORPD, "xorpd"},
-    {SHLQ, "shlq"},
-    {SHRQ, "shrq"},
-    {MOV, "mov"},
-	{NONE,	""}
+    {XORPD,	"xorpd"},
+    {SHLQ,	"shlq"},
+    {SHRQ,	"shrq"},
+    {MOV,	"mov"},
+    {JZ,	"jz"},
+    {JNZ,	"jnz"},
+    {JMP,	"jmp"},
+    {TESTQ,	"testq"},
+    {NONE,	""}
 };
+
+uint64_t AsmLabel::counter = 0;
+
+AsmLabel::AsmLabel() :
+    name(label_prefix + to_string(++counter))
+{}
+
+AsmCmd::AsmCmd() :
+    m_opcode(NONE)
+{}
 
 AsmCmd::AsmCmd(Opcode oc) :
     m_opcode(oc)
@@ -90,10 +105,7 @@ void AsmCode::push_buf(PAsmCmd cmd) {
 }
 
 void AsmCode::append(const AsmCode& other) {
-	for (PAsmCmd cmd: other.m_commands) {
-		m_commands.push_back(cmd);
-	}
-//	m_commands.insert(m_commands.end(), other.m_commands.begin(), other.m_commands.end());
+	m_commands.insert(m_commands.end(), other.m_commands.begin(), other.m_commands.end());
 }
 
 AsmCode& AsmCode::push_buf() {
@@ -160,6 +172,10 @@ AsmCmd1::AsmCmd1(Opcode oc, Syscall sc) :
 
 AsmCmd1::AsmCmd1(Opcode oc, Register a_register) :
     AsmCmd(oc), operand(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmCmd1::AsmCmd1(Opcode oc, AsmLabel a_label) :
+    AsmCmd(oc), operand(make_shared<AsmLabel>(a_label))
 {}
 
 AsmCmd1::AsmCmd1(Opcode oc, AsmOperandOffset a_offs) :
@@ -337,6 +353,10 @@ std::string AsmImmFloat::str() const {
 
 std::string AsmRawInt::str() const {
 	return to_string(value);
+}
+
+std::string AsmLabel::str() const {
+	return name;
 }
 
 std::string AsmOperandOffset::str() const {

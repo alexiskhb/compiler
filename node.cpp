@@ -606,9 +606,34 @@ void NodeBinaryOperator::m_gen_cmp(AsmCode& ac) {
 void NodeBinaryOperator::m_gen_bin(AsmCode& ac) {
 	left->generate(ac);
 	ac << AsmCmd1{POPQ, RAX};
+	AsmLabel _true, _false;
 	switch (this->operation) {
 	case Token::OP_AND:
+		ac << AsmCmd2{TESTQ, RAX, RAX}
+		   << AsmCmd1{JZ, _false};
+		right->generate(ac);
+		ac << AsmCmd1{POPQ, RAX}
+		   << AsmCmd2{TESTQ, RAX, RAX}
+		   << AsmCmd1{JZ, _false}
+		   << AsmCmd1{PUSHQ, (int64_t)1}
+		   << AsmCmd1{JMP, _true}
+		   << _false
+		   << AsmCmd1{PUSHQ, (int64_t)0}
+		   << _true;
+		return;
 	case Token::OP_OR:
+		ac << AsmCmd2{TESTQ, RAX, RAX}
+		   << AsmCmd1{JNZ, _true};
+		right->generate(ac);
+		ac << AsmCmd1{POPQ, RAX}
+		   << AsmCmd2{TESTQ, RAX, RAX}
+		   << AsmCmd1{JNZ, _true}
+		   << AsmCmd1{PUSHQ, (int64_t)0}
+		   << AsmCmd1{JMP, _false}
+		   << _true
+		   << AsmCmd1{PUSHQ, (int64_t)1}
+		   << _false;
+		return;
 	case Token::OP_XOR:
 		right->generate(ac);
 		ac << AsmCmd1{POPQ, RBX}
@@ -624,7 +649,14 @@ void NodeBinaryOperator::m_gen_bin(AsmCode& ac) {
 		ac << AsmCmd1{POPQ, RCX}
 		   << AsmCmd2{SHRQ, CL, RAX};
 		break;
-	case Token::OP_MOD:;
+	case Token::OP_MOD:
+		right->generate(ac);
+		ac << AsmCmd1{POPQ, RBX}
+		   << AsmCmd2{XORQ, RDX, RDX}
+		   << AsmCmd0{CQO}
+		   << AsmCmd1{IDIVQ, RBX}
+		   << AsmCmd2{MOVQ, RDX, RAX};
+		;
 	default:;
 	}
 	ac << AsmCmd1{PUSHQ, RAX};
@@ -725,8 +757,10 @@ void NodeStmtVar::generate(AsmCode& ac) {
 
 void NodeExprStmtFunctionCall::generate(AsmCode& ac) {
 	if (m_predefined == Predefined::WRITE || m_predefined == Predefined::WRITELN) {
-		for (PNodeExpression expr: this->args->arglist) {
-			m_write(ac, expr);
+		if (this->args) {
+			for (PNodeExpression expr: this->args->arglist) {
+				m_write(ac, expr);
+			}
 		}
 		if (m_predefined == Predefined::WRITELN) {
 			ac << AsmCmd2{LEAQ, AsmVar{fmt_newline}, RDI}
