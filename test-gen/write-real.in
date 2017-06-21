@@ -1,0 +1,9 @@
+var
+	a: integer = 10;
+	b: float = 5.5;
+	c: integer = 9 + 1.4;
+	d: float = -100.0;
+begin
+	writeln(a * b + c + 0.3);
+	writeln(d);
+end.

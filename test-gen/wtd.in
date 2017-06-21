@@ -1,0 +1,4 @@
+begin
+	writeln((1.0-2.0)*100.0);
+	writeln(-100.0);
+end.

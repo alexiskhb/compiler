@@ -1,0 +1,3 @@
+begin
+	writeln((100-200) div 10)
+end.

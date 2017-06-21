@@ -1,0 +1,47 @@
+var
+	a: float = 10;
+	b: float = a*a + a;
+begin
+	writeln(a = 10);
+	writeln(a <> 10);
+
+	writeln(a > 9);
+	writeln(a > 11);
+
+	writeln(a < 11);
+	writeln(a < 9);
+
+	writeln(b = 110);
+	
+	writeln(b >= a);
+	writeln(b >= a + b);
+
+	writeln(b <= a*100);
+	writeln(b <= 0);
+	
+	writeln( ' ' );
+	writeln(10.2 > 10.1);
+	writeln(10.2 >= 10.1);
+	writeln(10.1 < 10.2);
+	writeln(10.1 <= 10.2);
+	writeln(10.1 = 10.1);
+
+	writeln(10.2 < 10.1);
+	writeln(10.2 <= 10.1);
+	writeln(10.1 > 10.2);
+	writeln(10.1 >= 10.2);
+	writeln(10.1 <> 10.1);
+
+	writeln( ' ' );
+	writeln((0-10.2) > (0-10.1));
+	writeln(-10.2 >= -10.1);
+	writeln(-10.1 < -10.2);
+	writeln(-10.1 <= -10.2);
+	writeln(-10.1 <> -10.1);
+
+	writeln(-10.2 < -10.1);
+	writeln(-10.2 <= -10.1);
+	writeln(-10.1 > -10.2);
+	writeln(-10.1 >= -10.2);
+	writeln(-10.1 = -10.1);
+end.

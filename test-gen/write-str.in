@@ -1,0 +1,3 @@
+begin
+	write( 'ababaca'#13#10 , 'acaba'#13#10 );
+end.
