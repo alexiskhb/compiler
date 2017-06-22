@@ -66,7 +66,7 @@ main:
 	pushq	%rax
 // gen_index
 	pushq	$0
-	pushq	$10
+	pushq	$20
 	movq	$1, %rbx
 	popq	%rax
 	subq	%rbx, %rax
@@ -134,7 +134,7 @@ main:
 	pushq	%rax
 // gen_index
 	pushq	$0
-	pushq	$10
+	pushq	$20
 	movq	$1, %rbx
 	popq	%rax
 	subq	%rbx, %rax

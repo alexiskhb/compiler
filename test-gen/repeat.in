@@ -1,0 +1,39 @@
+var
+	i, k: integer;
+begin
+	repeat
+		i += 1;
+		k += 2;
+	until i = 100;
+	writeln(k);
+
+
+	i := 0;
+	k := 0;
+	repeat
+		i += 1;
+		k += 2;
+		if i = 100 then
+			break;
+	until i = 1000;
+	writeln(k);
+
+
+	i := 0;
+	k := 0;
+	repeat
+		i += 1;
+		if i mod 2 then
+			continue;
+		k += 2;
+		repeat
+			break
+		until 0;
+	until i = 200;
+	writeln(k);
+
+
+	repeat
+		writeln(k)
+	until 1;
+end.

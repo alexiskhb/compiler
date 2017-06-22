@@ -69,6 +69,11 @@ enum Opcode {
 	JZ,
 	JNZ,
 	JMP,
+	JE,
+	JGE,
+	JLE,
+	JG,
+	JL,
 	TESTQ,
 	NONE,
 };
@@ -271,6 +276,7 @@ public:
 	AsmCmd2(Opcode, int64_t, Register);
 	AsmCmd2(Opcode, Register, AsmVar);
 	AsmCmd2(Opcode, AsmOffs, Register);
+	AsmCmd2(Opcode, int64_t, AsmOffs);
 	std::ostream& output(std::ostream&) override;
 	PAsmOperand operand1;
 	PAsmOperand operand2;

@@ -181,14 +181,16 @@ class NodeStmt : public Node {
 class NodeStmtIf : public NodeStmt {
 public:
 	std::string str() const override;
+	void generate(AsmCode&) override;
 	PNodeExpression cond;
-	PNodeStmt then_stmt;
-	PNodeStmt else_stmt;
+	PNodeStmt then_stmt = nullptr;
+	PNodeStmt else_stmt = nullptr;
 };
 
 class NodeStmtWhile : public NodeStmt {
 public:
 	std::string str() const override;
+	void generate(AsmCode&) override;
 	PNodeExpression cond;
 	PNodeStmt stmt;
 };
@@ -226,6 +228,7 @@ public:
 class NodeStmtRepeat : public NodeStmt {
 public:
 	std::string str() const override;
+	void generate(AsmCode&) override;
 	PNodeExpression cond;
 	PNodeStmt stmt;
 };
@@ -233,6 +236,7 @@ public:
 class NodeStmtBreak : public NodeStmt {
 public:
 	NodeStmtBreak(PNodeStmt);
+	void generate(AsmCode&) override;
 	std::string str() const override;
 	PNodeStmt cycle;
 };
@@ -240,6 +244,7 @@ public:
 class NodeStmtContinue : public NodeStmt {
 public:
 	NodeStmtContinue(PNodeStmt);
+	void generate(AsmCode&) override;
 	std::string str() const override;
 	PNodeStmt cycle;
 };
@@ -281,7 +286,8 @@ public:
 class NodeStmtFor : public NodeStmt {
 public:
 	std::string str() const override;
-	PNodeIdentifier iter_var;
+	void generate(AsmCode&) override;
+	PNodeVariable iter_var;
 	PNodeExpression low;
 	PNodeExpression high;
 	bool is_inc = true;

@@ -305,12 +305,19 @@ PNodeStmtFor Parser::parse_for () {
 	PNodeStmtFor node = make_shared<NodeStmtFor>();
 	++scanner;
 	require({Token::C_IDENTIFIER}, "identifier");
-	node->iter_var = make_shared<NodeIdentifier>(scanner++);
-	if (for_checker[node->iter_var->name]) {
+	PNodeIdentifier id = make_shared<NodeIdentifier>(scanner++);
+	PSymbolVariable varsymb;
+	m_symtables[id->name] >> varsymb;
+	if (!varsymb || varsymb->type != NodeInteger::type_sym_ptr) {
 		throw ParseError(scanner.top(),
-		                 "Illegal assignment to for-loop variable \"" + node->iter_var->name + "\"");
+		                 "Illegal for-loop variable \"" + id->name + "\"");
 	}
-	for_checker[node->iter_var->name] = true;
+	node->iter_var = make_shared<NodeVariable>(id, varsymb);
+	if (for_checker[id->name]) {
+		throw ParseError(scanner.top(),
+		                 "Illegal assignment to for-loop variable \"" + id->name + "\"");
+	}
+	for_checker[id->name] = true;
 	require({Token::OP_ASSIGN}, ":=");
 	++scanner;
 	node->low = parse_expression(precedence(Token::OP_EQUAL));
@@ -322,7 +329,7 @@ PNodeStmtFor Parser::parse_for () {
 	m_current_cycle.push(node);
 	node->stmt = parse_stmt();
 	m_current_cycle.pop();
-	for_checker.erase(for_checker.find(node->iter_var->name));
+	for_checker.erase(for_checker.find(id->name));
 	return node;
 }
 

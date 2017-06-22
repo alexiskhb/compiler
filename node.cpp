@@ -14,6 +14,8 @@ uint NodeString::strcounter = 0;
 string NodeString::str_prefix = ".str";
 string fmt_newline = "._fmt_newline_";
 
+std::stack<std::pair<AsmLabel, AsmLabel>> cycle_continue_break;
+
 std::map<Token::Operator, std::string> operator_lst =
 {
 {Token::OP_EQUAL, "="},
@@ -859,6 +861,90 @@ void NodeExprStmtFunctionCall::generate(AsmCode& ac) {
 			   << AsmCmd1{CALL, PRINTF};
 		}
 	}
+}
+
+void NodeStmtIf::generate(AsmCode& ac) {
+	AsmLabel _else, _endif;
+	this->cond->generate(ac);
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{TESTQ, RAX, RAX}
+	   << AsmCmd1{JZ, _else};
+	this->then_stmt->generate(ac);
+	ac << AsmCmd1{JMP, _endif}
+	   << _else;
+	if (this->else_stmt) {
+		this->else_stmt->generate(ac);
+	}
+	ac << _endif;
+}
+
+void NodeStmtWhile::generate(AsmCode& ac) {
+	AsmLabel _body, _end;
+	cycle_continue_break.push({_body, _end});
+	ac << _body;
+	this->cond->generate(ac);
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{TESTQ, RAX, RAX}
+	   << AsmCmd1{JZ, _end};
+	this->stmt->generate(ac);
+	ac << AsmCmd1{JMP, _body}
+	   << _end;
+	cycle_continue_break.pop();
+}
+
+void NodeStmtRepeat::generate(AsmCode& ac) {
+	AsmLabel _body, _end;
+	cycle_continue_break.push({_body, _end});
+	ac << _body;
+	this->stmt->generate(ac);
+	this->cond->generate(ac);
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{TESTQ, RAX, RAX}
+	   << AsmCmd1{JZ, _body}
+	   << _end;
+	cycle_continue_break.pop();
+}
+
+void NodeStmtFor::generate(AsmCode& ac) {
+	AsmLabel _body, _end, _continue;
+	cycle_continue_break.push({_continue, _end});
+	/// init
+	this->low->generate(ac);
+	this->iter_var->generate_lvalue(ac);
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd1{POPQ, AsmOffs{RAX}};
+	/// pre-check
+	this->high->generate(ac);
+	ac << AsmCmd2{MOVQ, AsmOffs{RAX}, RBX}
+	   << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{CMPQ, RBX, RAX}
+	   << AsmCmd1{(is_inc ? JL : JG), _end};
+	/// statement
+	ac << _body;
+	this->stmt->generate(ac);
+	/// check condition
+	ac << _continue;
+	this->high->generate(ac);
+	this->iter_var->generate(ac);
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd1{POPQ, RBX}
+	   << AsmCmd2{CMPQ, RAX, RBX}
+	   << AsmCmd1{(is_inc ? JLE : JGE), _end};
+	/// inc or dec
+	this->iter_var->generate_lvalue(ac);
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{(is_inc ? ADDQ : SUBQ), (int64_t)1, AsmOffs{RAX}}
+	   << AsmCmd1{JMP, _body}
+	   << _end;
+	cycle_continue_break.pop();
+}
+
+void NodeStmtBreak::generate(AsmCode& ac) {
+	ac << AsmCmd1{JMP, cycle_continue_break.top().second};
+}
+
+void NodeStmtContinue::generate(AsmCode& ac) {
+	ac << AsmCmd1{JMP, cycle_continue_break.top().first};
 }
 
 void NodeExprStmtFunctionCall::m_write(AsmCode& ac, PNodeExpression expr) {

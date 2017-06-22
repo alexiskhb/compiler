@@ -62,6 +62,11 @@ const std::map<Opcode, string> opcodes =
     {JZ,	"jz"},
     {JNZ,	"jnz"},
     {JMP,	"jmp"},
+    {JE,	"je"},
+    {JGE,	"jge"},
+    {JLE,	"jle"},
+    {JG,	"jg"},
+    {JL,	"jl"},
     {TESTQ,	"testq"},
     {NONE,	""}
 };
@@ -212,6 +217,10 @@ AsmCmd2::AsmCmd2(Opcode oc, Register a_register, AsmVar a_var) :
 
 AsmCmd2::AsmCmd2(Opcode oc, AsmOffs a_offs, Register a_register) :
     AsmCmd(oc), operand1(make_shared<AsmOffs>(a_offs)), operand2(make_shared<AsmOperandReg>(a_register))
+{}
+
+AsmCmd2::AsmCmd2(Opcode oc, int64_t a_value, AsmOffs a_offs) :
+    AsmCmd(oc), operand1(make_shared<AsmImmInt>(a_value)), operand2(make_shared<AsmOffs>(a_offs))
 {}
 
 AsmCmd2::AsmCmd2(Opcode oc, double a_var, Register a_register) :
