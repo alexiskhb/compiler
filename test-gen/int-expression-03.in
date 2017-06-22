@@ -5,4 +5,7 @@ begin
 	b := 20;
 	c := a*b + (a - b) + b div a;
 	writeln(a, ' ' , b, ' ' , c);
+	writeln(1234 mod 10);
+	writeln(13 mod 7);
+	writeln(-13 mod 7);
 end.

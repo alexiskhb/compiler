@@ -1,0 +1,11 @@
+var
+	a: integer = 10;
+	b: integer = 20;
+	c: float = 5.5;
+begin
+	writeln((@a)^);
+	writeln((@a + 8)^);
+	writeln((@b - 8)^);
+	writeln((@c)^);
+	writeln((@b + 8)^);
+end.

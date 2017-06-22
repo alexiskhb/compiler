@@ -1,0 +1,6 @@
+begin
+	writeln(1 shl 4);
+	writeln(16 shr 2);
+	writeln(10 xor 10);
+	writeln(1 xor 5);
+end.

@@ -1,0 +1,6 @@
+var
+	a: integer = 20;
+	p: ^integer = @a;
+begin
+	writeln(p^);
+end.
