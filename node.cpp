@@ -152,6 +152,7 @@ NodeUnaryOperator::NodeUnaryOperator(Token::Operator operation, PNodeExpression 
 NodeRecordAccess::NodeRecordAccess(PNodeExpression expr, PSymbolVariable var) :
     record(expr), field(var) {
 	m_exprtype = this->exprtype();
+	st = dynamic_pointer_cast<SymbolTypeRecord>(this->record->exprtype())->symtable;
 }
 
 NodeStmtAssign::NodeStmtAssign(PNodeExpression left, PNodeExpression right) :
@@ -498,19 +499,25 @@ void NodeExprStmtFunctionCall::generate_lvalue(AsmCode& ac) {
 }
 
 void NodeRecordAccess::generate_lvalue(AsmCode& ac) {
-
+	int64_t offs = this->st->offsetb(this->field->name);
+	m_gen_start_address(ac);
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{MOVQ, offs, RBX}
+	   << AsmCmd2{LEAQ, AsmOffs{RAX, RBX, 1}, RAX}
+	   << AsmCmd1{PUSHQ, RAX};
 }
 
 void NodeArrayAccess::generate_lvalue(AsmCode& ac) {
-	ac << AsmComment{"generate_lvalue"};
 	int64_t sz = dynamic_pointer_cast<SymbolTypeArray>(this->array->exprtype())->type->size();
+	ac << AsmComment{"generate_lvalue"};
 	ac << AsmComment{"gen_start_address"};
 	m_gen_start_address(ac);
 	ac << AsmComment{"gen_index"};
 	m_gen_index(ac);
 	ac << AsmCmd1{POPQ, RBX}
+	   << AsmCmd2{IMULQ, sz, RBX}
 	   << AsmCmd1{POPQ, RAX}
-	   << AsmCmd2{LEAQ, AsmOffs{RAX, RBX, sz}, RAX}
+	   << AsmCmd2{LEAQ, AsmOffs{RAX, RBX, 1}, RAX}
 	   << AsmCmd1{PUSHQ, RAX};
 	ac << AsmComment{"end generate_lvalue"};
 }
@@ -520,11 +527,25 @@ void NodeUnaryOperator::generate_lvalue(AsmCode& ac) {
 }
 
 void NodeArrayAccess::m_gen_start_address(AsmCode& ac) {
+	ac << AsmComment{"generate array start address"};
+	array->generate_lvalue(ac);
+	/*
 	if (dynamic_pointer_cast<NodeVariable>(array)) {
 		array->generate_lvalue(ac);
 	} else {
 		throw runtime_error("Internal error: unknown array identifier");
-	}
+	}*/
+}
+
+void NodeRecordAccess::m_gen_start_address(AsmCode& ac) {
+	ac << AsmComment{"generate record start address"};
+	record->generate_lvalue(ac);
+	/*
+	if (dynamic_pointer_cast<NodeVariable>(record)) {
+		record->generate_lvalue(ac);
+	} else {
+		throw runtime_error("Internal error: unknown record identifier");
+	}*/
 }
 
 void NodeArrayAccess::m_gen_index(AsmCode& ac) {
@@ -788,13 +809,19 @@ void NodeArrayAccess::generate(AsmCode& ac) {
 	m_gen_start_address(ac);
 	m_gen_index(ac);
 	ac << AsmCmd1{POPQ, RBX}
+	   << AsmCmd2{IMULQ, sz, RBX}
 	   << AsmCmd1{POPQ, RAX}
-	   << AsmCmd2{MOVQ, AsmOffs{RAX, RBX, sz}, RAX}
+	   << AsmCmd2{MOVQ, AsmOffs{RAX, RBX, 1}, RAX}
 	   << AsmCmd1{PUSHQ, RAX};
 }
 
 void NodeRecordAccess::generate(AsmCode& ac) {
-	ac << AsmComment{"record access"};
+	int64_t offs = this->st->offsetb(this->field->name);
+	m_gen_start_address(ac);
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{MOVQ, offs, RBX}
+	   << AsmCmd2{MOVQ, AsmOffs{RAX, RBX, 1}, RAX}
+	   << AsmCmd1{PUSHQ, RAX};
 }
 
 void NodeStmtAssign::generate(AsmCode& ac) {

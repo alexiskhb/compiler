@@ -158,7 +158,6 @@ public:
 private:
 	void m_gen_start_address(AsmCode&);
 	void m_gen_index(AsmCode&);
-	std::vector<int> m_dims;
 };
 
 class NodeRecordAccess : public NodeExpression {
@@ -170,6 +169,9 @@ public:
 	void generate_lvalue(AsmCode&) override;
 	PNodeExpression record;
 	PSymbolVariable field;
+	PSymTable st;
+private:
+	void m_gen_start_address(AsmCode&);
 };
 
 class NodeStmt : public Node {

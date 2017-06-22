@@ -15,6 +15,7 @@ main:
 	pushq	$415
 // generate_lvalue
 // gen_start_address
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 // gen_index
@@ -47,8 +48,9 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	leaq	(%rax,%rbx,8), %rax
+	leaq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // end generate_lvalue
 	popq	%rax
@@ -56,6 +58,7 @@ main:
 	pushq	$416
 // generate_lvalue
 // gen_start_address
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 // gen_index
@@ -88,12 +91,14 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	leaq	(%rax,%rbx,8), %rax
+	leaq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // end generate_lvalue
 	popq	%rax
 	popq	(%rax)
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
@@ -125,11 +130,13 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	movq	(%rax,%rbx,8), %rax
+	movq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // generate_lvalue
 // gen_start_address
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 // gen_index
@@ -162,12 +169,14 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	leaq	(%rax,%rbx,8), %rax
+	leaq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // end generate_lvalue
 	popq	%rax
 	popq	(%rax)
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
@@ -199,11 +208,13 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	movq	(%rax,%rbx,8), %rax
+	movq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // generate_lvalue
 // gen_start_address
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 // gen_index
@@ -236,12 +247,14 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	leaq	(%rax,%rbx,8), %rax
+	leaq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // end generate_lvalue
 	popq	%rax
 	popq	(%rax)
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
@@ -273,11 +286,13 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	movq	(%rax,%rbx,8), %rax
+	movq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // generate_lvalue
 // gen_start_address
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 // gen_index
@@ -310,12 +325,14 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	leaq	(%rax,%rbx,8), %rax
+	leaq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // end generate_lvalue
 	popq	%rax
 	popq	(%rax)
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
@@ -347,14 +364,16 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	movq	(%rax,%rbx,8), %rax
+	movq	(%rax,%rbx,1), %rax
 	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
@@ -386,14 +405,16 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	movq	(%rax,%rbx,8), %rax
+	movq	(%rax,%rbx,1), %rax
 	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
@@ -425,14 +446,16 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	movq	(%rax,%rbx,8), %rax
+	movq	(%rax,%rbx,1), %rax
 	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
@@ -464,8 +487,9 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	movq	(%rax,%rbx,8), %rax
+	movq	(%rax,%rbx,1), %rax
 	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
@@ -474,6 +498,7 @@ main:
 	call	printf
 // generate_lvalue
 // gen_start_address
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 // gen_index
@@ -506,12 +531,14 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	leaq	(%rax,%rbx,8), %rax
+	leaq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // end generate_lvalue
 // generate_lvalue
 // gen_start_address
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 // gen_index
@@ -544,8 +571,9 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	leaq	(%rax,%rbx,8), %rax
+	leaq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // end generate_lvalue
 	popq	%rbx
@@ -554,6 +582,7 @@ main:
 	pushq	%rax
 // generate_lvalue
 // gen_start_address
+// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 // gen_index
@@ -586,8 +615,9 @@ main:
 	addq	%rbx, %rax
 	pushq	%rax
 	popq	%rbx
+	imulq	$8, %rbx
 	popq	%rax
-	leaq	(%rax,%rbx,8), %rax
+	leaq	(%rax,%rbx,1), %rax
 	pushq	%rax
 // end generate_lvalue
 	popq	%rbx

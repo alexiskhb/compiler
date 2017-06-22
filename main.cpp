@@ -75,7 +75,7 @@ void generate(const string& filename, string output_filename) {
 }
 
 int main(int argc, char *argv[]) {
-//	generate("./test-gen/array-02.in", "");
+//	generate("./test-gen/arr-rec-arr.in", "");
 //	parse("./test-parse/not.in", true);
 //	return 0;
 	cxxopts::Options options(argv[0]);

@@ -211,9 +211,9 @@ uint SymbolTypePointer::size() const {
 uint SymbolTypeArray::size() const {
 	uint result = 1;
 	for (pair<int, int> p: this->bounds) {
-		result *= (p.second - p.first + 1)*this->type->size();
+		result *= p.second - p.first + 1;
 	}
-	return result;
+	return result*this->type->size();
 }
 
 uint SymbolTypeInt::size() const {
@@ -233,7 +233,7 @@ uint SymbolTypeString::size() const {
 }
 
 uint SymbolTypeRecord::size() const {
-	return symtable->bsize();
+	return symtable->sizeb();
 }
 
 void SymbolType::gen_write(AsmCode&) {}
@@ -254,7 +254,7 @@ void SymbolTypeFloat::gen_write(AsmCode& ac) {
 }
 
 void SymbolTypeRecord::gen_declare(AsmCode& ac, const std::string& a_name) {
-	ac << AsmComment{"record " + a_name};
+	ac.add_data(make_shared<AsmVarRecord>(a_name, this->symtable));
 }
 
 void SymbolTypeArray::gen_declare(AsmCode& ac, const std::string& a_name) {

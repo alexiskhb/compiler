@@ -282,6 +282,10 @@ AsmVarArray::AsmVarArray(const std::string& a_var, uint a_esize, const std::vect
     AsmVar(a_var), m_element_size(a_esize), m_bounds(bounds), m_size(_m_size())
 {}
 
+AsmVarRecord::AsmVarRecord(const std::string& a_var, PSymTable a_st) :
+    AsmVar(a_var), st(a_st), m_size(a_st->sizeb())
+{}
+
 uint AsmVarArray::_m_size() const {
 	uint result = 1;
 	for (const pair<int, int>& p: this->m_bounds) {
@@ -307,6 +311,11 @@ std::ostream& AsmVarFloat::output(std::ostream& os) {
 
 std::ostream& AsmVarArray::output(std::ostream& os) {
 	os << ".data\n\t" << name << ": .fill " << this->m_size*m_element_size << ",1,0\n";
+	return os;
+}
+
+std::ostream& AsmVarRecord::output(std::ostream& os) {
+	os << ".data\n\t" << name << ": .fill " << this->m_size << ",1,0\n";
 	return os;
 }
 

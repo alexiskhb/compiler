@@ -10,6 +10,7 @@
 #include <memory>
 #include <algorithm>
 #include <map>
+#include "symboltable.h"
 
 const std::string var_prefix = ".__";
 
@@ -181,14 +182,14 @@ public:
 class AsmVarString : public AsmVar {
 public:
 	AsmVarString(const std::string&, const std::string&);
-	std::ostream& output(std::ostream&);
+	std::ostream& output(std::ostream&) override;
 	std::string value;
 };
 
 class AsmVarInt : public AsmVar {
 public:
 	AsmVarInt(const std::string&, int64_t value = 0);
-	std::ostream& output(std::ostream&);
+	std::ostream& output(std::ostream&) override;
 private:
 	int64_t m_value;
 };
@@ -196,7 +197,7 @@ private:
 class AsmVarFloat : public AsmVar {
 public:
 	AsmVarFloat(const std::string&, double value = 0);
-	std::ostream& output(std::ostream&);
+	std::ostream& output(std::ostream&) override;
 private:
 	double m_value;
 };
@@ -204,13 +205,22 @@ private:
 class AsmVarArray : public AsmVar {
 public:
 	AsmVarArray(const std::string&, uint, const std::vector<std::pair<int, int>>&);
-	std::ostream& output(std::ostream&);
+	std::ostream& output(std::ostream&) override;
 private:
 	uint _m_size() const;
-	double m_value;
 	const uint m_element_size;                       // Do not
 	const std::vector<std::pair<int, int>> m_bounds; // change
 	const uint m_size;                               // order.
+};
+
+class AsmVarRecord : public AsmVar {
+public:
+	AsmVarRecord(const std::string&, PSymTable);
+	std::ostream& output(std::ostream&) override;
+private:
+	uint _m_size() const;
+	PSymTable st;
+	const uint m_size;
 };
 
 class AsmCode {

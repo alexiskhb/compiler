@@ -18,10 +18,19 @@ void SymTable::add(PSymbol symbol) {
 	}
 }
 
-uint SymTable::bsize() const {
+uint SymTable::sizeb() const {
 	uint result = 0;
 	for (PSymbol t: *this) {
 		result += t->size();
+	}
+	return result;
+}
+
+uint SymTable::offsetb(const std::string& s) {
+	uint result = 0, i = 0;
+	while ((*this)[i]->name != s) {
+		result += (*this)[i]->size();
+		++i;
 	}
 	return result;
 }
