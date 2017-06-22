@@ -155,6 +155,10 @@ public:
 	void generate_lvalue(AsmCode&) override;
 	PNodeExpression array;
 	PNodeActualParameters index;
+private:
+	void m_gen_start_address(AsmCode&);
+	void m_gen_index(AsmCode&);
+	std::vector<int> m_dims;
 };
 
 class NodeRecordAccess : public NodeExpression {

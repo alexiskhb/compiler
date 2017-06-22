@@ -209,9 +209,9 @@ uint SymbolTypePointer::size() const {
 }
 
 uint SymbolTypeArray::size() const {
-	uint result = 0;
+	uint result = 1;
 	for (pair<int, int> p: this->bounds) {
-		result += (p.second - p.first + 1)*this->type->size();
+		result *= (p.second - p.first + 1)*this->type->size();
 	}
 	return result;
 }

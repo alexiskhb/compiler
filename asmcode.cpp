@@ -96,6 +96,10 @@ AsmOperandOffset::AsmOperandOffset(Register reg) :
     base(make_shared<AsmOperandReg>(reg))
 {}
 
+AsmOperandOffset::AsmOperandOffset(Register a_base, Register a_index, int64_t a_scale) :
+    base(make_shared<AsmOperandReg>(a_base)), index(make_shared<AsmOperandReg>(a_index)), scale(make_shared<AsmRawInt>(a_scale))
+{}
+
 AsmRawInt::AsmRawInt(int64_t a_value) :
     value(a_value)
 {}
@@ -206,6 +210,10 @@ AsmCmd2::AsmCmd2(Opcode oc, Register a_register, AsmVar a_var) :
     AsmCmd(oc), operand1(make_shared<AsmOperandReg>(a_register)), operand2(make_shared<AsmVar>(a_var))
 {}
 
+AsmCmd2::AsmCmd2(Opcode oc, AsmOffs a_offs, Register a_register) :
+    AsmCmd(oc), operand1(make_shared<AsmOffs>(a_offs)), operand2(make_shared<AsmOperandReg>(a_register))
+{}
+
 AsmCmd2::AsmCmd2(Opcode oc, double a_var, Register a_register) :
     AsmCmd(oc), operand1(make_shared<AsmImmFloat>(a_var)), operand2(make_shared<AsmOperandReg>(a_register))
 {}
@@ -275,9 +283,9 @@ AsmVarArray::AsmVarArray(const std::string& a_var, uint a_esize, const std::vect
 {}
 
 uint AsmVarArray::_m_size() const {
-	uint result = 0;
+	uint result = 1;
 	for (const pair<int, int>& p: this->m_bounds) {
-		result += p.second - p.first + 1;
+		result *= p.second - p.first + 1;
 	}
 	return result;
 }
@@ -362,10 +370,10 @@ std::string AsmLabel::str() const {
 std::string AsmOperandOffset::str() const {
 	return (offset ? offset->str() : "") +
 	        "(" + base->str() +
-	        (index ? ("," + index->str() +
-	                 (scale ? ("," + scale->str()) : "")
-	                 )
-	        : ")");
+	            (index ? ("," + index->str() +
+	                     (scale ? ("," + scale->str()) : ""))
+	                     : "")
+	        + ")";
 }
 
 

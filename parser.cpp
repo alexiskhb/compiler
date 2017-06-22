@@ -628,6 +628,10 @@ PNodeTypeArray Parser::parse_type_array() {
 		require({Token::L_INTEGER}, "integer literal");
 		high = dynamic_pointer_cast<NodeInteger>(parse_factor())->value;
 		stype->bounds.push_back({low, high});
+		if (low > high) {
+			throw ParseError(Scanner::current_position(),
+			                 "high range limit < low range limit");
+		}
 	} while (scanner == Token::S_COMMA);
 	require({Token::OP_RIGHT_BRACKET}, "]");
 	++scanner;

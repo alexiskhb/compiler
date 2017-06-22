@@ -117,6 +117,7 @@ private:
 class AsmOperandOffset : public AsmOperand {
 public:
 	AsmOperandOffset(Register);
+	AsmOperandOffset(Register, Register, int64_t);
 	std::string str() const override;
 	PAsmOperand offset = nullptr;
 	PAsmOperandReg base = nullptr;
@@ -259,6 +260,7 @@ public:
 	AsmCmd2(Opcode, double, Register);
 	AsmCmd2(Opcode, int64_t, Register);
 	AsmCmd2(Opcode, Register, AsmVar);
+	AsmCmd2(Opcode, AsmOffs, Register);
 	std::ostream& output(std::ostream&) override;
 	PAsmOperand operand1;
 	PAsmOperand operand2;

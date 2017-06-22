@@ -389,6 +389,11 @@ PSymbolType NodeArrayAccess::exprtype() {
 		throw ParseError(Scanner::current_position(),
 		                 "left operand of [] must be an array");
 	}
+	if (this->index->arglist.size() != s->bounds.size()) {
+		throw ParseError(Scanner::current_position(),
+		                 "arg list size and n. of dimensions do not match: got "
+		                 + to_string(this->index->arglist.size()) + ", expected " + to_string(s->bounds.size()));
+	}
 	for (int i = 0; i < this->index->arglist.size(); i++) {
 		PNodeExpression expr = this->index->arglist[i];
 		if (expr->exprtype() != NodeInteger::type_sym_ptr) {
@@ -497,11 +502,65 @@ void NodeRecordAccess::generate_lvalue(AsmCode& ac) {
 }
 
 void NodeArrayAccess::generate_lvalue(AsmCode& ac) {
-
+	ac << AsmComment{"generate_lvalue"};
+	int64_t sz = dynamic_pointer_cast<SymbolTypeArray>(this->array->exprtype())->type->size();
+	ac << AsmComment{"gen_start_address"};
+	m_gen_start_address(ac);
+	ac << AsmComment{"gen_index"};
+	m_gen_index(ac);
+	ac << AsmCmd1{POPQ, RBX}
+	   << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{LEAQ, AsmOffs{RAX, RBX, sz}, RAX}
+	   << AsmCmd1{PUSHQ, RAX};
+	ac << AsmComment{"end generate_lvalue"};
 }
 
 void NodeUnaryOperator::generate_lvalue(AsmCode& ac) {
 	ac << AsmComment{":("};
+}
+
+void NodeArrayAccess::m_gen_start_address(AsmCode& ac) {
+	if (dynamic_pointer_cast<NodeVariable>(array)) {
+		array->generate_lvalue(ac);
+	} else {
+		throw runtime_error("Internal error: unknown array identifier");
+	}
+}
+
+void NodeArrayAccess::m_gen_index(AsmCode& ac) {
+	static vector<int64_t> dims;
+	static vector<int64_t> qr;
+	vector<PNodeExpression>& args = this->index->arglist;
+	vector<pair<int, int>>& bounds = dynamic_pointer_cast<SymbolTypeArray>(this->array->exprtype())->bounds;
+	dims.clear();
+	for (const pair<int, int>& p: bounds) {
+		dims.push_back(p.second - p.first + 1);
+	}
+	qr.resize(dims.size());
+	for (int i = 0; i < qr.size(); i++) {
+		qr[i] = 0;
+		for (int j = i + 1; j < qr.size(); j++) {
+			qr[i] += dims.at(j);
+		}
+	}
+	qr.back() = 1;
+	ac << AsmCmd1{PUSHQ, (int64_t)0};
+	for (int i = 0; i < qr.size(); i++) {
+		int64_t k = qr.at(i);
+		int64_t s = bounds.at(i).first;
+		args.at(i)->generate(ac);
+		/// args[i] - s
+		ac << AsmCmd2{MOVQ, s, RBX}
+		   << AsmCmd1{POPQ, RAX}
+		   << AsmCmd2{SUBQ, RBX, RAX}
+		/// (args[i] - s)*k
+		   << AsmCmd2{MOVQ, k, RBX}
+		   << AsmCmd2{IMULQ, RBX, RAX}
+		/// (args[i] - s)*k + prev
+		   << AsmCmd1{POPQ, RBX}
+		   << AsmCmd2{ADDQ, RBX, RAX}
+		   << AsmCmd1{PUSHQ, RAX};
+	}
 }
 
 void NodeVariable::declare(AsmCode& ac) {
@@ -725,7 +784,13 @@ void NodeUnaryOperator::generate(AsmCode& ac) {
 }
 
 void NodeArrayAccess::generate(AsmCode& ac) {
-	ac << AsmComment{"array access"};
+	int64_t sz = dynamic_pointer_cast<SymbolTypeArray>(this->array->exprtype())->type->size();
+	m_gen_start_address(ac);
+	m_gen_index(ac);
+	ac << AsmCmd1{POPQ, RBX}
+	   << AsmCmd1{POPQ, RAX}
+	   << AsmCmd2{MOVQ, AsmOffs{RAX, RBX, sz}, RAX}
+	   << AsmCmd1{PUSHQ, RAX};
 }
 
 void NodeRecordAccess::generate(AsmCode& ac) {
