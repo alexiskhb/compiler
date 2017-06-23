@@ -115,6 +115,7 @@ void AsmCode::push_buf(PAsmCmd cmd) {
 
 void AsmCode::append(const AsmCode& other) {
 	m_commands.insert(m_commands.end(), other.m_commands.begin(), other.m_commands.end());
+	m_header_labels.insert(m_header_labels.end(), other.m_header_labels.begin(), other.m_header_labels.end());
 }
 
 AsmCode& AsmCode::push_buf() {
@@ -129,6 +130,13 @@ void AsmCode::pop_buf() {
 
 AsmCode& AsmCode::buf() {
 	return *this->buffers.top();
+}
+
+AsmCode& AsmCode::proc_defs() {
+	if (!m_procedures) {
+		m_procedures = make_shared<AsmCode>();
+	}
+	return *m_procedures;
 }
 
 bool AsmCode::add_label(PAsmLabel a_label) {
@@ -156,7 +164,7 @@ std::ostream& AsmCode::output(std::ostream& os) {
 }
 
 std::ostream& AsmCmd::output(std::ostream& os) {
-	return os;
+	return os << '\t' << opcodes.at(this->m_opcode) << '\n';
 }
 
 AsmOperandReg::AsmOperandReg(Register a_register) :
@@ -236,23 +244,19 @@ AsmDirective::AsmDirective(Directive a_directive) :
 {}
 
 std::ostream& AsmCmd0::output(std::ostream& os) {
-	os << '\t' << opcodes.at(this->m_opcode) << "\n";
-	return os;
+	return os << '\t' << opcodes.at(this->m_opcode) << "\n";
 }
 
 std::ostream& AsmCmd1::output(std::ostream& os) {
-	os << '\t' << opcodes.at(this->m_opcode) << "\t" << operand->str() << '\n';
-	return os;
+	return os << '\t' << opcodes.at(this->m_opcode) << "\t" << operand->str() << '\n';
 }
 
 std::ostream& AsmCmd2::output(std::ostream& os) {
-	os << '\t' << opcodes.at(this->m_opcode) << "\t" << operand1->str() << ", " << operand2->str() << '\n';
-	return os;
+	return os << '\t' << opcodes.at(this->m_opcode) << "\t" << operand1->str() << ", " << operand2->str() << '\n';
 }
 
 std::ostream& AsmComment::output(std::ostream& os) {
-	os << "// " + m_string + "\n";
-	return os;
+	return os << "// " + m_string + "\n";
 }
 
 AsmCmd0::AsmCmd0(Opcode oc) :
@@ -304,48 +308,39 @@ uint AsmVarArray::_m_size() const {
 }
 
 std::ostream& AsmVarString::output(std::ostream& os) {
-	os << name << ":\n\t.string \"" << value << "\"\n";
-	return os;
+	return os << name << ":\n\t.string \"" << value << "\"\n";	
 }
 
 std::ostream& AsmVarInt::output(std::ostream& os) {
-	os << ".data\n\t" << name << ": .quad " << m_value << "\n";
-	return os;
+	return os << ".data\n\t" << name << ": .quad " << m_value << "\n";	
 }
 
 std::ostream& AsmVarFloat::output(std::ostream& os) {
-	os << ".data\n\t" << name << ": .double " << m_value << "\n";
-	return os;
+	return os << ".data\n\t" << name << ": .double " << m_value << "\n";	
 }
 
 std::ostream& AsmVarArray::output(std::ostream& os) {
-	os << ".data\n\t" << name << ": .fill " << this->m_size*m_element_size << ",1,0\n";
-	return os;
+	return os << ".data\n\t" << name << ": .fill " << this->m_size*m_element_size << ",1,0\n";	
 }
 
 std::ostream& AsmVarRecord::output(std::ostream& os) {
-	os << ".data\n\t" << name << ": .fill " << this->m_size << ",1,0\n";
-	return os;
+	return os << ".data\n\t" << name << ": .fill " << this->m_size << ",1,0\n";	
 }
 
 std::ostream& AsmLabel::output(std::ostream& os) {
-	os << name + ":\n";
-	return os;
+	return os << name + ":\n";	
 }
 
 std::ostream& AsmVar::output(std::ostream& os) {
-	os << name + ":\n";
-	return os;
+	return os << name + ":\n";	
 }
 
 std::ostream& AsmSyscall::output(std::ostream& os) {
-	os << name + " output syscall :\n";
-	return os;
+	return os << name + " output syscall :\n";	
 }
 
 std::ostream& AsmGlobl::output(std::ostream& os) {
-	os << "\t.globl " << name << '\n';
-	return os;
+	return os << "\t.globl " << name << '\n';	
 }
 
 AsmCode& operator<<(AsmCode& ac, PAsmCmd cmd) {

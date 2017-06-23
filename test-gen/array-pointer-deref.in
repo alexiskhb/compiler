@@ -1,0 +1,16 @@
+type
+	TPoint = record
+		x, y, z: float;
+	end;
+	TCurve = array [1..100] of TPoint;
+	PTCurve = ^TCurve;
+
+var
+	c: TCurve;
+	pc: PTCurve = @c;
+begin
+	c[10].z := 1/3;
+	pc^[10].y := 100/3;
+	writeln(pc^[10].z);
+	writeln(c[10].y);
+end.

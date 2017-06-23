@@ -37,6 +37,7 @@ public:
 	virtual PSymbolType exprtype();
 	virtual void write(AsmCode&);
 	virtual void generate_lvalue(AsmCode&);
+	virtual void generate_assign(AsmCode&);
 protected:
 	PSymbolType m_exprtype = nullptr;
 };
@@ -305,6 +306,7 @@ public:
 class NodeStmtProcedure : public NodeStmt {
 public:
 	std::string str() const override;
+	void generate(AsmCode&) override;
 	PNodeIdentifier name;
 	std::vector<PNodeFormalParameterSection> params;
 	std::vector<PNodeStmt> parts;
@@ -314,6 +316,7 @@ public:
 class NodeStmtFunction : public NodeStmtProcedure {
 public:
 	std::string str() const override;
+	void generate(AsmCode&) override;
 	PNodeType result_type;
 };
 
@@ -364,7 +367,7 @@ public:
 private:
 	PSymbolType m_proctype = nullptr;
 	enum Predefined {
-		NONE,
+		NONE = 0,
 		WRITE,
 		WRITELN,
 		ORD,

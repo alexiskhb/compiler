@@ -1,6 +1,13 @@
 procedure foo;
+forward;
+
+procedure foo;
 begin
+	writeln( 'call foo' );
+	exit;
+	writeln( 'error' );
 end;
 
 begin
+	foo;
 end.

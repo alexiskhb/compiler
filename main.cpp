@@ -1,5 +1,5 @@
 #include <iostream>
-#include <cxxopts.hpp>
+#include "cxxopts.hpp"
 #include <string>
 #include <vector>
 #include "scanner.h"
@@ -75,7 +75,7 @@ void generate(const string& filename, string output_filename) {
 }
 
 int main(int argc, char *argv[]) {
-//	generate("./test-gen/for.in", "");
+//	generate("./test-gen/procedure.in", "");
 //	parse("./test-parse/not.in", true);
 //	return 0;
 	cxxopts::Options options(argv[0]);

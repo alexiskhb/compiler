@@ -1,0 +1,8 @@
+var
+	r: record
+		a: array [0..3] of integer;
+	end;
+	d: integer;
+begin
+	d := (r.a)[0];
+end.

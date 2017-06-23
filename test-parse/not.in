@@ -1,0 +1,5 @@
+var
+	a: integer;
+begin
+	a := not (2 = 2);
+end.

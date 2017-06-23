@@ -15,6 +15,7 @@ string NodeString::str_prefix = ".str";
 string fmt_newline = "._fmt_newline_";
 
 std::stack<std::pair<AsmLabel, AsmLabel>> cycle_continue_break;
+std::stack<PSymbolProcedure> proc_func_exit;
 
 std::map<Token::Operator, std::string> operator_lst =
 {
@@ -442,6 +443,27 @@ bool NodeExprStmtFunctionCall::check_parameters(Pos pos) {
 		return true;
 	}
 	if (m_predefined) {
+		if (m_predefined == EXIT) {
+			PSymbolFunction f = dynamic_pointer_cast<SymbolFunction>(proc);
+			if (f && args && args->arglist.size() == 1 && f->type == args->arglist.at(0)->exprtype()) {
+				return true;
+			}
+			if (!f && (!args || args->arglist.size() == 0)) {
+				return true;
+			}
+			return false;
+		}
+		if ((m_predefined == WRITE || m_predefined == WRITELN) && args) {
+			for (PNodeExpression arg: args->arglist) {
+				if (!(arg->exprtype() == NodeString::char_type_sym_ptr ||
+				     arg->exprtype() == NodeString::str_type_sym_ptr  ||
+				     SymbolType::is_arithmetic({arg->exprtype()})))
+				{
+					throw ParseError(pos,
+					                 "can't write variables of type \"" + arg->exprtype()->name + "\"");
+				}
+			}
+		}
 		return true;
 	}
 	if (proc->params->size() != args->size()) {
@@ -488,6 +510,7 @@ void NodeString::generate(AsmCode& ac) {
 }
 
 void NodeVariable::generate(AsmCode& ac) {
+
 	ac << AsmCmd1{PUSHQ, AsmVar{this->identifier->name}};
 }
 
@@ -511,10 +534,7 @@ void NodeRecordAccess::generate_lvalue(AsmCode& ac) {
 
 void NodeArrayAccess::generate_lvalue(AsmCode& ac) {
 	int64_t sz = dynamic_pointer_cast<SymbolTypeArray>(this->array->exprtype())->type->size();
-	ac << AsmComment{"generate_lvalue"};
-	ac << AsmComment{"gen_start_address"};
 	m_gen_start_address(ac);
-	ac << AsmComment{"gen_index"};
 	m_gen_index(ac);
 	ac << AsmCmd1{POPQ, RBX}
 	   << AsmCmd2{IMULQ, sz, RBX}
@@ -525,29 +545,19 @@ void NodeArrayAccess::generate_lvalue(AsmCode& ac) {
 }
 
 void NodeUnaryOperator::generate_lvalue(AsmCode& ac) {
-	ac << AsmComment{":("};
+	/// operation == dereference
+	/// node == pointer
+	this->node->generate(ac);
 }
 
 void NodeArrayAccess::m_gen_start_address(AsmCode& ac) {
 	ac << AsmComment{"generate array start address"};
 	array->generate_lvalue(ac);
-	/*
-	if (dynamic_pointer_cast<NodeVariable>(array)) {
-		array->generate_lvalue(ac);
-	} else {
-		throw runtime_error("Internal error: unknown array identifier");
-	}*/
 }
 
 void NodeRecordAccess::m_gen_start_address(AsmCode& ac) {
 	ac << AsmComment{"generate record start address"};
 	record->generate_lvalue(ac);
-	/*
-	if (dynamic_pointer_cast<NodeVariable>(record)) {
-		record->generate_lvalue(ac);
-	} else {
-		throw runtime_error("Internal error: unknown record identifier");
-	}*/
 }
 
 void NodeArrayAccess::m_gen_index(AsmCode& ac) {
@@ -830,8 +840,7 @@ void NodeStmtAssign::generate(AsmCode& ac) {
 	right->generate(ac);
 	right->exprtype()->gen_typecast(ac, left->exprtype());
 	left->generate_lvalue(ac);
-	ac << AsmCmd1{POPQ, RAX}
-	   << AsmCmd1{POPQ, AsmOffs(RAX)};
+	left->generate_assign(ac);
 }
 
 void NodeStmtVar::generate(AsmCode& ac) {
@@ -860,7 +869,34 @@ void NodeExprStmtFunctionCall::generate(AsmCode& ac) {
 			ac << AsmCmd2{LEAQ, AsmVar{fmt_newline}, RDI}
 			   << AsmCmd1{CALL, PRINTF};
 		}
+		return;
 	}
+	if (m_predefined == EXIT) {
+		PSymbolFunction f = dynamic_pointer_cast<SymbolFunction>(proc_func_exit.top());
+		if (f) {
+			int64_t rsz = f->type->size();
+			int64_t psz = f->params ? f->params->size() : 0;
+			this->args->arglist.at(0)->generate(ac);
+/// TODO
+//			ac << AsmCmd2{MOVQ, }
+//			   << AsmCmd2{ADDQ, rsz + psz, RSP}
+//			   << AsmCmd2{SUBQ, (int64_t), RSP};
+		}
+		ac << AsmCmd1{POPQ, RBP}
+		   << AsmCmd{RET};
+		return;
+	}
+	if (this->args && this->args->arglist.size() > 0) {
+		vector<PNodeExpression>& args = this->args->arglist;
+		for (auto parg = args.rbegin(); parg != args.rend(); parg++) {
+			(*parg)->generate(ac);
+		}
+	}
+	PSymbolFunction f = dynamic_pointer_cast<SymbolFunction>(this->proc);
+	if (f) {
+		ac << AsmCmd2{SUBQ, (int64_t)f->type->size(), RSP};
+	}
+	ac << AsmCmd1{CALL, AsmVar{this->proc->name}};
 }
 
 void NodeStmtIf::generate(AsmCode& ac) {
@@ -947,6 +983,54 @@ void NodeStmtContinue::generate(AsmCode& ac) {
 	ac << AsmCmd1{JMP, cycle_continue_break.top().first};
 }
 
+void NodeStmtProcedure::generate(AsmCode& ac) {
+	if (this->parts.size() == 0) {
+		/// If forward
+		return;
+	}
+	proc_func_exit.push(this->symbol);
+	AsmCode& pd = ac.proc_defs();
+	pd << AsmLabel{var_prefix + this->name->name};
+	/// args were pushed before in reversed order
+	pd << AsmCmd1{PUSHQ, RBP}      /// prolog
+	   << AsmCmd2{MOVQ, RSP, RBP}  ///
+	   << AsmCmd2{SUBQ, (int64_t)(symbol->locals->size() - symbol->params->size()), RSP}; /// local variables (locals = locals + params)
+
+	for (PNodeStmt stmt: this->parts) {
+		if (dynamic_pointer_cast<NodeStmtBlock>(stmt)) {
+			stmt->generate(pd);
+		}
+	}
+
+	pd << AsmCmd1{POPQ, RBP} /// epilog
+	   << AsmCmd{RET};       ///
+	proc_func_exit.pop();
+}
+
+void NodeStmtFunction::generate(AsmCode& ac) {
+	if (this->parts.size() == 0) {
+		/// If forward
+		return;
+	}
+	proc_func_exit.push(this->symbol);
+	AsmCode& pd = ac.proc_defs();
+	pd << AsmLabel{var_prefix + this->name->name};
+	/// args were pushed before in reversed order
+	pd << AsmCmd1{PUSHQ, RBP}      /// prolog
+	   << AsmCmd2{MOVQ, RSP, RBP}  ///
+	   << AsmCmd2{SUBQ, (int64_t)(symbol->locals->size() - symbol->params->size()), RSP}; /// local variables (locals = locals + params)
+
+	for (PNodeStmt stmt: this->parts) {
+		if (dynamic_pointer_cast<NodeStmtBlock>(stmt)) {
+			stmt->generate(pd);
+		}
+	}
+
+	pd << AsmCmd1{POPQ, RBP} /// epilog
+	   << AsmCmd{RET};       ///
+	proc_func_exit.pop();
+}
+
 void NodeExprStmtFunctionCall::m_write(AsmCode& ac, PNodeExpression expr) {
 	expr->generate(ac);
 	expr->write(ac);
@@ -977,6 +1061,7 @@ void NodeProgram::generate(AsmCode& ac) {
 	ac << AsmCmd1{POPQ, RBP}
 	   << AsmCmd2{XORQ, RAX, RAX}
 	   << AsmCmd0{RET};
+	ac.append(ac.proc_defs());
 }
 
 void NodeExpression::write(AsmCode& ac) {
@@ -984,7 +1069,12 @@ void NodeExpression::write(AsmCode& ac) {
 }
 
 void NodeExpression::generate_lvalue(AsmCode& ac) {
-	ac << AsmComment("TODO: define assign for this kind of expr (or compiler must throw here)");
+	ac << AsmComment("TODO: define assign for this kind of expr; or compiler must throw here");
+}
+
+void NodeExpression::generate_assign(AsmCode& ac) {
+	ac << AsmCmd1{POPQ, RAX}
+	   << AsmCmd1{POPQ, AsmOffs(RAX)};
 }
 
 void NodeInteger::write(AsmCode& ac) {

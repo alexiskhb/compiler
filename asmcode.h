@@ -236,6 +236,7 @@ public:
 	AsmCode& push_buf();
 	void pop_buf();
 	AsmCode& buf();
+	AsmCode& proc_defs();
 	// true if the label was added before
 	bool add_label(PAsmLabel);
 	PAsmLabel add_data(PAsmLabel);
@@ -244,6 +245,7 @@ private:
 	std::vector<PAsmLabel> m_header_labels;
 	std::map<std::string, PAsmLabel> m_labels;
 	std::deque<PAsmCmd> m_commands;
+	PAsmCode m_procedures = nullptr;
 };
 
 class AsmCmd0 : public AsmCmd {

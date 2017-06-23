@@ -389,7 +389,8 @@ std::vector<PNodeStmt> Parser::parse_procedure_body() {
 			return body;
 		}
 		case Token::R_FORWARD: {
-			++scanner;			if (body.size() == 0) {
+			++scanner;
+			if (body.size() == 0) {
 				return body;
 			} else {
 				throw ParseError(scanner.top(), "invalid definition of forwarded function");
@@ -474,7 +475,7 @@ PNodeStmtProcedure Parser::parse_procedure() {
 	if (m_forwarded_funcs[procedure->name->name]) {
 		PSymbolProcedure p;
 		m_symtables[procedure->name->name] >> p;
-		if (p && make_shared<SymbolTypeProc>(p) == make_shared<SymbolTypeProc>(procedure->symbol)) {
+		if (p && make_shared<SymbolTypeProc>(p)->equals(make_shared<SymbolTypeProc>(procedure->symbol))) {
 
 		} else {
 			throw ParseError(scanner.top(), "invalid definition of forwarded procedure \"" + procedure->name->name + "\"");

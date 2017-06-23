@@ -1,0 +1,2 @@
+at (15:7): incompatible types : got "TPOINT2", expected "TPOINT":
+	a := b;

@@ -1,0 +1,11 @@
+type
+	TPoint = record
+		x, y: integer;
+	end;
+
+var
+	a, b: TPoint;
+
+begin
+	a := b;
+end.

@@ -1,0 +1,15 @@
+type
+	TPoint = record
+		x, y, z: float;
+	end;
+	PTPoint = ^TPoint;
+
+var
+	p: TPoint;
+	pp: PTPoint = @p;
+begin
+	p.z := 1/3;
+	pp^.y := 100/3;
+	writeln(pp^.z);
+	writeln(p.y);
+end.

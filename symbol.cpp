@@ -160,8 +160,7 @@ SymbolTypeRecord::SymbolTypeRecord(const string& a_name) :
 
 SymbolTypeProc::SymbolTypeProc() :
     SymbolType("$procedure_" + to_string(SymbolType::counter)) {
-	proc = make_shared<SymbolProcedure>("$procedure_" + to_string(SymbolType::counter));
-	++SymbolType::counter;
+	proc = make_shared<SymbolProcedure>("$procedure_" + to_string(++SymbolType::counter));
 }
 
 SymbolTypeProc::SymbolTypeProc(const string& a_name, PSymbolProcedure a_proc) :
@@ -174,8 +173,7 @@ SymbolTypeProc::SymbolTypeProc(PSymbolProcedure a_proc) :
 
 SymbolTypeFunc::SymbolTypeFunc() :
     SymbolType("$function_" + to_string(SymbolType::counter)) {
-	func = make_shared<SymbolFunction>("$function_" + to_string(SymbolType::counter));
-	++SymbolType::counter;
+	func = make_shared<SymbolFunction>("$function_" + to_string(++SymbolType::counter));
 }
 
 SymbolTypeFunc::SymbolTypeFunc(const string& a_name, PSymbolFunction a_func) :

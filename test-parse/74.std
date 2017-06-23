@@ -1,0 +1,2 @@
+at (8:17): can't write variables of type "VOID":
+   write(a, foo());

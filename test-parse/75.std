@@ -1,0 +1,2 @@
+at (5:13): can't write variables of type "$array_1":
+   write(a, b);

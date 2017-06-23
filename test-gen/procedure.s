@@ -6,12 +6,35 @@
 	.string "
 "
 	.globl main
+.__.str0:
+	.string "call foo"
+.__.str1:
+	.string "error"
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
 // start block
+	call	.__FOO
 // end block
 	popq	%rbp
 	xorq	%rax, %rax
+	ret
+.__FOO:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$0, %rsp
+// start block
+	leaq	.__.str0, %rdi
+	call	printf
+	leaq	.__._fmt_newline_, %rdi
+	call	printf
+	popq	%rbp
+	ret
+	leaq	.__.str1, %rdi
+	call	printf
+	leaq	.__._fmt_newline_, %rdi
+	call	printf
+// end block
+	popq	%rbp
 	ret
 
