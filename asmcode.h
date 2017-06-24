@@ -27,6 +27,13 @@ enum Register {
 	XMM1,
 	AL,
 	CL,
+	R9,
+	R10,
+	R11,
+	R12,
+	R13,
+	R14,
+	R15
 };
 
 enum Opcode {
@@ -35,9 +42,7 @@ enum Opcode {
 	PUSHQ,
 	POPQ,
 	ADDQ,
-	CALL,
 	LEAQ,
-	RET,
 	SUBQ,
 	IMULQ,
 	IDIVQ,
@@ -66,6 +71,8 @@ enum Opcode {
 	SHLQ,
 	SHRQ,
 	MOV,
+	CALL,
+	RET,
 	JZ,
 	JNZ,
 	JMP,
@@ -89,12 +96,24 @@ enum Syscall {
 class AsmOperand {
 public:
 	virtual std::string str() const = 0;
+	virtual bool equals(const AsmOperandReg&) const;
+	virtual bool equals(const AsmOperandImm&) const;
+	virtual bool equals(const AsmImmInt&) const;
+	virtual bool equals(const AsmImmFloat&) const;
+	virtual bool equals(const AsmOperandOffset&) const;
+	virtual bool equals(const AsmRawInt&) const;
+	virtual bool equals(const AsmOperandIndirect&) const;
+	virtual bool equals(const AsmLabel&) const;
+	virtual bool equals(PAsmOperand) const;
 };
 
 class AsmOperandReg : public AsmOperand {
 public:
 	AsmOperandReg(Register);
 	std::string str() const override;
+	Register reg() const;
+	bool equals(PAsmOperand) const override;
+	bool equals(const AsmOperandReg&) const override;
 private:
 	Register m_register;
 };
@@ -102,12 +121,17 @@ private:
 class AsmOperandImm : public AsmOperand {
 public:
 	std::string str() const override;
+	bool equals(PAsmOperand) const override;
+	bool equals(const AsmOperandImm&) const override;
 };
 
 class AsmImmInt : public AsmOperandImm {
 public:
 	AsmImmInt(int64_t);
 	std::string str() const override;
+	int64_t value() const;
+	bool equals(PAsmOperand) const override;
+	bool equals(const AsmImmInt&) const override;
 private:
 	int64_t m_value;
 };
@@ -116,6 +140,9 @@ class AsmImmFloat : public AsmOperandImm {
 public:
 	AsmImmFloat(double);
 	std::string str() const override;
+	double value() const;
+	bool equals(PAsmOperand) const override;
+	bool equals(const AsmImmFloat&) const override;
 private:
 	double m_value;
 };
@@ -125,6 +152,8 @@ public:
 	AsmOperandOffset(Register);
 	AsmOperandOffset(Register, Register, int64_t);
 	std::string str() const override;
+	bool equals(PAsmOperand) const override;
+	bool equals(const AsmOperandOffset&) const override;
 	PAsmOperand offset = nullptr;
 	PAsmOperandReg base = nullptr;
 	PAsmOperandReg index = nullptr;
@@ -136,12 +165,16 @@ class AsmRawInt : public AsmOperand {
 public:
 	AsmRawInt(int64_t);
 	std::string str() const override;
+	bool equals(PAsmOperand) const override;
+	bool equals(const AsmRawInt&) const override;
 	int64_t value;
 };
 
 class AsmOperandIndirect : public AsmOperand {
 public:
 	std::string str() const override;
+	bool equals(PAsmOperand) const override;
+	bool equals(const AsmOperandIndirect&) const override;
 };
 
 class AsmCmd {
@@ -149,6 +182,7 @@ public:
 	AsmCmd();
 	AsmCmd(Opcode);
 	virtual std::ostream& output(std::ostream&);
+	Opcode oc() const;
 protected:
 	Opcode m_opcode;
 };
@@ -159,6 +193,8 @@ public:
 	AsmLabel(const std::string&);
 	std::ostream& output(std::ostream&) override;
 	std::string str() const override;
+	bool equals(PAsmOperand) const override;
+	bool equals(const AsmLabel&) const override;
 	std::string name;
 protected:
 	static uint64_t counter;
@@ -242,6 +278,7 @@ public:
 	PAsmLabel add_data(PAsmLabel);
 	std::stack<PAsmCode> buffers;
 private:
+	friend class Optimizer;
 	std::vector<PAsmLabel> m_header_labels;
 	std::map<std::string, PAsmLabel> m_labels;
 	std::deque<PAsmCmd> m_commands;
@@ -271,6 +308,7 @@ public:
 
 class AsmCmd2 : public AsmCmd {
 public:
+	AsmCmd2(Opcode, PAsmOperand, PAsmOperand);
 	AsmCmd2(Opcode, Register, Register);
 	AsmCmd2(Opcode, PAsmVar, Register);
 	AsmCmd2(Opcode, AsmVar, Register);
@@ -307,6 +345,15 @@ AsmCode& operator<<(AsmCode& ac, TAsmCmd cmd) {
 	return ac;
 }
 
+bool operator==(PAsmOperand, PAsmOperand);
+bool operator!=(PAsmOperand, PAsmOperand);
+bool operator==(PAsmOperand, Register);
+bool operator!=(PAsmOperand, Register);
+
+bool operator==(PAsmCmd, Opcode);
+bool operator==(PAsmCmd0, Opcode);
+bool operator==(PAsmCmd1, Opcode);
+bool operator==(PAsmCmd2, Opcode);
 
 #endif // ASMCODE_H
 

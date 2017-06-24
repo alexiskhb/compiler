@@ -17,36 +17,43 @@ const std::map<Register, string> registers =
     {XMM1,	"xmm1"},
     {AL,	"al"},
     {CL,	"cl"},
+    {R9,	"r9"},
+	{R10,	"r10"},
+	{R11,	"r11"},
+	{R12,	"r12"},
+	{R13,	"r13"},
+	{R14,	"r14"},
+	{R15,	"r15"},
 };
 const string reg_prefix = "%";
 const string imm_prefix = "$";
 const string label_prefix = "..L";
 const std::map<Opcode, string> opcodes =
 {
-	{MOVQ,	"movq"},
-	{XORQ,	"xorq"},
-	{PUSHQ,	"pushq"},
-	{POPQ,	"popq"},
-	{CALL,	"call"},
-	{LEAQ,	"leaq"},
-	{RET,	"ret"},
-	{ADDQ,	"addq"},
-	{SUBQ,	"subq"},
-	{IMULQ,	"imulq"},
-	{IDIVQ,	"idivq"},
+    {MOVQ,	"movq"},
+    {XORQ,	"xorq"},
+    {PUSHQ,	"pushq"},
+    {POPQ,	"popq"},
+    {CALL,	"call"},
+    {LEAQ,	"leaq"},
+    {RET,	"ret"},
+    {ADDQ,	"addq"},
+    {SUBQ,	"subq"},
+    {IMULQ,	"imulq"},
+    {IDIVQ,	"idivq"},
     {CQO,	"cqo"},
     {CVTSI2SD,	"cvtsi2sd"},
     {CVTSD2SI,	"cvtsd2si"},
     {SETE,	"sete"},
-	{SETNE,	"setne"},
-	{SETL,	"setl"},
-	{SETG,	"setg"},
-	{SETGE,	"setge"},
-	{SETLE,	"setle"},
-	{SETA,	"seta"},
-	{SETB,	"setb"},
-	{SETAE,	"setae"},
-	{SETBE,	"setbe"},
+    {SETNE,	"setne"},
+    {SETL,	"setl"},
+    {SETG,	"setg"},
+    {SETGE,	"setge"},
+    {SETLE,	"setle"},
+    {SETA,	"seta"},
+    {SETB,	"setb"},
+    {SETAE,	"setae"},
+    {SETBE,	"setbe"},
     {CMPQ,	"cmpq"},
     {ADDSD,	"addsd"},
     {SUBSD,	"subsd"},
@@ -84,6 +91,10 @@ AsmCmd::AsmCmd() :
 AsmCmd::AsmCmd(Opcode oc) :
     m_opcode(oc)
 {}
+
+Opcode AsmCmd::oc() const {
+	return m_opcode;
+}
 
 AsmComment::AsmComment(const std::string& str) :
     AsmCmd(NONE), m_string(str)
@@ -207,6 +218,10 @@ AsmCmd1::AsmCmd1(Opcode oc, double a_value) :
     AsmCmd(oc), operand(make_shared<AsmImmFloat>(a_value))
 {}
 
+AsmCmd2::AsmCmd2(Opcode oc, PAsmOperand a_op1, PAsmOperand a_op2) :
+	AsmCmd(oc), operand1(a_op1), operand2(a_op2)
+{}
+
 AsmCmd2::AsmCmd2(Opcode oc, Register a_register_1, Register a_register_2) :
     AsmCmd(oc), operand1(make_shared<AsmOperandReg>(a_register_1)), operand2(make_shared<AsmOperandReg>(a_register_2))
 {}
@@ -308,39 +323,39 @@ uint AsmVarArray::_m_size() const {
 }
 
 std::ostream& AsmVarString::output(std::ostream& os) {
-	return os << name << ":\n\t.string \"" << value << "\"\n";	
+	return os << name << ":\n\t.string \"" << value << "\"\n";
 }
 
 std::ostream& AsmVarInt::output(std::ostream& os) {
-	return os << ".data\n\t" << name << ": .quad " << m_value << "\n";	
+	return os << ".data\n\t" << name << ": .quad " << m_value << "\n";
 }
 
 std::ostream& AsmVarFloat::output(std::ostream& os) {
-	return os << ".data\n\t" << name << ": .double " << m_value << "\n";	
+	return os << ".data\n\t" << name << ": .double " << m_value << "\n";
 }
 
 std::ostream& AsmVarArray::output(std::ostream& os) {
-	return os << ".data\n\t" << name << ": .fill " << this->m_size*m_element_size << ",1,0\n";	
+	return os << ".data\n\t" << name << ": .fill " << this->m_size*m_element_size << ",1,0\n";
 }
 
 std::ostream& AsmVarRecord::output(std::ostream& os) {
-	return os << ".data\n\t" << name << ": .fill " << this->m_size << ",1,0\n";	
+	return os << ".data\n\t" << name << ": .fill " << this->m_size << ",1,0\n";
 }
 
 std::ostream& AsmLabel::output(std::ostream& os) {
-	return os << name + ":\n";	
+	return os << name + ":\n";
 }
 
 std::ostream& AsmVar::output(std::ostream& os) {
-	return os << name + ":\n";	
+	return os << name + ":\n";
 }
 
 std::ostream& AsmSyscall::output(std::ostream& os) {
-	return os << name + " output syscall :\n";	
+	return os << name + " output syscall :\n";
 }
 
 std::ostream& AsmGlobl::output(std::ostream& os) {
-	return os << "\t.globl " << name << '\n';	
+	return os << "\t.globl " << name << '\n';
 }
 
 AsmCode& operator<<(AsmCode& ac, PAsmCmd cmd) {
@@ -353,7 +368,7 @@ std::string AsmOperandReg::str() const {
 }
 
 std::string AsmOperandImm::str() const {
-    return "";
+	return "";
 }
 
 std::string AsmVar::str() const {
@@ -365,7 +380,7 @@ std::string AsmSyscall::str() const {
 }
 
 std::string AsmImmInt::str() const {
-    return imm_prefix + to_string(m_value);
+	return imm_prefix + to_string(m_value);
 }
 
 std::string AsmImmFloat::str() const {
@@ -380,6 +395,18 @@ std::string AsmLabel::str() const {
 	return name;
 }
 
+Register AsmOperandReg::reg() const {
+	return m_register;
+}
+
+int64_t AsmImmInt::value() const {
+	return m_value;
+}
+
+double AsmImmFloat::value() const {
+	return m_value;
+}
+
 std::string AsmOperandOffset::str() const {
 	return (offset ? offset->str() : "") +
 	        "(" + base->str() +
@@ -390,7 +417,114 @@ std::string AsmOperandOffset::str() const {
 }
 
 
+bool AsmOperandReg      ::equals(PAsmOperand oprd) const {return oprd->equals(*this);}
+bool AsmOperandImm      ::equals(PAsmOperand oprd) const {return oprd->equals(*this);}
+bool AsmImmInt          ::equals(PAsmOperand oprd) const {return oprd->equals(*this);}
+bool AsmImmFloat        ::equals(PAsmOperand oprd) const {return oprd->equals(*this);}
+bool AsmOperandOffset   ::equals(PAsmOperand oprd) const {return oprd->equals(*this);}
+bool AsmRawInt          ::equals(PAsmOperand oprd) const {return oprd->equals(*this);}
+bool AsmOperandIndirect ::equals(PAsmOperand oprd) const {return oprd->equals(*this);}
+bool AsmLabel           ::equals(PAsmOperand oprd) const {return oprd->equals(*this);}
 
+bool AsmOperand::equals(const AsmOperandReg&)      const {return false;}
+bool AsmOperand::equals(const AsmOperandImm&)      const {return false;}
+bool AsmOperand::equals(const AsmImmInt&)          const {return false;}
+bool AsmOperand::equals(const AsmImmFloat&)        const {return false;}
+bool AsmOperand::equals(const AsmOperandOffset&)   const {return false;}
+bool AsmOperand::equals(const AsmRawInt&)          const {return false;}
+bool AsmOperand::equals(const AsmOperandIndirect&) const {return false;}
+bool AsmOperand::equals(const AsmLabel&)           const {return false;}
+bool AsmOperand::equals(PAsmOperand)               const {return false;}
+
+bool AsmOperandReg::equals(const AsmOperandReg& oprd) const {
+	return this->m_register == oprd.m_register;
+}
+
+bool AsmOperandImm::equals(const AsmOperandImm& oprd) const {
+	return false;
+}
+
+bool AsmImmInt::equals(const AsmImmInt& oprd) const {
+	return this->m_value == oprd.m_value;
+}
+
+bool AsmImmFloat::equals(const AsmImmFloat& oprd) const {
+	return this->m_value == oprd.m_value;
+}
+
+bool AsmOperandOffset::equals(const AsmOperandOffset& oprd) const {
+	return
+			this->base->equals(oprd.base) &&
+			((!this->index  && !oprd.index ) || (this->index  && oprd.index && this->index->equals(oprd.index))) &&
+			((!this->scale  && !oprd.scale ) || (this->scale  && oprd.scale && this->scale->equals(oprd.scale))) &&
+			((!this->offset && !oprd.offset) || (this->offset && oprd.offset && this->offset->equals(oprd.offset)));
+}
+
+bool AsmRawInt::equals(const AsmRawInt& oprd) const {
+	return this->value == oprd.value;
+}
+
+bool AsmOperandIndirect::equals(const AsmOperandIndirect& oprd) const {
+	return false;
+}
+
+bool AsmLabel::equals(const AsmLabel& oprd) const {
+	return this->name == oprd.name;
+}
+
+bool operator==(PAsmOperand opr1, PAsmOperand opr2) {
+	return opr1->equals(opr2);
+}
+
+bool operator!=(PAsmOperand opr1, PAsmOperand opr2) {
+	return !(opr1->equals(opr2));
+}
+
+bool operator==(PAsmOperand opr, Register reg) {
+	PAsmOperandReg r = dynamic_pointer_cast<AsmOperandReg>(opr);
+	return r && r->reg() == reg;
+}
+
+bool operator!=(PAsmOperand opr, Register reg) {
+	return !(opr == reg);
+}
+
+bool operator==(PAsmCmd cmd, Opcode opc) {
+	PAsmCmd1 acd1 = dynamic_pointer_cast<AsmCmd1>(cmd);
+	if (acd1) {
+		if (acd1 == opc) {
+			return true;
+		}
+		return false;
+	}
+	PAsmCmd2 acd2 = dynamic_pointer_cast<AsmCmd2>(cmd);
+	if (acd2) {
+		if (acd2 == opc) {
+			return true;
+		}
+		return false;
+	}
+	PAsmCmd0 acd0 = dynamic_pointer_cast<AsmCmd0>(cmd);
+	if (acd0) {
+		if (acd0 == opc) {
+			return true;
+		}
+		return false;
+	}
+	return false;
+}
+
+bool operator==(PAsmCmd0 op, Opcode opc) {
+	return op->oc() == opc;
+}
+
+bool operator==(PAsmCmd1 op, Opcode opc) {
+	return op->oc() == opc;
+}
+
+bool operator==(PAsmCmd2 op, Opcode opc) {
+	return op->oc() == opc;
+}
 
 
 

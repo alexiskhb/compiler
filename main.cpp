@@ -51,7 +51,7 @@ void parse(const string& filename, const bool strict) {
 	parser.output_syntax_tree(cout);
 }
 
-void generate(const string& filename, string output_filename) {
+void generate(const string& filename, bool optimize, string output_filename, bool output_opt_stats) {
 	Generator generator(filename);
 	if (!generator.is_open()) {
 		std::cerr << "Could not open " << filename << endl;
@@ -66,7 +66,7 @@ void generate(const string& filename, string output_filename) {
 		return;
 	}
 	try {
-		generator.generate(output);
+		generator.generate(output, optimize, output_opt_stats);
 	} catch (ParseError pe) {
 		cerr << pe.msg() << ":\n";
 		cerr << generator.get_line(pe.pos().line) << endl;
@@ -75,11 +75,11 @@ void generate(const string& filename, string output_filename) {
 }
 
 int main(int argc, char *argv[]) {
-//	generate("./test-gen/procedure.in", "");
+//	generate("./test-gen/array-01.in", true, "", false);
 //	parse("./test-parse/not.in", true);
 //	return 0;
 	cxxopts::Options options(argv[0]);
-	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false, mode_generate = false;
+	bool mode_lexical = false, mode_parse_simple = false, mode_parse = false, mode_generate = false, optimize = false;
 	string asm_output_filename;
 	options.add_options()
 			("l,lexical", "lexical analysis", cxxopts::value<bool>(mode_lexical))
@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
 			("p,parse", "parse", cxxopts::value<bool>(mode_parse))
 	        ("S,generate", "generate", cxxopts::value<bool>(mode_generate))
 	        ("o,output", "asm output filename", cxxopts::value<string>(asm_output_filename))
+	        ("O,optimize", "optimize", cxxopts::value<bool>(optimize))
 			("positional", "", cxxopts::value<vector<string>>());
 	options.parse_positional({"", "", "positional"});
 	options.parse(argc, argv);
@@ -108,7 +109,7 @@ int main(int argc, char *argv[]) {
 		parse(files[0], true);
 	}
 	if (mode_generate) {
-		generate(files[0], asm_output_filename);
+		generate(files[0], optimize, asm_output_filename, true);
 	}
 	return compile_result;
 }

@@ -510,7 +510,6 @@ void NodeString::generate(AsmCode& ac) {
 }
 
 void NodeVariable::generate(AsmCode& ac) {
-
 	ac << AsmCmd1{PUSHQ, AsmVar{this->identifier->name}};
 }
 
@@ -527,8 +526,8 @@ void NodeRecordAccess::generate_lvalue(AsmCode& ac) {
 	int64_t offs = this->st->offsetb(this->field->name);
 	m_gen_start_address(ac);
 	ac << AsmCmd1{POPQ, RAX}
-	   << AsmCmd2{MOVQ, offs, RBX}
-	   << AsmCmd2{LEAQ, AsmOffs{RAX, RBX, 1}, RAX}
+	   << AsmCmd2{MOVQ, offs, RCX}
+	   << AsmCmd2{LEAQ, AsmOffs{RAX, RCX, 1}, RAX}
 	   << AsmCmd1{PUSHQ, RAX};
 }
 
@@ -536,12 +535,12 @@ void NodeArrayAccess::generate_lvalue(AsmCode& ac) {
 	int64_t sz = dynamic_pointer_cast<SymbolTypeArray>(this->array->exprtype())->type->size();
 	m_gen_start_address(ac);
 	m_gen_index(ac);
-	ac << AsmCmd1{POPQ, RBX}
-	   << AsmCmd2{IMULQ, sz, RBX}
+	ac << AsmCmd1{POPQ, RCX}
+	   << AsmCmd2{IMULQ, sz, RCX}
 	   << AsmCmd1{POPQ, RAX}
-	   << AsmCmd2{LEAQ, AsmOffs{RAX, RBX, 1}, RAX}
+	   << AsmCmd2{LEAQ, AsmOffs{RAX, RCX, 1}, RAX}
 	   << AsmCmd1{PUSHQ, RAX};
-	ac << AsmComment{"end generate_lvalue"};
+//	ac << AsmComment{"end generate_lvalue"};
 }
 
 void NodeUnaryOperator::generate_lvalue(AsmCode& ac) {
@@ -551,12 +550,12 @@ void NodeUnaryOperator::generate_lvalue(AsmCode& ac) {
 }
 
 void NodeArrayAccess::m_gen_start_address(AsmCode& ac) {
-	ac << AsmComment{"generate array start address"};
+//	ac << AsmComment{"generate array start address"};
 	array->generate_lvalue(ac);
 }
 
 void NodeRecordAccess::m_gen_start_address(AsmCode& ac) {
-	ac << AsmComment{"generate record start address"};
+//	ac << AsmComment{"generate record start address"};
 	record->generate_lvalue(ac);
 }
 
@@ -583,15 +582,15 @@ void NodeArrayAccess::m_gen_index(AsmCode& ac) {
 		int64_t s = bounds.at(i).first;
 		args.at(i)->generate(ac);
 		/// args[i] - s
-		ac << AsmCmd2{MOVQ, s, RBX}
+		ac << AsmCmd2{MOVQ, s, R9}
 		   << AsmCmd1{POPQ, RAX}
-		   << AsmCmd2{SUBQ, RBX, RAX}
+		   << AsmCmd2{SUBQ, R9, RAX}
 		/// (args[i] - s)*k
-		   << AsmCmd2{MOVQ, k, RBX}
-		   << AsmCmd2{IMULQ, RBX, RAX}
+		   << AsmCmd2{MOVQ, k, R9}
+		   << AsmCmd2{IMULQ, R9, RAX}
 		/// (args[i] - s)*k + prev
-		   << AsmCmd1{POPQ, RBX}
-		   << AsmCmd2{ADDQ, RBX, RAX}
+		   << AsmCmd1{POPQ, R9}
+		   << AsmCmd2{ADDQ, R9, RAX}
 		   << AsmCmd1{PUSHQ, RAX};
 	}
 }
@@ -605,25 +604,25 @@ void NodeBinaryOperator::m_gen_arithm(AsmCode& ac) {
 	left->exprtype()->gen_typecast(ac, this->exprtype());
 	right->generate(ac);
 	right->exprtype()->gen_typecast(ac, this->exprtype());
-	ac << AsmCmd1{POPQ, RBX}
+	ac << AsmCmd1{POPQ, R10}
 	   << AsmCmd1{POPQ, RAX};
 	if (is_integer_type(this->exprtype())) {
 	/// RAX <op> RBX
 		switch (this->operation) {
 		case Token::OP_PLUS:
-			ac << AsmCmd2{ADDQ, RBX, RAX}; break;
+			ac << AsmCmd2{ADDQ, R10, RAX}; break;
 		case Token::OP_MINUS:
-			ac << AsmCmd2{SUBQ, RBX, RAX}; break;
+			ac << AsmCmd2{SUBQ, R10, RAX}; break;
 		case Token::OP_MULT:
-			ac << AsmCmd2{IMULQ, RBX, RAX}; break;
+			ac << AsmCmd2{IMULQ, R10, RAX}; break;
 		case Token::OP_DIV:
 			ac << AsmCmd0{CQO}
-			   << AsmCmd1{IDIVQ, RBX}; break;
+			   << AsmCmd1{IDIVQ, R10}; break;
 		default:;
 		}
 	} else if (this->exprtype() == NodeFloat::type_sym_ptr) {
 		ac << AsmCmd2{MOVQ, RAX, XMM0}
-		   << AsmCmd2{MOVQ, RBX, XMM1};
+		   << AsmCmd2{MOVQ, R10, XMM1};
 		switch (this->operation){
 		case Token::OP_PLUS:
 			ac << AsmCmd2{ADDSD, XMM1, XMM0}; break;
@@ -641,19 +640,19 @@ void NodeBinaryOperator::m_gen_arithm(AsmCode& ac) {
 }
 
 void NodeBinaryOperator::m_gen_cmp(AsmCode& ac) {
-	/// RAX <op> RBX
+	/// RAX <op> R11
 	bool is_float = left->exprtype() == NodeFloat::type_sym_ptr || right->exprtype() == NodeFloat::type_sym_ptr;
 	if (is_float) {
 		left->generate(ac);
 		left->exprtype()->gen_typecast(ac, NodeFloat::type_sym_ptr);
 		right->generate(ac);
 		right->exprtype()->gen_typecast(ac, NodeFloat::type_sym_ptr);
-		ac << AsmCmd1{POPQ, RBX}
+		ac << AsmCmd1{POPQ, R11}
 		   << AsmCmd1{POPQ, RAX}
 		   << AsmCmd2{MOVQ, RAX, XMM0}
-		   << AsmCmd2{MOVQ, RBX, XMM1}
-		   << AsmCmd2{COMISD, XMM1, XMM0}
-		   << AsmCmd2{MOVQ, (int64_t)0, RAX};
+		   << AsmCmd2{MOVQ, R11, XMM1}
+		   << AsmCmd2{XORQ, RAX, RAX}
+		   << AsmCmd2{COMISD, XMM1, XMM0};
 		switch (this->operation) {
 		case Token::OP_EQUAL:
 			ac << AsmCmd1{SETE, AL}; break;
@@ -672,10 +671,10 @@ void NodeBinaryOperator::m_gen_cmp(AsmCode& ac) {
 	} else {
 		left->generate(ac);
 		right->generate(ac);
-		ac << AsmCmd1{POPQ, RBX}
-		   << AsmCmd1{POPQ, RAX}
-		   << AsmCmd2{CMPQ, RBX, RAX}
-		   << AsmCmd2{MOVQ, (int64_t)0, RAX};
+		ac << AsmCmd1{POPQ, R11}
+		   << AsmCmd1{POPQ, RDX}
+		   << AsmCmd2{XORQ, RAX, RAX}
+		   << AsmCmd2{CMPQ, R11, RDX};
 		switch (this->operation) {
 		case Token::OP_EQUAL:
 			ac << AsmCmd1{SETE, AL}; break;
@@ -820,20 +819,20 @@ void NodeArrayAccess::generate(AsmCode& ac) {
 	int64_t sz = dynamic_pointer_cast<SymbolTypeArray>(this->array->exprtype())->type->size();
 	m_gen_start_address(ac);
 	m_gen_index(ac);
-	ac << AsmCmd1{POPQ, RBX}
-	   << AsmCmd2{IMULQ, sz, RBX}
-	   << AsmCmd1{POPQ, RAX}
-	   << AsmCmd2{MOVQ, AsmOffs{RAX, RBX, 1}, RAX}
-	   << AsmCmd1{PUSHQ, RAX};
+	ac << AsmCmd1{POPQ, R12}
+	   << AsmCmd2{IMULQ, sz, R12}
+	   << AsmCmd1{POPQ, R10}
+	   << AsmCmd2{MOVQ, AsmOffs{R10, R12, 1}, R10}
+	   << AsmCmd1{PUSHQ, R10};
 }
 
 void NodeRecordAccess::generate(AsmCode& ac) {
 	int64_t offs = this->st->offsetb(this->field->name);
 	m_gen_start_address(ac);
-	ac << AsmCmd1{POPQ, RAX}
-	   << AsmCmd2{MOVQ, offs, RBX}
-	   << AsmCmd2{MOVQ, AsmOffs{RAX, RBX, 1}, RAX}
-	   << AsmCmd1{PUSHQ, RAX};
+	ac << AsmCmd1{POPQ, R11}
+	   << AsmCmd2{MOVQ, offs, R13}
+	   << AsmCmd2{MOVQ, AsmOffs{R11, R13, 1}, R11}
+	   << AsmCmd1{PUSHQ, R11};
 }
 
 void NodeStmtAssign::generate(AsmCode& ac) {
@@ -883,7 +882,7 @@ void NodeExprStmtFunctionCall::generate(AsmCode& ac) {
 //			   << AsmCmd2{SUBQ, (int64_t), RSP};
 		}
 		ac << AsmCmd1{POPQ, RBP}
-		   << AsmCmd{RET};
+		   << AsmCmd0{RET};
 		return;
 	}
 	if (this->args && this->args->arglist.size() > 0) {
@@ -947,13 +946,13 @@ void NodeStmtFor::generate(AsmCode& ac) {
 	/// init
 	this->low->generate(ac);
 	this->iter_var->generate_lvalue(ac);
-	ac << AsmCmd1{POPQ, RAX}
-	   << AsmCmd1{POPQ, AsmOffs{RAX}};
-	/// pre-check
 	this->high->generate(ac);
-	ac << AsmCmd2{MOVQ, AsmOffs{RAX}, RBX}
-	   << AsmCmd1{POPQ, RAX}
-	   << AsmCmd2{CMPQ, RBX, RAX}
+	ac << AsmCmd1{POPQ, R13}
+	   << AsmCmd1{POPQ, R14}
+	   << AsmCmd1{POPQ, AsmOffs{R14}};
+	/// pre-check
+	ac << AsmCmd2{MOVQ, AsmOffs{R14}, R14}
+	   << AsmCmd2{CMPQ, R14, R13}
 	   << AsmCmd1{(is_inc ? JL : JG), _end};
 	/// statement
 	ac << _body;
@@ -962,14 +961,14 @@ void NodeStmtFor::generate(AsmCode& ac) {
 	ac << _continue;
 	this->high->generate(ac);
 	this->iter_var->generate(ac);
-	ac << AsmCmd1{POPQ, RAX}
-	   << AsmCmd1{POPQ, RBX}
-	   << AsmCmd2{CMPQ, RAX, RBX}
+	ac << AsmCmd1{POPQ, R13}
+	   << AsmCmd1{POPQ, R14}
+	   << AsmCmd2{CMPQ, R13, R14}
 	   << AsmCmd1{(is_inc ? JLE : JGE), _end};
 	/// inc or dec
 	this->iter_var->generate_lvalue(ac);
-	ac << AsmCmd1{POPQ, RAX}
-	   << AsmCmd2{(is_inc ? ADDQ : SUBQ), (int64_t)1, AsmOffs{RAX}}
+	ac << AsmCmd1{POPQ, R12}
+	   << AsmCmd2{(is_inc ? ADDQ : SUBQ), (int64_t)1, AsmOffs{R12}}
 	   << AsmCmd1{JMP, _body}
 	   << _end;
 	cycle_continue_break.pop();
@@ -1003,7 +1002,7 @@ void NodeStmtProcedure::generate(AsmCode& ac) {
 	}
 
 	pd << AsmCmd1{POPQ, RBP} /// epilog
-	   << AsmCmd{RET};       ///
+	   << AsmCmd0{RET};       ///
 	proc_func_exit.pop();
 }
 
@@ -1027,7 +1026,7 @@ void NodeStmtFunction::generate(AsmCode& ac) {
 	}
 
 	pd << AsmCmd1{POPQ, RBP} /// epilog
-	   << AsmCmd{RET};       ///
+	   << AsmCmd0{RET};       ///
 	proc_func_exit.pop();
 }
 
@@ -1037,11 +1036,11 @@ void NodeExprStmtFunctionCall::m_write(AsmCode& ac, PNodeExpression expr) {
 }
 
 void NodeStmtBlock::generate(AsmCode& ac) {
-	ac << AsmComment{"start block"};
+//	ac << AsmComment{"start block"};
 	for (PNode stmt: this->stmts) {
 		stmt->generate(ac);
 	}
-	ac << AsmComment{"end block"};
+//	ac << AsmComment{"end block"};
 }
 
 void NodeProgram::generate(AsmCode& ac) {
