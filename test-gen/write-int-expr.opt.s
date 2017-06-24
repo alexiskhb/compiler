@@ -11,46 +11,30 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$2
-	pushq	$2
-	pushq	$2
-	popq	%r10
-	popq	%rax
-	imulq	%r10, %rax
-	pushq	%rax
-	popq	%r10
-	popq	%rax
+	movq	$2, %rax
+	imulq	$2, %rax
+	movq	%rax, %r10
+	movq	$2, %rax
 	addq	%r10, %rax
+	movq	$3, %r10
 	pushq	%rax
-	pushq	$3
-	pushq	$3
-	popq	%r10
-	popq	%rax
+	movq	$3, %rax
 	addq	%r10, %rax
-	pushq	%rax
-	popq	%r10
+	movq	%rax, %r10
 	popq	%rax
 	subq	%r10, %rax
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__.str0, %rdi
 	call	printf
-	pushq	$10
-	pushq	$2
-	popq	%r10
-	popq	%rax
+	movq	$10, %rax
 	cqo
+	movq	$2, %r10
 	idivq	%r10
-	pushq	%rax
-	pushq	$3
-	popq	%r10
-	popq	%rax
-	imulq	%r10, %rax
-	pushq	%rax
+	imulq	$3, %rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	popq	%rbp
 	xorq	%rax, %rax

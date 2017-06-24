@@ -17,7 +17,6 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-// start block
 	pushq	$10
 	leaq	.__A, %rax
 	pushq	%rax
@@ -30,9 +29,9 @@ main:
 	popq	(%rax)
 	pushq	.__A
 	pushq	.__B
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	leaq	.__A, %rax
 	pushq	%rax
@@ -46,9 +45,9 @@ main:
 	call	printf
 	pushq	.__A
 	pushq	$40
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	subq	%rbx, %rax
+	subq	%r10, %rax
 	pushq	%rax
 	leaq	.__B, %rax
 	pushq	%rax
@@ -68,16 +67,15 @@ main:
 	call	printf
 	pushq	.__A
 	pushq	.__B
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// end block
 	popq	%rbp
 	xorq	%rax, %rax
 	ret

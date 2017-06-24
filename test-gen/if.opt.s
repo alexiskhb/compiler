@@ -19,25 +19,13 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$10
-	leaq	.__A, %rax
-	pushq	%rax
-	popq	%rax
-	popq	(%rax)
-	pushq	$10
-	leaq	.__B, %rax
-	pushq	%rax
-	popq	%rax
-	popq	(%rax)
-	pushq	.__A
-	pushq	.__B
-	popq	%r11
-	popq	%rdx
+	movq	$10, .__A
+	movq	$10, .__B
+	movq	.__B, %r11
+	movq	.__A, %rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setne	%al
-	pushq	%rax
-	popq	%rax
 	testq	%rax, %rax
 	jz	..L1
 	leaq	.__.str0, %rdi
@@ -51,15 +39,11 @@ main:
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
 ..L2:
-	pushq	.__A
-	pushq	.__B
-	popq	%r11
-	popq	%rdx
+	movq	.__B, %r11
+	movq	.__A, %rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	sete	%al
-	pushq	%rax
-	popq	%rax
 	testq	%rax, %rax
 	jz	..L3
 	leaq	.__.str2, %rdi

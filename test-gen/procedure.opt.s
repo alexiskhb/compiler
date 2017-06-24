@@ -20,7 +20,6 @@ main:
 .__FOO:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	subq	$0, %rsp
 	leaq	.__.str0, %rdi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi

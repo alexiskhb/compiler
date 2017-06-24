@@ -1,0 +1,63 @@
+var
+  k, i, j, d: integer;
+  n: integer = 5;
+  a: array [0..5, 0..5] of integer;
+  di: array [0..3] of integer;
+  dj: array [0..3] of integer;
+  got0n: integer;
+begin
+  k := 0;
+  i := 0;
+  j := 0;
+  d := 3;
+  di[0] := 0; di[1] :=  1; di[2] := 1; di[3] := -1; 
+  dj[0] := 1; dj[1] := -1; dj[2] := 0; dj[3] :=  1; 
+  got0n := 0;
+  while k <= n*n do begin
+    if (i = 0) or (j = 0) or (i = n-1) or (j = n-1) then
+      if got0n then 
+        d -= 1 
+      else 
+        d += 1;
+    a[i, j] := k;
+    i += di[d mod 4];
+    j += dj[d mod 4];    
+    k += 1; 
+    if (i = (n-1)*(1 - (n mod 2))) and (j = (n-1)*(n mod 2)) then 
+      got0n := 1;
+  end; 
+  for i := 0 to n-1 do begin
+    for j := 0 to n-1 do begin
+      write( a[i, j], ' ' );
+    end;
+    writeln;
+  end;
+end.
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

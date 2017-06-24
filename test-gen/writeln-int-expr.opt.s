@@ -9,20 +9,12 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$100
-	pushq	$200
-	popq	%r10
-	popq	%rax
-	subq	%r10, %rax
-	pushq	%rax
-	pushq	$10
-	popq	%r10
-	popq	%rax
+	movq	$-100, %rax
 	cqo
+	movq	$10, %r10
 	idivq	%r10
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf

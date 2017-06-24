@@ -6,23 +6,25 @@
 	.string "
 "
 	.globl main
+.data
+	.__A: .fill 16,1,0
+.data
+	.__B: .fill 16,1,0
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$100
-	pushq	$200
-	popq	%r10
-	popq	%rax
-	subq	%r10, %rax
-	pushq	%rax
-	pushq	$10
-	popq	%r10
-	popq	%rax
-	cqo
-	idivq	%r10
-	pushq	%rax
+	leaq	.__A, %rax
+	xorq	%rcx, %rcx
+	movq	$10, (%rax,%rcx,1)
+	leaq	.__B, %rax
+	pushq	.__A
+	popq	(%rax)
+	leaq	.__B, %rax
+	movq	%rax, %r11
+	xorq	%r13, %r13
+	movq	(%r11,%r13,1), %r11
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%r11, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf

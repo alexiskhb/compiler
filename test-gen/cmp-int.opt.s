@@ -17,176 +17,117 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$10
-	leaq	.__A, %rax
-	pushq	%rax
-	popq	%rax
-	popq	(%rax)
-	pushq	.__A
-	pushq	.__A
-	popq	%r10
-	popq	%rax
+	movq	$10, .__A
+	movq	.__A, %r10
+	movq	.__A, %rax
 	imulq	%r10, %rax
-	pushq	%rax
-	pushq	.__A
-	popq	%r10
-	popq	%rax
-	addq	%r10, %rax
-	pushq	%rax
-	leaq	.__B, %rax
-	pushq	%rax
-	popq	%rax
-	popq	(%rax)
-	pushq	.__A
-	pushq	$10
-	popq	%r11
-	popq	%rdx
+	addq	.__A, %rax
+	movq	%rax, .__B
+	movq	.__A, %rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	cmpq	$10, %rdx
 	sete	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__A
-	pushq	$10
-	popq	%r11
-	popq	%rdx
+	movq	.__A, %rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	cmpq	$10, %rdx
 	setne	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__A
-	pushq	$9
-	popq	%r11
-	popq	%rdx
+	movq	.__A, %rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	cmpq	$9, %rdx
 	setg	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__A
-	pushq	$11
-	popq	%r11
-	popq	%rdx
+	movq	.__A, %rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	cmpq	$11, %rdx
 	setg	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__A
-	pushq	$11
-	popq	%r11
-	popq	%rdx
+	movq	.__A, %rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	cmpq	$11, %rdx
 	setl	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__A
-	pushq	$9
-	popq	%r11
-	popq	%rdx
+	movq	.__A, %rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	cmpq	$9, %rdx
 	setl	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__B
-	pushq	$110
-	popq	%r11
-	popq	%rdx
+	movq	.__B, %rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	cmpq	$110, %rdx
 	sete	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__B
-	pushq	.__A
-	popq	%r11
-	popq	%rdx
+	movq	.__A, %r11
+	movq	.__B, %rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setge	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__B
-	pushq	.__A
-	pushq	.__B
-	popq	%r10
-	popq	%rax
+	movq	.__B, %r10
+	movq	.__A, %rax
 	addq	%r10, %rax
-	pushq	%rax
-	popq	%r11
-	popq	%rdx
+	movq	%rax, %r11
+	movq	.__B, %rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setge	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__B
-	pushq	.__A
-	pushq	$100
-	popq	%r10
-	popq	%rax
-	imulq	%r10, %rax
-	pushq	%rax
-	popq	%r11
-	popq	%rdx
+	movq	.__A, %rax
+	imulq	$100, %rax
+	movq	%rax, %r11
+	movq	.__B, %rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setle	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	.__B
-	pushq	$0
-	popq	%r11
-	popq	%rdx
+	xorq	%r11, %r11
+	movq	.__B, %rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setle	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
@@ -194,133 +135,93 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$102
-	pushq	$101
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$102, %rdx
+	cmpq	$101, %rdx
 	setg	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$102
-	pushq	$101
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$102, %rdx
+	cmpq	$101, %rdx
 	setge	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	pushq	$102
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$101, %rdx
+	cmpq	$102, %rdx
 	setl	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	pushq	$102
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$101, %rdx
+	cmpq	$102, %rdx
 	setle	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	pushq	$101
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$101, %rdx
+	cmpq	$101, %rdx
 	sete	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$102
-	pushq	$101
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$102, %rdx
+	cmpq	$101, %rdx
 	setl	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$102
-	pushq	$101
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$102, %rdx
+	cmpq	$101, %rdx
 	setle	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	pushq	$102
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$101, %rdx
+	cmpq	$102, %rdx
 	setg	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	pushq	$102
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$101, %rdx
+	cmpq	$102, %rdx
 	setge	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	pushq	$101
-	popq	%r11
-	popq	%rdx
 	xorq	%rax, %rax
-	cmpq	%r11, %rdx
+	movq	$101, %rdx
+	cmpq	$101, %rdx
 	setne	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
@@ -328,193 +229,153 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$102
-	popq	%rax
+	movq	$102, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setg	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$102
-	popq	%rax
+	movq	$102, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setge	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$102
-	popq	%rax
+	movq	$102, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setl	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$102
-	popq	%rax
+	movq	$102, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setle	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setne	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$102
-	popq	%rax
+	movq	$102, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setl	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$102
-	popq	%rax
+	movq	$102, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setle	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$102
-	popq	%rax
+	movq	$102, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setg	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$102
-	popq	%rax
+	movq	$102, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	setge	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
 	pushq	%rax
-	pushq	$101
-	popq	%rax
+	movq	$101, %rax
 	negq	%rax
-	pushq	%rax
-	popq	%r11
+	movq	%rax, %r11
 	popq	%rdx
 	xorq	%rax, %rax
 	cmpq	%r11, %rdx
 	sete	%al
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf

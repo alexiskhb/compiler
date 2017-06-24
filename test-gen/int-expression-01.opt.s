@@ -6,50 +6,44 @@
 	.string "
 "
 	.globl main
+.data
+	.__A: .quad 0
+.data
+	.__B: .quad 0
+.__.str0:
+	.string " "
+.__.str1:
+	.string " "
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$1
-	popq	%rax
-	pushq	$4
-	popq	%rcx
-	shlq	%cl, %rax
-	pushq	%rax
+	movq	$10, .__A
+	movq	$20, .__B
+	movq	.__B, %r10
+	addq	%r10, .__A
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	.__A, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$16
-	popq	%rax
-	pushq	$2
-	popq	%rcx
-	shrq	%cl, %rax
-	pushq	%rax
+	movq	.__A, %rax
+	subq	$40, %rax
+	movq	%rax, .__B
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	.__A, %rsi
 	call	printf
-	leaq	.__._fmt_newline_, %rdi
+	leaq	.__.str0, %rdi
 	call	printf
-	pushq	$10
-	popq	%rax
-	pushq	$10
-	popq	%rbx
-	xorq	%rbx, %rax
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	.__B, %rsi
 	call	printf
-	leaq	.__._fmt_newline_, %rdi
+	leaq	.__.str1, %rdi
 	call	printf
-	pushq	$1
-	popq	%rax
-	pushq	$5
-	popq	%rbx
-	xorq	%rbx, %rax
-	pushq	%rax
+	movq	.__B, %r10
+	movq	.__A, %rax
+	addq	%r10, %rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf

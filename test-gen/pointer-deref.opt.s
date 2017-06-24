@@ -6,23 +6,19 @@
 	.string "
 "
 	.globl main
+.data
+	.__A: .quad 0
+.data
+	.__P: .quad 0
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$100
-	pushq	$200
-	popq	%r10
-	popq	%rax
-	subq	%r10, %rax
-	pushq	%rax
-	pushq	$10
-	popq	%r10
-	popq	%rax
-	cqo
-	idivq	%r10
-	pushq	%rax
+	movq	$20, .__A
+	leaq	.__A, %rax
+	movq	%rax, .__P
+	movq	.__P, %rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	(%rax), %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf

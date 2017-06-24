@@ -11,623 +11,575 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-// start block
 	pushq	$415
-// generate_lvalue
-// gen_start_address
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$4
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
+	popq	%rcx
+	imulq	$8, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
 	popq	%rax
 	popq	(%rax)
 	pushq	$416
-// generate_lvalue
-// gen_start_address
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$4
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$6
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
+	popq	%rcx
+	imulq	$8, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
 	popq	%rax
 	popq	(%rax)
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
 	pushq	$4
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
-	popq	%rax
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
-// generate_lvalue
-// gen_start_address
-// generate array start address
+	popq	%r12
+	imulq	$8, %r12
+	popq	%r10
+	movq	(%r10,%r12,1), %r10
+	pushq	%r10
 	leaq	.__A, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$3
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
+	popq	%rcx
+	imulq	$8, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
 	popq	%rax
 	popq	(%rax)
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
 	pushq	$4
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
-	popq	%rax
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
-// generate_lvalue
-// gen_start_address
-// generate array start address
+	popq	%r12
+	imulq	$8, %r12
+	popq	%r10
+	movq	(%r10,%r12,1), %r10
+	pushq	%r10
 	leaq	.__A, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$3
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$2
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
+	popq	%rcx
+	imulq	$8, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
 	popq	%rax
 	popq	(%rax)
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
 	pushq	$4
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
-	popq	%rax
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
-// generate_lvalue
-// gen_start_address
-// generate array start address
+	popq	%r12
+	imulq	$8, %r12
+	popq	%r10
+	movq	(%r10,%r12,1), %r10
+	pushq	%r10
 	leaq	.__A, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$3
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$6
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
+	popq	%rcx
+	imulq	$8, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
 	popq	%rax
 	popq	(%rax)
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
 	pushq	$4
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
-	popq	%rax
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
+	popq	%r12
+	imulq	$8, %r12
+	popq	%r10
+	movq	(%r10,%r12,1), %r10
+	pushq	%r10
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
 	pushq	$3
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
-	popq	%rax
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
+	popq	%r12
+	imulq	$8, %r12
+	popq	%r10
+	movq	(%r10,%r12,1), %r10
+	pushq	%r10
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
 	pushq	$3
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$2
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
-	popq	%rax
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
+	popq	%r12
+	imulq	$8, %r12
+	popq	%r10
+	movq	(%r10,%r12,1), %r10
+	pushq	%r10
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
 	pushq	$0
 	pushq	$3
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$6
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
-	popq	%rax
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
+	popq	%r12
+	imulq	$8, %r12
+	popq	%r10
+	movq	(%r10,%r12,1), %r10
+	pushq	%r10
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// generate_lvalue
-// gen_start_address
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$0
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$0
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$0
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
+	popq	%rcx
+	imulq	$8, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
-// generate_lvalue
-// gen_start_address
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$4
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$1
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$5
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
+	popq	%rcx
+	imulq	$8, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
-// generate_lvalue
-// gen_start_address
-// generate array start address
 	leaq	.__A, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$0
-	movq	$2, %rbx
+	movq	$2, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$6, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$6, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$0
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$4, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$4, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
 	pushq	$0
-	movq	$3, %rbx
+	movq	$3, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$8, %rbx
+	popq	%rcx
+	imulq	$8, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	subq	%rbx, %rax
+	subq	%r10, %rax
 	pushq	%rax
 	pushq	$8
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	popq	%rax
 	pushq	(%rax)
@@ -636,7 +588,6 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// end block
 	popq	%rbp
 	xorq	%rax, %rax
 	ret

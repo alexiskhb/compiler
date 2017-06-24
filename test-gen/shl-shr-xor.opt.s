@@ -9,47 +9,33 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$1
-	popq	%rax
-	pushq	$4
-	popq	%rcx
+	movq	$1, %rax
+	movq	$4, %rcx
 	shlq	%cl, %rax
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$16
-	popq	%rax
-	pushq	$2
-	popq	%rcx
+	movq	$16, %rax
+	movq	$2, %rcx
 	shrq	%cl, %rax
-	pushq	%rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$10
-	popq	%rax
-	pushq	$10
-	popq	%rbx
-	xorq	%rbx, %rax
-	pushq	%rax
+	movq	$10, %rax
+	xorq	$10, %rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$1
-	popq	%rax
-	pushq	$5
-	popq	%rbx
-	xorq	%rbx, %rax
-	pushq	%rax
+	movq	$1, %rax
+	xorq	$5, %rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	%rax, %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf

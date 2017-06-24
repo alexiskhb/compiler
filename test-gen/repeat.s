@@ -13,14 +13,12 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-// start block
 ..L1:
-// start block
 	pushq	.__I
 	pushq	$1
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	leaq	.__I, %rax
 	pushq	%rax
@@ -28,21 +26,20 @@ main:
 	popq	(%rax)
 	pushq	.__K
 	pushq	$2
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	leaq	.__K, %rax
 	pushq	%rax
 	popq	%rax
 	popq	(%rax)
-// end block
 	pushq	.__I
 	pushq	$100
-	popq	%rbx
-	popq	%rax
-	cmpq	%rbx, %rax
-	movq	$0, %rax
+	popq	%r11
+	popq	%rdx
+	xorq	%rax, %rax
+	cmpq	%r11, %rdx
 	sete	%al
 	pushq	%rax
 	popq	%rax
@@ -66,12 +63,11 @@ main:
 	popq	%rax
 	popq	(%rax)
 ..L3:
-// start block
 	pushq	.__I
 	pushq	$1
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	leaq	.__I, %rax
 	pushq	%rax
@@ -79,9 +75,9 @@ main:
 	popq	(%rax)
 	pushq	.__K
 	pushq	$2
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	leaq	.__K, %rax
 	pushq	%rax
@@ -89,10 +85,10 @@ main:
 	popq	(%rax)
 	pushq	.__I
 	pushq	$100
-	popq	%rbx
-	popq	%rax
-	cmpq	%rbx, %rax
-	movq	$0, %rax
+	popq	%r11
+	popq	%rdx
+	xorq	%rax, %rax
+	cmpq	%r11, %rdx
 	sete	%al
 	pushq	%rax
 	popq	%rax
@@ -102,13 +98,12 @@ main:
 	jmp	..L6
 ..L5:
 ..L6:
-// end block
 	pushq	.__I
 	pushq	$1000
-	popq	%rbx
-	popq	%rax
-	cmpq	%rbx, %rax
-	movq	$0, %rax
+	popq	%r11
+	popq	%rdx
+	xorq	%rax, %rax
+	cmpq	%r11, %rdx
 	sete	%al
 	pushq	%rax
 	popq	%rax
@@ -132,12 +127,11 @@ main:
 	popq	%rax
 	popq	(%rax)
 ..L7:
-// start block
 	pushq	.__I
 	pushq	$1
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	leaq	.__I, %rax
 	pushq	%rax
@@ -161,30 +155,27 @@ main:
 ..L10:
 	pushq	.__K
 	pushq	$2
-	popq	%rbx
+	popq	%r10
 	popq	%rax
-	addq	%rbx, %rax
+	addq	%r10, %rax
 	pushq	%rax
 	leaq	.__K, %rax
 	pushq	%rax
 	popq	%rax
 	popq	(%rax)
 ..L13:
-// start block
 	jmp	..L14
-// end block
 	pushq	$0
 	popq	%rax
 	testq	%rax, %rax
 	jz	..L13
 ..L14:
-// end block
 	pushq	.__I
 	pushq	$200
-	popq	%rbx
-	popq	%rax
-	cmpq	%rbx, %rax
-	movq	$0, %rax
+	popq	%r11
+	popq	%rdx
+	xorq	%rax, %rax
+	cmpq	%r11, %rdx
 	sete	%al
 	pushq	%rax
 	popq	%rax
@@ -198,20 +189,17 @@ main:
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
 ..L15:
-// start block
 	pushq	.__K
 	leaq	.__._fmt_int_, %rdi
 	popq	%rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// end block
 	pushq	$1
 	popq	%rax
 	testq	%rax, %rax
 	jz	..L15
 ..L16:
-// end block
 	popq	%rbp
 	xorq	%rax, %rax
 	ret

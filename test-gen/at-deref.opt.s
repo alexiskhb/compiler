@@ -15,81 +15,42 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$10
-	leaq	.__A, %rax
-	pushq	%rax
-	popq	%rax
-	popq	(%rax)
-	pushq	$20
-	leaq	.__B, %rax
-	pushq	%rax
-	popq	%rax
-	popq	(%rax)
+	movq	$10, .__A
+	movq	$20, .__B
 	movq	$5.500000, %rax
-	pushq	%rax
-	leaq	.__C, %rax
-	pushq	%rax
-	popq	%rax
-	popq	(%rax)
+	movq	%rax, .__C
 	leaq	.__A, %rax
-	pushq	%rax
-	popq	%rax
-	pushq	(%rax)
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	(%rax), %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
 	leaq	.__A, %rax
-	pushq	%rax
-	pushq	$8
-	popq	%r10
-	popq	%rax
-	addq	%r10, %rax
-	pushq	%rax
-	popq	%rax
-	pushq	(%rax)
+	addq	$8, %rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	(%rax), %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
 	leaq	.__B, %rax
-	pushq	%rax
-	pushq	$8
-	popq	%r10
-	popq	%rax
-	subq	%r10, %rax
-	pushq	%rax
-	popq	%rax
-	pushq	(%rax)
+	subq	$8, %rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	(%rax), %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
 	leaq	.__C, %rax
-	pushq	%rax
-	popq	%rax
-	pushq	(%rax)
 	leaq	.__._fmt_float_, %rdi
-	popq	%rax
+	movq	(%rax), %rax
 	movq	%rax, %xmm0
 	movq	$1, %rax
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
 	leaq	.__B, %rax
-	pushq	%rax
-	pushq	$8
-	popq	%r10
-	popq	%rax
-	addq	%r10, %rax
-	pushq	%rax
-	popq	%rax
-	pushq	(%rax)
+	addq	$8, %rax
 	leaq	.__._fmt_int_, %rdi
-	popq	%rsi
+	movq	(%rax), %rsi
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf

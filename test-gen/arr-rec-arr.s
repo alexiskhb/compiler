@@ -13,38 +13,31 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-// start block
 	pushq	$10
 	popq	%rax
 	cvtsi2sd	%rax, %xmm0
 	movq	%xmm0, %rax
 	pushq	%rax
-// generate record start address
-// generate_lvalue
-// gen_start_address
-// generate array start address
 	leaq	.__CURVE, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$10
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$16, %rbx
+	popq	%rcx
+	imulq	$16, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
 	popq	%rax
-	movq	$0, %rbx
-	leaq	(%rax,%rbx,1), %rax
+	movq	$0, %rcx
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
 	popq	%rax
 	popq	(%rax)
@@ -53,67 +46,54 @@ main:
 	cvtsi2sd	%rax, %xmm0
 	movq	%xmm0, %rax
 	pushq	%rax
-// generate record start address
-// generate_lvalue
-// gen_start_address
-// generate array start address
-// generate record start address
 	leaq	.__DCURVE, %rax
 	pushq	%rax
 	popq	%rax
-	movq	$1600, %rbx
-	leaq	(%rax,%rbx,1), %rax
+	movq	$1600, %rcx
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$20
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$16, %rbx
+	popq	%rcx
+	imulq	$16, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
 	popq	%rax
-	movq	$8, %rbx
-	leaq	(%rax,%rbx,1), %rax
+	movq	$8, %rcx
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
 	popq	%rax
 	popq	(%rax)
-// generate record start address
-// generate_lvalue
-// gen_start_address
-// generate array start address
 	leaq	.__CURVE, %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$10
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$16, %rbx
+	popq	%rcx
+	imulq	$16, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
-	popq	%rax
-	movq	$0, %rbx
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
+	popq	%r11
+	movq	$0, %r13
+	movq	(%r11,%r13,1), %r11
+	pushq	%r11
 	leaq	.__._fmt_float_, %rdi
 	popq	%rax
 	movq	%rax, %xmm0
@@ -121,38 +101,31 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// generate record start address
-// generate_lvalue
-// gen_start_address
-// generate array start address
-// generate record start address
 	leaq	.__DCURVE, %rax
 	pushq	%rax
 	popq	%rax
-	movq	$1600, %rbx
-	leaq	(%rax,%rbx,1), %rax
+	movq	$1600, %rcx
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// gen_index
 	pushq	$0
 	pushq	$20
-	movq	$1, %rbx
+	movq	$1, %r9
 	popq	%rax
-	subq	%rbx, %rax
-	movq	$1, %rbx
-	imulq	%rbx, %rax
-	popq	%rbx
-	addq	%rbx, %rax
+	subq	%r9, %rax
+	movq	$1, %r9
+	imulq	%r9, %rax
+	popq	%r9
+	addq	%r9, %rax
 	pushq	%rax
-	popq	%rbx
-	imulq	$16, %rbx
+	popq	%rcx
+	imulq	$16, %rcx
 	popq	%rax
-	leaq	(%rax,%rbx,1), %rax
+	leaq	(%rax,%rcx,1), %rax
 	pushq	%rax
-// end generate_lvalue
-	popq	%rax
-	movq	$8, %rbx
-	movq	(%rax,%rbx,1), %rax
-	pushq	%rax
+	popq	%r11
+	movq	$8, %r13
+	movq	(%r11,%r13,1), %r11
+	pushq	%r11
 	leaq	.__._fmt_float_, %rdi
 	popq	%rax
 	movq	%rax, %xmm0
@@ -160,7 +133,6 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// end block
 	popq	%rbp
 	xorq	%rax, %rax
 	ret

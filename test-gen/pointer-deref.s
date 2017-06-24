@@ -24,7 +24,6 @@ main:
 	pushq	%rax
 	popq	%rax
 	popq	(%rax)
-// start block
 	pushq	.__P
 	popq	%rax
 	pushq	(%rax)
@@ -33,7 +32,6 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-// end block
 	popq	%rbp
 	xorq	%rax, %rax
 	ret

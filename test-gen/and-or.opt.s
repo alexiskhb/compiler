@@ -9,12 +9,10 @@
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	pushq	$0
-	popq	%rax
+	xorq	%rax, %rax
 	testq	%rax, %rax
 	jnz	..L1
-	pushq	$0
-	popq	%rax
+	xorq	%rax, %rax
 	testq	%rax, %rax
 	jnz	..L1
 	pushq	$0
@@ -27,12 +25,10 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$0
-	popq	%rax
+	xorq	%rax, %rax
 	testq	%rax, %rax
 	jnz	..L3
-	pushq	$1
-	popq	%rax
+	movq	$1, %rax
 	testq	%rax, %rax
 	jnz	..L3
 	pushq	$0
@@ -45,12 +41,10 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$1
-	popq	%rax
+	movq	$1, %rax
 	testq	%rax, %rax
 	jnz	..L5
-	pushq	$0
-	popq	%rax
+	xorq	%rax, %rax
 	testq	%rax, %rax
 	jnz	..L5
 	pushq	$0
@@ -63,12 +57,10 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$1
-	popq	%rax
+	movq	$1, %rax
 	testq	%rax, %rax
 	jnz	..L7
-	pushq	$1
-	popq	%rax
+	movq	$1, %rax
 	testq	%rax, %rax
 	jnz	..L7
 	pushq	$0
@@ -83,14 +75,8 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$0
-	popq	%rax
-	testq	%rax, %rax
-	jz	..L10
-	pushq	$0
-	popq	%rax
-	testq	%rax, %rax
-	jz	..L10
+	jmp	..L10
+	jmp	..L10
 	pushq	$1
 	jmp	..L9
 ..L10:
@@ -101,12 +87,8 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$0
-	popq	%rax
-	testq	%rax, %rax
-	jz	..L12
-	pushq	$1
-	popq	%rax
+	jmp	..L12
+	movq	$1, %rax
 	testq	%rax, %rax
 	jz	..L12
 	pushq	$1
@@ -119,14 +101,10 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$1
-	popq	%rax
+	movq	$1, %rax
 	testq	%rax, %rax
 	jz	..L14
-	pushq	$0
-	popq	%rax
-	testq	%rax, %rax
-	jz	..L14
+	jmp	..L14
 	pushq	$1
 	jmp	..L13
 ..L14:
@@ -137,12 +115,10 @@ main:
 	call	printf
 	leaq	.__._fmt_newline_, %rdi
 	call	printf
-	pushq	$1
-	popq	%rax
+	movq	$1, %rax
 	testq	%rax, %rax
 	jz	..L16
-	pushq	$1
-	popq	%rax
+	movq	$1, %rax
 	testq	%rax, %rax
 	jz	..L16
 	pushq	$1
